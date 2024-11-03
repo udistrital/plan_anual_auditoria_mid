@@ -3,12 +3,17 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PlanAuditoriaModule } from './plan-auditoria/plan-auditoria.module';
 import { AuditoriaModule } from './auditoria/auditoria.module';
-import { ActividadController } from './actividad/actividad.controller';
-import { ActividadService } from './actividad/actividad.service';
+import { ActividadModule } from './actividad/actividad.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [PlanAuditoriaModule, AuditoriaModule],
-  controllers: [AppController, ActividadController],
-  providers: [AppService, ActividadService],
+  imports: [PlanAuditoriaModule,
+    AuditoriaModule,
+    ActividadModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),],
+  controllers: [AppController],
+  providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
