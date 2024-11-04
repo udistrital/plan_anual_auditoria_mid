@@ -11,27 +11,31 @@ export class PlanAuditoriaService {
         private readonly configService: ConfigService,
     ) { }
 
-    async getdAll() {
-        const data = await this.traerDataCrud(null);
+    async getdAll(queryParams: any) {
+        const data = await this.traerDataCrud(null, queryParams);
         return data;
 
     }
 
     async getOne(id: string) {
-        const data = await this.traerDataCrud(id);
+        const data = await this.traerDataCrud(id, null);
         return data;
     }
 
-    private async traerDataCrud(id: string | null) {
+    private async traerDataCrud(id: string | null, queryParams: any) {
         const apiUrl = `${environment.PLAN_ANUAL_AUDITORIA_CRUD}`;
         let url = `${apiUrl}plan-auditoria/`;
-        console.log("id: ", id)
         if (id != null && id != undefined) {
-            url = url + `${id}`;
+            url += `${id}`;
         }
+        if (queryParams) {
+            const queryString = new URLSearchParams(queryParams).toString();
+            url += `?${queryString}`;
+        }
+
         try {
             const response = await lastValueFrom(this.httpService.get(url));
-
+            //console.log("data: ", response.data)
             return response.data;
         } catch (error) {
             // Maneja los errores si la solicitud falla
@@ -39,7 +43,6 @@ export class PlanAuditoriaService {
                 'Error al obtener los datos del servicio externo',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
-
         }
     }
 }

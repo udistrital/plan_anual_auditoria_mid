@@ -23,8 +23,8 @@ export class AuditoriaService {
         private readonly configService: ConfigService,
     ) { }
 
-    async getdAll() {
-        const data = await this.traerDataCrud(null);
+    async getdAll(queryParams: any) {
+        const data = await this.traerDataCrud(null, queryParams);
         //console.log(data);
         /*if ((!data || !data.Data || data.Data.length === 0)) {
             return null;
@@ -40,7 +40,7 @@ export class AuditoriaService {
     }
 
     async getOne(id: string) {
-        const data = await this.traerDataCrud(id);
+        const data = await this.traerDataCrud(id,null);
         if (await this.identificarCampo(data)) {
             console.log("vuelve")
             this.reemplazarCampos(data);
@@ -50,11 +50,10 @@ export class AuditoriaService {
     }
 
     private async identificarCampo(data: any) {
-        console.log(data)
-        const firstElement = data.Data[0];
-        console.log(firstElement)
         let validacion = false;
         try {
+            const firstElement = Array.isArray(data.Data) ? data.Data[0] : data.Data;
+
             if ("tipoEvaluacionId" in firstElement) {
                 let param = await this.traerParametros("136")
                 this.tiposEvaluacion.push(...param);
@@ -122,12 +121,16 @@ export class AuditoriaService {
         //identificar si el campo a reemplazar con parametros existe
     }
 
-    private async traerDataCrud(id: string | null) {
+    private async traerDataCrud(id: string | null, queryParams: any) {
         const apiUrl = `${environment.PLAN_ANUAL_AUDITORIA_CRUD}`;
         let url = `${apiUrl}auditoria/`;
 
         if (id != null && id != undefined) {
             url = url + `${id}`;
+        }
+        if (queryParams) {
+            const queryString = new URLSearchParams(queryParams).toString();
+            url += `?${queryString}`;
         }
         try {
             const response = await lastValueFrom(this.httpService.get(url));
@@ -144,8 +147,7 @@ export class AuditoriaService {
     }
 
     private reemplazarCampos(data: any) {
-        console.log("Entra a reemplazarCampos");
-
+        //console.log("Entra a reemplazarCampos");
         if (Array.isArray(data.Data)) {
             data.Data.forEach(element => {
                 if (element.tipoEvaluacionId !== undefined) {
@@ -170,7 +172,30 @@ export class AuditoriaService {
                     this.reemplazar(this.responsables, element, 'responsableId');
                 }
             });
-        } 
+        } else if (typeof data.Data === 'object' && data.Data !== null) {
+            
+            if (data.Data.tipoEvaluacionId !== undefined) {
+                this.reemplazar(this.tiposEvaluacion, data.Data, 'tipoEvaluacionId');
+            }
+            if (data.Data.cronogramaId !== undefined) {
+                this.reemplazar(this.cronogramasActividad, data.Data, 'cronogramaId');
+            }
+            if (data.Data.estadoId !== undefined) {
+                this.reemplazar(this.estados, data.Data, 'estadoId');
+            }
+            if (data.Data.tipoId !== undefined) {
+                this.reemplazar(this.tipos, data.Data, 'tipoId');
+            }
+            if (data.Data.macroproceso !== undefined) {
+                this.reemplazar(this.macroprocesos, data.Data, 'macroproceso');
+            }
+            if (data.Data.liderId !== undefined) {
+                this.reemplazar(this.lideres, data.Data, 'liderId');
+            }
+            if (data.Data.responsableId !== undefined) {
+                this.reemplazar(this.responsables, data.Data, 'responsableId');
+            }
+        }
 
         return data;
     }
@@ -181,11 +206,8 @@ export class AuditoriaService {
         if (Array.isArray(value)) {
             element[campo] = value.map(id => {
                 const encontrado = array.find(param => param.Id === id);
-                if (encontrado) {
-                    return encontrado.Nombre; 
-                } else {
-                    return id;
-                }
+                return encontrado ? encontrado.Nombre : id;
+
             });
         } else {
             const encontrado = array.find(param => param.Id === value);
@@ -195,6 +217,7 @@ export class AuditoriaService {
                 console.warn(`no se encontro ${campo} para ID: ${value}`);
             }
         }
+        return element;
     }
 
 }

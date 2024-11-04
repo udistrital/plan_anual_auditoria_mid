@@ -7,9 +7,9 @@ export class PlanAuditoriaController {
 
     // Método para obtener todos los registros
     @Get()
-    async getAll(@Res() res) {
+    async getAll(@Res() res, @Query() queryParams) {
         try {
-            const data = await this.planAuditoriaService.getdAll();
+            const data = await this.planAuditoriaService.getdAll(queryParams);
             res.status(HttpStatus.OK).json(data);
         } catch (error) {
             res.status(HttpStatus.NOT_FOUND).json({

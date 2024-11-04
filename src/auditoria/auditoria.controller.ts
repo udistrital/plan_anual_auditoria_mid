@@ -4,9 +4,9 @@ import {AuditoriaService} from './auditoria.service'
 export class AuditoriaController {
     constructor(private readonly auditoriaService: AuditoriaService) { }
     @Get()
-    async getAll(@Res() res) {
+    async getAll(@Res() res, @Query() queryParams) {
         try {
-            const data = await this.auditoriaService.getdAll();
+            const data = await this.auditoriaService.getdAll(queryParams);
             res.status(HttpStatus.OK).json(data);
         } catch (error) {
             res.status(HttpStatus.NOT_FOUND).json({

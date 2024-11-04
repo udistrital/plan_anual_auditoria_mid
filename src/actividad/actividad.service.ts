@@ -17,8 +17,8 @@ export class ActividadService {
         private readonly configService: ConfigService,
     ) { }
 
-    async getdAll() {
-        const data = await this.traerDataCrud(null);
+    async getdAll(queryParams: any) {
+        const data = await this.traerDataCrud(null, queryParams);
         //console.log(data);
         /*if ((!data || !data.Data || data.Data.length === 0)) {
             return null;
@@ -34,7 +34,7 @@ export class ActividadService {
     }
 
     async getOne(id: string) {
-        const data = await this.traerDataCrud(id);
+        const data = await this.traerDataCrud(id,null);
         if (await this.identificarCampo(data)) {
             this.reemplazarCampos(data);
         }
@@ -42,11 +42,12 @@ export class ActividadService {
     }
 
     private async identificarCampo(data: any) {
-        const firstElement = data.Data[0];
-        //console.log(firstElement)
+        
         let validacion = false;
         try {
-            if ("medioId" in firstElement) {
+            const firstElement = Array.isArray(data.Data) ? data.Data[0] : data.Data;
+            //console.log(firstElement)
+            if (firstElement && "medioId" in firstElement) {
                 //let param = this.medio
                 //let param = await this.traerParametros("136")
                 //this.medio.push(...param);
@@ -77,19 +78,21 @@ export class ActividadService {
         }
     }
 
-    private async traerDataCrud(id: string | null) {
+    private async traerDataCrud(id: string | null, queryParams: any) {
         const apiUrl = `${environment.PLAN_ANUAL_AUDITORIA_CRUD}`;
         let url = `${apiUrl}actividad/`;
 
         if (id != null && id != undefined) {
             url = url + `${id}`;
         }
+        if (queryParams) {
+            const queryString = new URLSearchParams(queryParams).toString();
+            url += `?${queryString}`;
+        }
         try {
             const response = await lastValueFrom(this.httpService.get(url));
-            //console.log("data: ", response.data)
             return response.data;
         } catch (error) {
-            // Maneja los errores si la solicitud falla
             throw new HttpException(
                 'Error al obtener los datos del servicio externo',
                 HttpStatus.INTERNAL_SERVER_ERROR,
@@ -99,16 +102,18 @@ export class ActividadService {
     }
 
     private reemplazarCampos(data: any) {
-        console.log("Entra a reemplazarCampos");
-
+        //console.log("Entra a reemplazarCampos");
         if (Array.isArray(data.Data)) {
             data.Data.forEach(element => {
                 if (element.medioId !== undefined) {
                     this.reemplazar(this.medio, element, 'medioId');
                 }
             });
+        }else if (typeof data.Data === 'object' && data.Data !== null) {
+            if (data.Data.medioId !== undefined) {
+                this.reemplazar(this.medio, data.Data, 'medioId');
+            }
         }
-
         return data;
     }
 
@@ -118,11 +123,7 @@ export class ActividadService {
         if (Array.isArray(value)) {
             element[campo] = value.map(id => {
                 const encontrado = array.find(param => param.Id === id);
-                if (encontrado) {
-                    return encontrado.Nombre;
-                } else {
-                    return id;
-                }
+                return encontrado ? encontrado.Nombre : id;
             });
         } else {
             const encontrado = array.find(param => param.Id === value);
@@ -132,5 +133,8 @@ export class ActividadService {
                 console.warn(`no se encontro ${campo} para ID: ${value}`);
             }
         }
+        //console.log("reemplazo ",element)
+        return element;
+
     }
 }
