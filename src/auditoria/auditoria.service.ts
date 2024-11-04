@@ -8,7 +8,11 @@ import { environment } from 'src/config/configuration';
 export class AuditoriaService {
     private tiposEvaluacion: any[] = [];
     private cronogramasActividad: any[] = [];
-    private estados: any[] = [];
+    private estados: { Id: number; Nombre: string }[] = [
+        { Id: 1, Nombre: "Activo" },
+        { Id: 2, Nombre: "Inactivo" },
+        { Id: 3, Nombre: "Otro" },
+    ];
     private tipos: any[] = [];
     private macroprocesos: any[] = [];
     private lideres: any[] = [];
@@ -37,11 +41,16 @@ export class AuditoriaService {
 
     async getOne(id: string) {
         const data = await this.traerDataCrud(id);
+        if (await this.identificarCampo(data)) {
+            console.log("vuelve")
+            this.reemplazarCampos(data);
 
+        }
         return data;
     }
 
     private async identificarCampo(data: any) {
+        console.log(data)
         const firstElement = data.Data[0];
         console.log(firstElement)
         let validacion = false;
@@ -60,8 +69,6 @@ export class AuditoriaService {
             }
 
             if ("estadoId" in firstElement) {
-                let param = await this.traerParametros("139")
-                this.estados.push(...param);
                 validacion = true;
             }
 

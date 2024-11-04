@@ -6,8 +6,12 @@ import { environment } from 'src/config/configuration';
 
 @Injectable()
 export class ActividadService {
-    private medio: any[] = [];
-
+    // private medio: any[] = [];
+    private medio: { Id: number; Nombre: string }[] = [
+        { Id: 1, Nombre: "Digital" },
+        { Id: 2, Nombre: "Fisico" },
+        { Id: 3, Nombre: "Otro" },
+    ];
     constructor(
         private readonly httpService: HttpService,
         private readonly configService: ConfigService,
@@ -21,7 +25,7 @@ export class ActividadService {
         }*/
 
         if (await this.identificarCampo(data)) {
-            console.log("vuelve")
+
             this.reemplazarCampos(data);
 
         }
@@ -31,7 +35,9 @@ export class ActividadService {
 
     async getOne(id: string) {
         const data = await this.traerDataCrud(id);
-
+        if (await this.identificarCampo(data)) {
+            this.reemplazarCampos(data);
+        }
         return data;
     }
 
@@ -41,12 +47,11 @@ export class ActividadService {
         let validacion = false;
         try {
             if ("medioId" in firstElement) {
-                let param = await this.traerParametros("136")
-                this.medio.push(...param);
-                console.log("medio: ", this.medio);
+                //let param = this.medio
+                //let param = await this.traerParametros("136")
+                //this.medio.push(...param);
                 validacion = true;
             }
-
             return validacion;
         } catch (error) {
             console.error(error)
@@ -70,8 +75,6 @@ export class ActividadService {
             );
 
         }
-        //identificar si hay data
-        //identificar si el campo a reemplazar con parametros existe
     }
 
     private async traerDataCrud(id: string | null) {
@@ -100,11 +103,11 @@ export class ActividadService {
 
         if (Array.isArray(data.Data)) {
             data.Data.forEach(element => {
-                if (element.tipoEvaluacionId !== undefined) {
-                    this.reemplazar(this.medio, element, 'tipoEvaluacionId');
+                if (element.medioId !== undefined) {
+                    this.reemplazar(this.medio, element, 'medioId');
                 }
             });
-        } 
+        }
 
         return data;
     }
@@ -116,7 +119,7 @@ export class ActividadService {
             element[campo] = value.map(id => {
                 const encontrado = array.find(param => param.Id === id);
                 if (encontrado) {
-                    return encontrado.Nombre; 
+                    return encontrado.Nombre;
                 } else {
                     return id;
                 }
@@ -124,7 +127,7 @@ export class ActividadService {
         } else {
             const encontrado = array.find(param => param.Id === value);
             if (encontrado) {
-                element[campo] = encontrado.Nombre; 
+                element[campo] = encontrado.Nombre;
             } else {
                 console.warn(`no se encontro ${campo} para ID: ${value}`);
             }
