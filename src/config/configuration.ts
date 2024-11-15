@@ -8,4 +8,6 @@ export const environment = {
         process.env.PLAN_ANUAL_AUDITORIA_PORT,
         PLAN_ANUAL_AUDITORIA_CRUD:
         process.env.PLAN_ANUAL_AUDITORIA_CRUD,
+        PLAN_ANUAL_AUDITORIA_PLANTILLAS:
+        process.env.PLAN_ANUAL_AUDITORIA_PLANTILLAS,
 };
