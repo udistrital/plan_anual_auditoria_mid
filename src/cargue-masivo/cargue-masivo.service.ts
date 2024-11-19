@@ -8,9 +8,9 @@ export class CargueMasivoService {
             base64data: base64data,
             service: process.env.PLAN_ANUAL_AUDITORIA_CRUD,
             endpoint: "auditoria",
-            // complement: {
-            //     plan_auditoria_id: planAuditoriaId,
-            // },
+            complement: {
+                plan_auditoria_id: planAuditoriaId,
+            },
             structure: {
                 titulo: {
                     file_name_column: "Auditoría",

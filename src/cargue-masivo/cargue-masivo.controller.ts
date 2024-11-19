@@ -21,9 +21,9 @@ export class CargueMasivoController {
 
             console.log('Estructura a enviar:', JSON.stringify(estructura, null, 2));
             
-            const lambdaUrl = process.env.LAMBDA_SERVICE;
-            console.log("lambdaUrl: ",lambdaUrl);
-            const response = await axios.post(lambdaUrl, estructura);
+            const serverlessUrl = process.env.CARGUE_MASIVO_SERVERLESS_MID;
+            console.log("lambdaUrl: ",serverlessUrl);
+            const response = await axios.post(serverlessUrl, estructura);
             return response.data;
 
         } catch (error) {
