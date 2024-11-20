@@ -17,6 +17,7 @@ export class AuditoriaService {
   private macroprocesos: any[] = [];
   private lideres: any[] = [];
   private responsables: any[] = [];
+  private vigencias: any[] = [];
 
   constructor(
     private readonly httpService: HttpService,
@@ -68,6 +69,12 @@ export class AuditoriaService {
         validacion = true;
       }
 
+      if ('vigencia_id' in firstElement) {
+        let param = await this.traerParametros('121');
+        this.vigencias.push(...param);
+        validacion = true;
+      }
+
       if ('tipoId' in firstElement) {
         let param = await this.traerParametros('139');
         this.tipos.push(...param);
@@ -99,7 +106,7 @@ export class AuditoriaService {
 
   private async traerParametros(idParam: string) {
     const apiUrl = `${environment.PLAN_ANUAL_AUDITORIA_PARAMETROS}`;
-    const url = `${apiUrl}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre`;
+    const url = `${apiUrl}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre&limit=0`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data.Data;
@@ -153,6 +160,9 @@ export class AuditoriaService {
         }
         if (element.tipoId !== undefined) {
           this.reemplazar(this.tipos, element, 'tipoId');
+        }
+        if (element.vigencia_id !== undefined) {
+          this.reemplazar(this.vigencias, element, 'vigencia_id');
         }
         if (element.macroproceso !== undefined) {
           this.reemplazar(this.macroprocesos, element, 'macroproceso');
@@ -208,16 +218,5 @@ export class AuditoriaService {
       }
     }
     return element;
-  }
-
-  async obtenerAuditoriasPorVigencia(idVigencia: number): Promise<any> {
-    const apiUrl = process.env.PLAN_ANUAL_AUDITORIA_CRUD; // Usar variables de entorno
-    const urlGet = `${apiUrl}auditoria?query=vigencia_id:${idVigencia},activo:true&limit=0`;
-
-    const response = await lastValueFrom(
-      this.httpService.get(urlGet).pipe(map((res) => res.data.Data)),
-    );
-
-    return response;
   }
 }

@@ -1,4 +1,12 @@
-import { Controller, Get, Param, HttpStatus, Res, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  HttpStatus,
+  Res,
+  Query,
+  HttpException,
+} from '@nestjs/common';
 import { AuditoriaService } from './auditoria.service';
 @Controller('auditoria')
 export class AuditoriaController {
@@ -23,20 +31,5 @@ export class AuditoriaController {
   @Get(':id')
   async getById(@Param('id') id: string) {
     return await this.auditoriaService.getOne(id);
-  }
-
-  @Get('/vigencia/:id')
-  async obtenerAuditoriasPorVigencia(
-    @Res() res,
-    @Param('id') idVigencia: number,
-  ) {
-    return res.status(HttpStatus.OK).json({
-      Success: true,
-      Status: HttpStatus.OK,
-      Message: '',
-      Data: await this.auditoriaService.obtenerAuditoriasPorVigencia(
-        idVigencia,
-      ),
-    });
   }
 }
