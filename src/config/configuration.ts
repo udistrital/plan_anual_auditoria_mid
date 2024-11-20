@@ -8,7 +8,7 @@ export const environment = {
         process.env.PLAN_ANUAL_AUDITORIA_PORT,
         PLAN_ANUAL_AUDITORIA_CRUD:
         process.env.PLAN_ANUAL_AUDITORIA_CRUD,
-        LAMBDA_SERVICE:
-        process.env.LAMBDA_SERVICE
+        CARGUE_MASIVO_SERVERLESS_MID:
+        process.env.CARGUE_MASIVO_SERVERLESS_MID
 
 };
