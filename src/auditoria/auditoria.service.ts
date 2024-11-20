@@ -31,7 +31,6 @@ export class AuditoriaService {
         }*/
 
         if (await this.identificarCampo(data)) {
-            console.log("vuelve")
             this.reemplazarCampos(data);
 
         }
@@ -42,7 +41,6 @@ export class AuditoriaService {
     async getOne(id: string) {
         const data = await this.traerDataCrud(id,null);
         if (await this.identificarCampo(data)) {
-            console.log("vuelve")
             this.reemplazarCampos(data);
 
         }
@@ -54,24 +52,24 @@ export class AuditoriaService {
         try {
             const firstElement = Array.isArray(data.Data) ? data.Data[0] : data.Data;
 
-            if ("tipoEvaluacionId" in firstElement) {
+            if ("tipo_evaluacion_id" in firstElement) {
                 let param = await this.traerParametros("136")
+                console.log("param: ",param);
                 this.tiposEvaluacion.push(...param);
-                console.log("tiposEvaluacion: ", this.tiposEvaluacion);
                 validacion = true;
             }
 
-            if ("cronogramaId" in firstElement) {
+            if ("cronograma_id" in firstElement) {
                 let param = await this.traerParametros("139")
                 this.cronogramasActividad.push(...param);
                 validacion = true;
             }
 
-            if ("estadoId" in firstElement) {
+            if ("estado_id" in firstElement) {
                 validacion = true;
             }
 
-            if ("tipoId" in firstElement) {
+            if ("tipo_id" in firstElement) {
                 let param = await this.traerParametros("139")
                 this.tipos.push(...param);
                 validacion = true;
@@ -83,13 +81,13 @@ export class AuditoriaService {
                 validacion = true;
             }
 
-            if ("liderId" in firstElement) {
+            if ("lider_id" in firstElement) {
                 let param = await this.traerParametros("139")
                 this.lideres.push(...param);
                 validacion = true;
             }
 
-            if ("responsableId" in firstElement) {
+            if ("responsable_id" in firstElement) {
                 let param = await this.traerParametros("139")
                 this.responsables.push(...param);
                 validacion = true;
@@ -117,8 +115,6 @@ export class AuditoriaService {
             );
 
         }
-        //identificar si hay data
-        //identificar si el campo a reemplazar con parametros existe
     }
 
     private async traerDataCrud(id: string | null, queryParams: any) {
@@ -150,50 +146,53 @@ export class AuditoriaService {
         //console.log("Entra a reemplazarCampos");
         if (Array.isArray(data.Data)) {
             data.Data.forEach(element => {
-                if (element.tipoEvaluacionId !== undefined) {
-                    this.reemplazar(this.tiposEvaluacion, element, 'tipoEvaluacionId');
+                if (element.tipo_evaluacion_id !== undefined) {
+                    console.log("entra ",this.tiposEvaluacion)
+                    this.reemplazar(this.tiposEvaluacion, element, 'tipo_evaluacion_id');
                 }
-                if (element.cronogramaId !== undefined) {
-                    this.reemplazar(this.cronogramasActividad, element, 'cronogramaId');
+                if (element.cronograma_id !== undefined) {
+                    console.log("entra ",this.cronogramasActividad)
+
+                    this.reemplazar(this.cronogramasActividad, element, 'cronograma_id');
                 }
-                if (element.estadoId !== undefined) {
-                    this.reemplazar(this.estados, element, 'estadoId');
+                if (element.estado_id !== undefined) {
+                    this.reemplazar(this.estados, element, 'estado_id');
                 }
-                if (element.tipoId !== undefined) {
-                    this.reemplazar(this.tipos, element, 'tipoId');
+                if (element.tipo_id !== undefined) {
+                    this.reemplazar(this.tipos, element, 'tipo_id');
                 }
                 if (element.macroproceso !== undefined) {
                     this.reemplazar(this.macroprocesos, element, 'macroproceso');
                 }
-                if (element.liderId !== undefined) {
-                    this.reemplazar(this.lideres, element, 'liderId');
+                if (element.lider_id !== undefined) {
+                    this.reemplazar(this.lideres, element, 'lider_id');
                 }
-                if (element.responsableId !== undefined) {
-                    this.reemplazar(this.responsables, element, 'responsableId');
+                if (element.responsable_id !== undefined) {
+                    this.reemplazar(this.responsables, element, 'responsable_id');
                 }
             });
         } else if (typeof data.Data === 'object' && data.Data !== null) {
             
-            if (data.Data.tipoEvaluacionId !== undefined) {
-                this.reemplazar(this.tiposEvaluacion, data.Data, 'tipoEvaluacionId');
+            if (data.Data.tipo_evaluacion_id !== undefined) {
+                this.reemplazar(this.tiposEvaluacion, data.Data, 'tipo_evaluacion_id');
             }
-            if (data.Data.cronogramaId !== undefined) {
-                this.reemplazar(this.cronogramasActividad, data.Data, 'cronogramaId');
+            if (data.Data.cronograma_id !== undefined) {
+                this.reemplazar(this.cronogramasActividad, data.Data, 'cronograma_id');
             }
-            if (data.Data.estadoId !== undefined) {
-                this.reemplazar(this.estados, data.Data, 'estadoId');
+            if (data.Data.estado_id !== undefined) {
+                this.reemplazar(this.estados, data.Data, 'estado_id');
             }
-            if (data.Data.tipoId !== undefined) {
-                this.reemplazar(this.tipos, data.Data, 'tipoId');
+            if (data.Data.tipo_id !== undefined) {
+                this.reemplazar(this.tipos, data.Data, 'tipo_id');
             }
             if (data.Data.macroproceso !== undefined) {
                 this.reemplazar(this.macroprocesos, data.Data, 'macroproceso');
             }
-            if (data.Data.liderId !== undefined) {
-                this.reemplazar(this.lideres, data.Data, 'liderId');
+            if (data.Data.lider_id !== undefined) {
+                this.reemplazar(this.lideres, data.Data, 'lider_id');
             }
-            if (data.Data.responsableId !== undefined) {
-                this.reemplazar(this.responsables, data.Data, 'responsableId');
+            if (data.Data.responsable_id !== undefined) {
+                this.reemplazar(this.responsables, data.Data, 'responsable_id');
             }
         }
 
