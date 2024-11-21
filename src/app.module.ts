@@ -6,6 +6,8 @@ import { AuditoriaModule } from './auditoria/auditoria.module';
 import { ActividadModule } from './actividad/actividad.module';
 import { ConfigModule } from '@nestjs/config';
 import { PlantillaModule } from './plantilla/plantilla.module';
+import { CargueMasivoModule } from './cargue-masivo/cargue-masivo.module';
+
 
 @Module({
   imports: [PlanAuditoriaModule,
@@ -14,7 +16,8 @@ import { PlantillaModule } from './plantilla/plantilla.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    PlantillaModule,],
+    PlantillaModule,
+    CargueMasivoModule,],
   controllers: [AppController],
   providers: [AppService],
 })

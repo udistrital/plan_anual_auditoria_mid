@@ -1,6 +1,6 @@
 import * as dotenv from 'dotenv';
 
-dotenv.config();
+dotenv.config({ path: './prueba.env' });
 export const environment = {
     PLAN_ANUAL_AUDITORIA_PARAMETROS:
         process.env.PLAN_ANUAL_AUDITORIA_PARAMETROS,
@@ -10,4 +10,6 @@ export const environment = {
         process.env.PLAN_ANUAL_AUDITORIA_CRUD,
         PLAN_ANUAL_AUDITORIA_PLANTILLAS:
         process.env.PLAN_ANUAL_AUDITORIA_PLANTILLAS,
+        CARGUE_MASIVO_SERVERLESS_MID:
+        process.env.CARGUE_MASIVO_SERVERLESS_MID,
 };
