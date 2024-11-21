@@ -8,6 +8,8 @@ import { environment } from 'src/config/configuration';
 export class AuditoriaService {
     private tiposEvaluacion: any[] = [];
     private cronogramasActividad: any[] = [];
+    private vigencias: any[] = [];
+
     private estados: { Id: number; Nombre: string }[] = [
         { Id: 1, Nombre: "Activo" },
         { Id: 2, Nombre: "Inactivo" },
@@ -65,6 +67,12 @@ export class AuditoriaService {
                 validacion = true;
             }
 
+            if ("vigencia_id" in firstElement) {
+                let param = await this.traerParametros("121")
+                this.vigencias.push(...param);
+                validacion = true;
+            }
+
             if ("estado_id" in firstElement) {
                 validacion = true;
             }
@@ -103,7 +111,7 @@ export class AuditoriaService {
     private async traerParametros(idParam: string) {
 
         const apiUrl = `${environment.PLAN_ANUAL_AUDITORIA_PARAMETROS}`;
-        const url = `${apiUrl}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre`;
+        const url = `${apiUrl}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre&limit=0`;
         try {
             const response = await lastValueFrom(this.httpService.get(url));
             return response.data.Data;
@@ -150,9 +158,10 @@ export class AuditoriaService {
                     console.log("entra ",this.tiposEvaluacion)
                     this.reemplazar(this.tiposEvaluacion, element, 'tipo_evaluacion_id');
                 }
+                if (element.vigencia_id !== undefined) {
+                    this.reemplazar(this.vigencias, element, 'vigencia_id');
+                }
                 if (element.cronograma_id !== undefined) {
-                    console.log("entra ",this.cronogramasActividad)
-
                     this.reemplazar(this.cronogramasActividad, element, 'cronograma_id');
                 }
                 if (element.estado_id !== undefined) {
@@ -175,6 +184,9 @@ export class AuditoriaService {
             
             if (data.Data.tipo_evaluacion_id !== undefined) {
                 this.reemplazar(this.tiposEvaluacion, data.Data, 'tipo_evaluacion_id');
+            }
+            if (data.Data.vigencia_id !== undefined) {
+                this.reemplazar(this.vigencias, data.Data, 'vigencia_id');
             }
             if (data.Data.cronograma_id !== undefined) {
                 this.reemplazar(this.cronogramasActividad, data.Data, 'cronograma_id');
