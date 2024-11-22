@@ -1,0 +1,183 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "AppController_healthCheck",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "App"
+        ]
+      }
+    },
+    "/plan-auditoria": {
+      "get": {
+        "operationId": "PlanAuditoriaController_getAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "PlanAuditoria"
+        ]
+      }
+    },
+    "/plan-auditoria/{id}": {
+      "get": {
+        "operationId": "PlanAuditoriaController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "PlanAuditoria"
+        ]
+      }
+    },
+    "/auditoria": {
+      "get": {
+        "operationId": "AuditoriaController_getAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auditoria"
+        ]
+      }
+    },
+    "/auditoria/{id}": {
+      "get": {
+        "operationId": "AuditoriaController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auditoria"
+        ]
+      }
+    },
+    "/actividad": {
+      "get": {
+        "operationId": "ActividadController_getAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Actividad"
+        ]
+      }
+    },
+    "/actividad/{id}": {
+      "get": {
+        "operationId": "ActividadController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Actividad"
+        ]
+      }
+    },
+    "/plantilla/{id}": {
+      "get": {
+        "operationId": "PlantillaController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Plantilla"
+        ]
+      }
+    },
+    "/cargue-masivo/auditorias": {
+      "post": {
+        "operationId": "CargueMasivoController_cargueMasivo",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "CargueMasivo"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Presupuesto Contractual API MID",
+    "description": "API",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "API",
+      "description": ""
+    }
+  ],
+  "servers": [],
+  "components": {
+    "schemas": {}
+  }
+}
