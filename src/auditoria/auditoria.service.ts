@@ -1,7 +1,7 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
-import { lastValueFrom, map } from 'rxjs';
+import { lastValueFrom } from 'rxjs';
 import { environment } from 'src/config/configuration';
 
 @Injectable()
@@ -26,13 +26,7 @@ export class AuditoriaService {
 
   async getdAll(queryParams: any) {
     const data = await this.traerDataCrud(null, queryParams);
-    //console.log(data);
-    /*if ((!data || !data.Data || data.Data.length === 0)) {
-            return null;
-        }*/
-
     if (await this.identificarCampo(data)) {
-      console.log('vuelve');
       this.reemplazarCampos(data);
     }
     return data;
@@ -41,7 +35,6 @@ export class AuditoriaService {
   async getOne(id: string) {
     const data = await this.traerDataCrud(id, null);
     if (await this.identificarCampo(data)) {
-      console.log('vuelve');
       this.reemplazarCampos(data);
     }
     return data;
@@ -52,30 +45,23 @@ export class AuditoriaService {
     try {
       const firstElement = Array.isArray(data.Data) ? data.Data[0] : data.Data;
 
-      if ('tipoEvaluacionId' in firstElement) {
+      if ('tipo_evaluacion_id' in firstElement) {
         let param = await this.traerParametros('136');
         this.tiposEvaluacion.push(...param);
-        console.log('tiposEvaluacion: ', this.tiposEvaluacion);
         validacion = true;
       }
 
-      if ('cronogramaId' in firstElement) {
+      if ('cronograma_id' in firstElement) {
         let param = await this.traerParametros('139');
         this.cronogramasActividad.push(...param);
         validacion = true;
       }
 
-      if ('estadoId' in firstElement) {
+      if ('estado_id' in firstElement) {
         validacion = true;
       }
 
-      if ('vigencia_id' in firstElement) {
-        let param = await this.traerParametros('121');
-        this.vigencias.push(...param);
-        validacion = true;
-      }
-
-      if ('tipoId' in firstElement) {
+      if ('tipo_id' in firstElement) {
         let param = await this.traerParametros('139');
         this.tipos.push(...param);
         validacion = true;
@@ -87,17 +73,24 @@ export class AuditoriaService {
         validacion = true;
       }
 
-      if ('liderId' in firstElement) {
+      if ('lider_id' in firstElement) {
         let param = await this.traerParametros('139');
         this.lideres.push(...param);
         validacion = true;
       }
 
-      if ('responsableId' in firstElement) {
+      if ('responsable_id' in firstElement) {
         let param = await this.traerParametros('139');
         this.responsables.push(...param);
         validacion = true;
       }
+
+      if ('vigencia_id' in firstElement) {
+        let param = await this.traerParametros('121');
+        this.vigencias.push(...param);
+        validacion = true;
+      }
+
       return validacion;
     } catch (error) {
       console.error(error);
@@ -105,24 +98,21 @@ export class AuditoriaService {
   }
 
   private async traerParametros(idParam: string) {
-    const apiUrl = `${environment.PLAN_ANUAL_AUDITORIA_PARAMETROS}`;
-    const url = `${apiUrl}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre&limit=0`;
+    const apiUrl = `${environment.PARAMETROS_SERVICE}`;
+    const url = `${apiUrl}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data.Data;
     } catch (error) {
-      // Maneja los errores si la solicitud falla
       throw new HttpException(
         'Error al obtener los datos del servicio externo',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-    //identificar si hay data
-    //identificar si el campo a reemplazar con parametros existe
   }
 
   private async traerDataCrud(id: string | null, queryParams: any) {
-    const apiUrl = `${environment.PLAN_ANUAL_AUDITORIA_CRUD}`;
+    const apiUrl = `${environment.PLAN_AUDITORIA_CRUD_SERVICE}`;
     let url = `${apiUrl}auditoria/`;
 
     if (id != null && id != undefined) {
@@ -134,10 +124,8 @@ export class AuditoriaService {
     }
     try {
       const response = await lastValueFrom(this.httpService.get(url));
-      //console.log("data: ", response.data)
       return response.data;
     } catch (error) {
-      // Maneja los errores si la solicitud falla
       throw new HttpException(
         'Error al obtener los datos del servicio externo',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -146,20 +134,19 @@ export class AuditoriaService {
   }
 
   private reemplazarCampos(data: any) {
-    //console.log("Entra a reemplazarCampos");
     if (Array.isArray(data.Data)) {
       data.Data.forEach((element) => {
-        if (element.tipoEvaluacionId !== undefined) {
-          this.reemplazar(this.tiposEvaluacion, element, 'tipoEvaluacionId');
+        if (element.tipo_evaluacion_id !== undefined) {
+          this.reemplazar(this.tiposEvaluacion, element, 'tipo_evaluacion_id');
         }
-        if (element.cronogramaId !== undefined) {
-          this.reemplazar(this.cronogramasActividad, element, 'cronogramaId');
+        if (element.cronograma_id !== undefined) {
+          this.reemplazar(this.cronogramasActividad, element, 'cronograma_id');
         }
-        if (element.estadoId !== undefined) {
-          this.reemplazar(this.estados, element, 'estadoId');
+        if (element.estado_id !== undefined) {
+          this.reemplazar(this.estados, element, 'estado_id');
         }
-        if (element.tipoId !== undefined) {
-          this.reemplazar(this.tipos, element, 'tipoId');
+        if (element.tipo_id !== undefined) {
+          this.reemplazar(this.tipos, element, 'tipo_id');
         }
         if (element.vigencia_id !== undefined) {
           this.reemplazar(this.vigencias, element, 'vigencia_id');
@@ -167,37 +154,39 @@ export class AuditoriaService {
         if (element.macroproceso !== undefined) {
           this.reemplazar(this.macroprocesos, element, 'macroproceso');
         }
-        if (element.liderId !== undefined) {
-          this.reemplazar(this.lideres, element, 'liderId');
+        if (element.lider_id !== undefined) {
+          this.reemplazar(this.lideres, element, 'lider_id');
         }
-        if (element.responsableId !== undefined) {
-          this.reemplazar(this.responsables, element, 'responsableId');
+        if (element.responsable_id !== undefined) {
+          this.reemplazar(this.responsables, element, 'responsable_id');
         }
       });
     } else if (typeof data.Data === 'object' && data.Data !== null) {
-      if (data.Data.tipoEvaluacionId !== undefined) {
-        this.reemplazar(this.tiposEvaluacion, data.Data, 'tipoEvaluacionId');
+      if (data.Data.tipo_evaluacion_id !== undefined) {
+        this.reemplazar(this.tiposEvaluacion, data.Data, 'tipo_evaluacion_id');
       }
-      if (data.Data.cronogramaId !== undefined) {
-        this.reemplazar(this.cronogramasActividad, data.Data, 'cronogramaId');
+      if (data.Data.cronograma_id !== undefined) {
+        this.reemplazar(this.cronogramasActividad, data.Data, 'cronograma_id');
       }
-      if (data.Data.estadoId !== undefined) {
-        this.reemplazar(this.estados, data.Data, 'estadoId');
+      if (data.Data.estado_id !== undefined) {
+        this.reemplazar(this.estados, data.Data, 'estado_id');
       }
-      if (data.Data.tipoId !== undefined) {
-        this.reemplazar(this.tipos, data.Data, 'tipoId');
+      if (data.Data.tipo_id !== undefined) {
+        this.reemplazar(this.tipos, data.Data, 'tipo_id');
+      }
+      if (data.Data.vigencia_id !== undefined) {
+        this.reemplazar(this.vigencias, data.Data, 'vigencia_id');
       }
       if (data.Data.macroproceso !== undefined) {
         this.reemplazar(this.macroprocesos, data.Data, 'macroproceso');
       }
-      if (data.Data.liderId !== undefined) {
-        this.reemplazar(this.lideres, data.Data, 'liderId');
+      if (data.Data.lider_id !== undefined) {
+        this.reemplazar(this.lideres, data.Data, 'lider_id');
       }
-      if (data.Data.responsableId !== undefined) {
-        this.reemplazar(this.responsables, data.Data, 'responsableId');
+      if (data.Data.responsable_id !== undefined) {
+        this.reemplazar(this.responsables, data.Data, 'responsable_id');
       }
     }
-
     return data;
   }
 
@@ -214,7 +203,7 @@ export class AuditoriaService {
       if (encontrado) {
         element[campo] = encontrado.Nombre;
       } else {
-        console.warn(`no se encontro ${campo} para ID: ${value}`);
+        console.warn(`no se encontró ${campo} para ID: ${value}`);
       }
     }
     return element;

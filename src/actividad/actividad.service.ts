@@ -47,7 +47,7 @@ export class ActividadService {
         try {
             const firstElement = Array.isArray(data.Data) ? data.Data[0] : data.Data;
             //console.log(firstElement)
-            if (firstElement && "medioId" in firstElement) {
+            if (firstElement && "medio_id" in firstElement) {
                 //let param = this.medio
                 //let param = await this.traerParametros("136")
                 //this.medio.push(...param);
@@ -63,7 +63,7 @@ export class ActividadService {
 
     private async traerParametros(idParam: string) {
 
-        const apiUrl = `${environment.PLAN_ANUAL_AUDITORIA_PARAMETROS}`;
+        const apiUrl = `${environment.PARAMETROS_SERVICE}`;
         const url = `${apiUrl}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre`;
         try {
             const response = await lastValueFrom(this.httpService.get(url));
@@ -79,7 +79,7 @@ export class ActividadService {
     }
 
     private async traerDataCrud(id: string | null, queryParams: any) {
-        const apiUrl = `${environment.PLAN_ANUAL_AUDITORIA_CRUD}`;
+        const apiUrl = `${environment.PLAN_AUDITORIA_CRUD_SERVICE}`;
         let url = `${apiUrl}actividad/`;
 
         if (id != null && id != undefined) {
@@ -105,13 +105,13 @@ export class ActividadService {
         //console.log("Entra a reemplazarCampos");
         if (Array.isArray(data.Data)) {
             data.Data.forEach(element => {
-                if (element.medioId !== undefined) {
-                    this.reemplazar(this.medio, element, 'medioId');
+                if (element.medio_id !== undefined) {
+                    this.reemplazar(this.medio, element, 'medio_id');
                 }
             });
         }else if (typeof data.Data === 'object' && data.Data !== null) {
-            if (data.Data.medioId !== undefined) {
-                this.reemplazar(this.medio, data.Data, 'medioId');
+            if (data.Data.medio_id !== undefined) {
+                this.reemplazar(this.medio, data.Data, 'medio_id');
             }
         }
         return data;

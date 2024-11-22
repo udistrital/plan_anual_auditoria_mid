@@ -1,14 +1,7 @@
-import * as dotenv from 'dotenv';
-
-dotenv.config({ path: './prueba.env' });
 export const environment = {
-    PLAN_ANUAL_AUDITORIA_PARAMETROS:
-        process.env.PLAN_ANUAL_AUDITORIA_PARAMETROS,
-        PLAN_ANUAL_AUDITORIA_PORT:
-        process.env.PLAN_ANUAL_AUDITORIA_PORT,
-        PLAN_ANUAL_AUDITORIA_CRUD:
-        process.env.PLAN_ANUAL_AUDITORIA_CRUD,
-        LAMBDA_SERVICE:
-        process.env.LAMBDA_SERVICE
-
+    PARAMETROS_SERVICE: process.env.PARAMETROS_SERVICE,
+    PLAN_AUDITORIA_MID_PORT: process.env.PLAN_AUDITORIA_MID_PORT,
+    PLAN_AUDITORIA_CRUD_SERVICE: process.env.PLAN_AUDITORIA_CRUD_SERVICE,
+    PLANTILLAS_MID_SERVICE: process.env.PLANTILLAS_MID_SERVICE,
+    CARGUE_MASIVO_SERVERLESS_MID: process.env.CARGUE_MASIVO_SERVERLESS_MID,
 };
