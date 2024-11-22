@@ -10,7 +10,7 @@ import * as yaml from 'js-yaml';
 async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
-  const port = Number(environment.PLAN_ANUAL_AUDITORIA_PORT);
+  const port = Number(environment.PLAN_AUDITORIA_MID_PORT);
 
   //Swagger
   const config = new DocumentBuilder()
