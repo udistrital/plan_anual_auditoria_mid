@@ -23,7 +23,7 @@ export class PlanAuditoriaService {
     }
 
     private async traerDataCrud(id: string | null, queryParams: any) {
-        const apiUrl = `${environment.PLAN_ANUAL_AUDITORIA_CRUD}`;
+        const apiUrl = `${environment.PLAN_AUDITORIA_CRUD_SERVICE}`;
         let url = `${apiUrl}plan-auditoria/`;
         if (id != null && id != undefined) {
             url += `${id}`;

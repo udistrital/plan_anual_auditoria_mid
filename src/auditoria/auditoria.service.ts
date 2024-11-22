@@ -102,7 +102,7 @@ export class AuditoriaService {
 
     private async traerParametros(idParam: string) {
 
-        const apiUrl = `${environment.PLAN_ANUAL_AUDITORIA_PARAMETROS}`;
+        const apiUrl = `${environment.PARAMETROS_SERVICE}`;
         const url = `${apiUrl}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre`;
         try {
             const response = await lastValueFrom(this.httpService.get(url));
@@ -118,7 +118,7 @@ export class AuditoriaService {
     }
 
     private async traerDataCrud(id: string | null, queryParams: any) {
-        const apiUrl = `${environment.PLAN_ANUAL_AUDITORIA_CRUD}`;
+        const apiUrl = `${environment.PLAN_AUDITORIA_CRUD_SERVICE}`;
         let url = `${apiUrl}auditoria/`;
 
         if (id != null && id != undefined) {
