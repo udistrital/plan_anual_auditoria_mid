@@ -6,7 +6,7 @@ export class CargueMasivoService {
     crearEstructura(base64data: string, planAuditoriaId: number, typeUpload: string): any {
         return {
             base64data: base64data,
-            service: process.env.PLAN_ANUAL_AUDITORIA_CRUD,
+            service: process.env.PLAN_AUDITORIA_CRUD_SERVICE,
             endpoint: "auditoria",
             complement: {
                 plan_auditoria_id: planAuditoriaId,
