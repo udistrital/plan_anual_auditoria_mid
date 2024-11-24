@@ -8,8 +8,8 @@ import { environment } from './config/configuration';
 import * as yaml from 'js-yaml';
 
 async function bootstrap() {
-
   const app = await NestFactory.create(AppModule);
+
   const port = Number(environment.PLAN_AUDITORIA_MID_PORT);
 
   //Swagger
