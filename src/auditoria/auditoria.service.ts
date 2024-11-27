@@ -99,7 +99,7 @@ export class AuditoriaService {
 
   private async traerParametros(idParam: string) {
     const apiUrl = `${environment.PARAMETROS_SERVICE}`;
-    const url = `${apiUrl}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre`;
+    const url = `${apiUrl}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre&limit=0`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data.Data;
