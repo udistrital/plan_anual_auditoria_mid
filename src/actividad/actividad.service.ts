@@ -64,7 +64,7 @@ export class ActividadService {
     private async traerParametros(idParam: string) {
 
         const apiUrl = `${environment.PARAMETROS_SERVICE}`;
-        const url = `${apiUrl}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre`;
+        const url = `${apiUrl}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre&limit=0`;
         try {
             const response = await lastValueFrom(this.httpService.get(url));
             return response.data.Data;
@@ -120,21 +120,24 @@ export class ActividadService {
     private reemplazar(array: any[], element: any, campo: string) {
         const value = element[campo];
 
+        //se realiza reemplazo de sufijo _id si existe, por _nombre
+        const nuevoCampo = campo.endsWith('_id') ? campo.replace('_id', '_nombre') : `${campo}_nombre`;
+
         if (Array.isArray(value)) {
-            element[campo] = value.map(id => {
-                const encontrado = array.find(param => param.Id === id);
+            element[nuevoCampo] = value.map((id) => {
+                const encontrado = array.find((param) => param.Id === id);
                 return encontrado ? encontrado.Nombre : id;
             });
         } else {
-            const encontrado = array.find(param => param.Id === value);
+            const encontrado = array.find((param) => param.Id === value);
             if (encontrado) {
-                element[campo] = encontrado.Nombre;
+                element[nuevoCampo] = encontrado.Nombre;
             } else {
-                console.warn(`no se encontro ${campo} para ID: ${value}`);
+                console.warn(`No se encontró ${campo} para ID: ${value}`);
+                element[nuevoCampo] = null;
             }
         }
-        //console.log("reemplazo ",element)
-        return element;
 
+        return element;
     }
 }
