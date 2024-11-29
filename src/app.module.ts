@@ -7,6 +7,7 @@ import { ActividadModule } from './actividad/actividad.module';
 import { ConfigModule } from '@nestjs/config';
 import { PlantillaModule } from './plantilla/plantilla.module';
 import { CargueMasivoModule } from './cargue-masivo/cargue-masivo.module';
+import { AuditorModule } from './auditor/auditor.module';
 
 
 @Module({
@@ -17,7 +18,8 @@ import { CargueMasivoModule } from './cargue-masivo/cargue-masivo.module';
       isGlobal: true,
     }),
     PlantillaModule,
-    CargueMasivoModule,],
+    CargueMasivoModule,
+    AuditorModule,],
   controllers: [AppController],
   providers: [AppService],
 })
