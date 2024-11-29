@@ -62,17 +62,17 @@ export class PlantillaService {
     private organizarItems(data: any): PlantillaDto {
         const idMesMap = {
             6779: 'enero',
-            6795: 'febrero',
-            6780: 'marzo',
-            6781: 'abril',
-            6782: 'mayo',
-            6783: 'junio',
-            6784: 'julio',
-            6785: 'agosto',
-            6786: 'septiembre',
-            6787: 'octubre',
-            6788: 'noviembre',
-            6789: 'diciembre',
+            6780: 'febrero',
+            6781: 'marzo',
+            6782: 'abril',
+            6783: 'mayo',
+            6784: 'junio',
+            6785: 'julio',
+            6786: 'agosto',
+            6787: 'septiembre',
+            6788: 'octubre',
+            6789: 'noviembre',
+            6795: 'diciembre',
         };
 
         const mesesMarcados = Object.keys(idMesMap).reduce((acc, id) => {
