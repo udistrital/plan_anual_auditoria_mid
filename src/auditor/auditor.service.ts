@@ -6,7 +6,8 @@ import { environment } from 'src/config/configuration';
 
 @Injectable()
 export class AuditorService {
-    private documento: any[] = []
+    private documento:any;
+    private asignadoPor:any;
     constructor(
         private readonly httpService: HttpService,
         private readonly configService: ConfigService,
@@ -14,10 +15,10 @@ export class AuditorService {
 
     async getdAll(queryParams: any) {
         let data = await this.traerDataCrud(null, queryParams);
+        console.log("DATA---", data)
+
         await this.reemplazarCampos(data);
-
         return data;
-
     }
 
     async getOne(id: string) {
@@ -25,23 +26,6 @@ export class AuditorService {
         await this.reemplazarCampos(data);
 
         return data;
-    }
-
-    private async identificarCampo(data: any) {
-
-        let validacion = false;
-        try {
-            const firstElement = Array.isArray(data.Data) ? data.Data[0] : data.Data;
-            if (firstElement && "documento_id" in firstElement) {
-                let param = await this.traerTercero(firstElement.documento_id)
-                this.documento.push(...param);
-                validacion = true;
-            }
-            return validacion;
-        } catch (error) {
-            console.error(error)
-        }
-
     }
 
     private async traerTercero(documento: string) {
@@ -82,29 +66,35 @@ export class AuditorService {
     }
 
     private async reemplazarCampos(data: any) {
-        
-        if (Array.isArray(data.Data)) {
+        const procesarElemento = async (elemento: any) => {
+            if (elemento?.documento_id) {
+                const tercero = await this.traerTercero(elemento.documento_id);
+                this.reemplazar(tercero, elemento, 'documento_id');
+            }
+    
+            if (elemento?.asignado_por_id) {
+                const asignadoPor = await this.traerTercero(elemento.asignado_por_id);
+                this.reemplazar(asignadoPor, elemento, 'asignado_por_id');
+            }
+        };
+    
+        if (Array.isArray(data?.Data)) {
             for (const elemento of data.Data) {
-                if (elemento.documento_id !== undefined) {
-                    const tercero = await this.traerTercero(elemento.documento_id);
-                    this.reemplazar(tercero, elemento, 'documento_id');
-                }
+                await procesarElemento(elemento);
             }
-        } else if (typeof data.Data === 'object' && data.Data !== null) {
-            if (data.Data.documento_id !== undefined) {
-                const tercero = await this.traerTercero(data.Data.documento_id);
-                this.reemplazar(tercero, data.Data, 'documento_id');
-            }
+        } else if (typeof data?.Data === 'object' && data.Data !== null) {
+            await procesarElemento(data.Data);
         }
+    
         return data;
     }
 
     private reemplazar(arrayTercero: any[], elemento: any, campo: string) {
         const elementoData = elemento[campo];
-         
-    if (!Array.isArray(arrayTercero)) {
-        arrayTercero = [arrayTercero];
-    }
+
+        if (!Array.isArray(arrayTercero)) {
+            arrayTercero = [arrayTercero];
+        }
         const nuevoCampo = campo.endsWith('_id') ? campo.replace('_id', '_nombre') : `${campo}_nombre_completo`;
         if (Array.isArray(elementoData)) {
             elemento[nuevoCampo] = elementoData.map((doc) => {
@@ -121,6 +111,7 @@ export class AuditorService {
                 elemento[nuevoCampo] = null;
             }
         }
+        console.log("elemento ",elemento)
         return elemento;
     }
 }
