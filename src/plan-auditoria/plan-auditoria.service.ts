@@ -7,6 +7,7 @@ import { environment } from 'src/config/configuration';
 @Injectable()
 export class PlanAuditoriaService {
     private vigencias: any[] = [];
+    private estados: any[] = [];
 
     constructor(
         private readonly httpService: HttpService,
@@ -33,16 +34,25 @@ export class PlanAuditoriaService {
         let validacion = false;
         try {
             const firstElement = Array.isArray(data.Data) ? data.Data[0] : data.Data;
-
             if ('vigencia_id' in firstElement) {
                 let param = await this.traerParametros('121');
                 this.vigencias.push(...param);
                 validacion = true;
             }
-
+    
+            if ('estado' in firstElement && firstElement.estado !== null) {
+                const estadoId = firstElement.estado.estado_id;
+    
+                if (estadoId) {
+                    let paramEstado = await this.traerParametros('138');
+                    this.estados.push(...paramEstado);
+                }
+                validacion = true;
+            }
+    
             return validacion;
         } catch (error) {
-            console.error(error);
+            console.warn('Error en identificarCampo:', error);
         }
     }
 
@@ -73,12 +83,44 @@ export class PlanAuditoriaService {
 
         try {
             const response = await lastValueFrom(this.httpService.get(url));
-            //console.log("data: ", response.data)
+            
+            if (Array.isArray(response.data.Data)) {
+                for (let plan of response.data.Data) {
+                    const estado = await this.traerEstadoPorPlan(plan._id);
+                    if (estado && estado.actual) {
+                        plan.estado = estado;
+                    }
+                }
+            } else if (response.data.Data && response.data.Data._id) {
+                const estado = await this.traerEstadoPorPlan(response.data.Data._id);
+                if (estado && estado.actual) {
+                    response.data.Data.estado = estado;
+                }
+            }
             return response.data;
         } catch (error) {
             // Maneja los errores si la solicitud falla
             throw new HttpException(
                 'Error al obtener los datos del servicio externo',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    private async traerEstadoPorPlan(planAuditoriaId: string) {
+        const apiUrl = `${environment.PLAN_AUDITORIA_CRUD_SERVICE}`;
+        const url = `${apiUrl}estado?query=plan_auditoria_id:${planAuditoriaId},actual:true`;
+
+        try {
+            const response = await lastValueFrom(this.httpService.get(url));
+            
+            if (response.data && response.data.Data && response.data.Data.length > 0) {
+                return response.data.Data[0];
+            }
+            return null;
+        } catch (error) {
+            throw new HttpException(
+                'Error al obtener los datos del estado',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
         }
@@ -90,10 +132,18 @@ export class PlanAuditoriaService {
                 if (element.vigencia_id !== undefined) {
                     this.reemplazar(this.vigencias, element, 'vigencia_id');
                 }
+
+                if (element.estado && element.estado.estado_id !== undefined) {
+                    this.reemplazar(this.estados, element.estado, 'estado_id');
+                }
             });
         } else if (typeof data.Data === 'object' && data.Data !== null) {
             if (data.Data.vigencia_id !== undefined) {
                 this.reemplazar(this.vigencias, data.Data, 'vigencia_id');
+            }
+
+            if (data.Data.estado && data.Data.estado.estado_id !== undefined) {
+                this.reemplazar(this.estados, data.Data.estado, 'estado_id');
             }
         }
         return data;
