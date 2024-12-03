@@ -26,9 +26,29 @@ export class AuditoriaService {
 
   async getdAll(queryParams: any) {
     const data = await this.traerDataCrud(null, queryParams);
-    if (await this.identificarCampo(data)) {
-      this.reemplazarCampos(data);
+  
+    if (data.Data && Array.isArray(data.Data)) {
+  
+      const auditoriasActivas = data.Data.filter(auditoria => auditoria.activo === true);
+
+
+      const planId = queryParams?.query?.split(':')[1];
+      if (planId) {
+        // Obtener el campo "auditorias" del plan
+        const planData = await this.obtenerPlanPorId(planId);
+        const auditoriasOrden = planData?.auditorias || [];
+  
+        // Ordenar las auditorías activas según el campo "auditorias" del plan
+        data.Data = this.ordenarAuditorias(auditoriasActivas, auditoriasOrden);
+      } else {
+        data.Data = auditoriasActivas; 
+      }
+  
+      if (await this.identificarCampo(data)) {
+        this.reemplazarCampos(data);
+      }
     }
+  
     return data;
   }
 
@@ -38,6 +58,36 @@ export class AuditoriaService {
       this.reemplazarCampos(data);
     }
     return data;
+  }
+
+  private async obtenerPlanPorId(planId: string) {
+    const apiUrl = `${environment.PLAN_AUDITORIA_CRUD_SERVICE}`;
+    const url = `${apiUrl}plan-auditoria/${planId}`;
+    try {
+      const response = await lastValueFrom(this.httpService.get(url));
+      return response.data.Data;
+    } catch (error) {
+      console.error('Error al obtener el plan:', error);
+      throw new HttpException(
+        'Error al obtener el plan',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+  
+  private ordenarAuditorias(auditorias: any[], auditoriasOrden: string[]) {
+    // Crear un mapa de auditorías para acceso rápido por ID
+    const auditoriasMap = new Map(auditorias.map(auditoria => [auditoria._id, auditoria]));
+  
+    // Ordenar las auditorías según el orden de los IDs en auditoriasOrden
+    const auditoriasOrdenadas = auditoriasOrden
+      .map(id => auditoriasMap.get(id))
+      .filter(auditoria => auditoria !== undefined); 
+  
+    // Agregar al final las auditorías activas no incluidas en auditoriasOrden
+    const restantes = auditorias.filter(auditoria => !auditoriasOrden.includes(auditoria._id));
+  
+    return [...auditoriasOrdenadas, ...restantes];
   }
 
   private async identificarCampo(data: any) {
