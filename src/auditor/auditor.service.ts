@@ -15,7 +15,6 @@ export class AuditorService {
 
     async getdAll(queryParams: any) {
         let data = await this.traerDataCrud(null, queryParams);
-        console.log("DATA---", data)
 
         await this.reemplazarCampos(data);
         return data;
@@ -31,6 +30,7 @@ export class AuditorService {
     private async traerTercero(documento: string) {
         const apiUrl = `${environment.TERCEROS_SERVICE}`;
         const url = `${apiUrl}/tercero/${documento}`;
+
         try {
             const response = await lastValueFrom(this.httpService.get(url));
             return response.data;
@@ -66,10 +66,11 @@ export class AuditorService {
     }
 
     private async reemplazarCampos(data: any) {
+
         const procesarElemento = async (elemento: any) => {
-            if (elemento?.documento_id) {
-                const tercero = await this.traerTercero(elemento.documento_id);
-                this.reemplazar(tercero, elemento, 'documento_id');
+            if (elemento?.auditor_id) {
+                const tercero = await this.traerTercero(elemento.auditor_id);
+                this.reemplazar(tercero, elemento, 'auditor_id');
             }
     
             if (elemento?.asignado_por_id) {
@@ -85,11 +86,11 @@ export class AuditorService {
         } else if (typeof data?.Data === 'object' && data.Data !== null) {
             await procesarElemento(data.Data);
         }
-    
         return data;
     }
 
     private reemplazar(arrayTercero: any[], elemento: any, campo: string) {
+
         const elementoData = elemento[campo];
 
         if (!Array.isArray(arrayTercero)) {
