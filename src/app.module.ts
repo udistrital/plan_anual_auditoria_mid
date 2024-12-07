@@ -7,18 +7,21 @@ import { ActividadModule } from './actividad/actividad.module';
 import { ConfigModule } from '@nestjs/config';
 import { PlantillaModule } from './plantilla/plantilla.module';
 import { CargueMasivoModule } from './cargue-masivo/cargue-masivo.module';
-
+import { PlanEstadoModule } from './plan-estado/plan-estado.module';
 
 @Module({
-  imports: [PlanAuditoriaModule,
+  imports: [
+    PlanEstadoModule,
+    PlanAuditoriaModule,
     AuditoriaModule,
     ActividadModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
     PlantillaModule,
-    CargueMasivoModule,],
+    CargueMasivoModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

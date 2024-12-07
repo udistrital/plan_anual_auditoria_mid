@@ -9,6 +9,28 @@ paths:
           description: ''
       tags:
         - App
+  /plan-estado:
+    get:
+      operationId: PlanEstadoController_getAll
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      tags: &ref_0
+        - PlanEstado
+  /plan-estado/{id}:
+    get:
+      operationId: PlanEstadoController_getById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      tags: *ref_0
   /plan-auditoria:
     get:
       operationId: PlanAuditoriaController_getAll
@@ -16,7 +38,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: &ref_0
+      tags: &ref_1
         - PlanAuditoria
   /plan-auditoria/{id}:
     get:
@@ -30,7 +52,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: *ref_0
+      tags: *ref_1
   /auditoria:
     get:
       operationId: AuditoriaController_getAll
@@ -38,7 +60,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: &ref_1
+      tags: &ref_2
         - Auditoria
   /auditoria/{id}:
     get:
@@ -52,7 +74,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: *ref_1
+      tags: *ref_2
   /actividad:
     get:
       operationId: ActividadController_getAll
@@ -60,7 +82,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: &ref_2
+      tags: &ref_3
         - Actividad
   /actividad/{id}:
     get:
@@ -74,7 +96,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: *ref_2
+      tags: *ref_3
   /plantilla/{id}:
     get:
       operationId: PlantillaController_getById
