@@ -199,6 +199,43 @@
           "CargueMasivo"
         ]
       }
+    },
+    "/auditor": {
+      "get": {
+        "operationId": "AuditorController_getAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auditor"
+        ]
+      }
+    },
+    "/auditor/{id}": {
+      "get": {
+        "operationId": "AuditorController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auditor"
+        ]
+      }
     }
   },
   "info": {

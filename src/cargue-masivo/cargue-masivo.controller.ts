@@ -16,7 +16,7 @@ export class CargueMasivoController {
 
             const estructura = await this.cargueMasivoService.crearEstructura(
                 base64data,
-                complement.plan_auditoria_id,
+                complement,
                 type_upload);
 
             console.log('Estructura a enviar:', JSON.stringify(estructura, null, 2));

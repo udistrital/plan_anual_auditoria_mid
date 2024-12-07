@@ -8,6 +8,7 @@ import { ConfigModule } from '@nestjs/config';
 import { PlantillaModule } from './plantilla/plantilla.module';
 import { CargueMasivoModule } from './cargue-masivo/cargue-masivo.module';
 import { PlanEstadoModule } from './plan-estado/plan-estado.module';
+import { AuditorModule } from './auditor/auditor.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { PlanEstadoModule } from './plan-estado/plan-estado.module';
     }),
     PlantillaModule,
     CargueMasivoModule,
+    AuditorModule,
   ],
   controllers: [AppController],
   providers: [AppService],
