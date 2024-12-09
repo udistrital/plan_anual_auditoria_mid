@@ -15,6 +15,43 @@
         ]
       }
     },
+    "/plan-estado": {
+      "get": {
+        "operationId": "PlanEstadoController_getAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "PlanEstado"
+        ]
+      }
+    },
+    "/plan-estado/{id}": {
+      "get": {
+        "operationId": "PlanEstadoController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "PlanEstado"
+        ]
+      }
+    },
     "/plan-auditoria": {
       "get": {
         "operationId": "PlanAuditoriaController_getAll",
