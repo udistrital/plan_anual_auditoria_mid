@@ -109,8 +109,21 @@ paths:
       responses:
         '200':
           description: ''
-      tags:
+      tags: &ref_4
         - Plantilla
+  /plantilla/plan-trabajo/{idAuditoria}:
+    get:
+      operationId: PlantillaController_getPlantillaPlanTrabajo
+      parameters:
+        - name: idAuditoria
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      tags: *ref_4
   /cargue-masivo/auditorias:
     post:
       operationId: CargueMasivoController_cargueMasivo
@@ -127,7 +140,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: &ref_3
+      tags: &ref_5
         - Auditor
   /auditor/{id}:
     get:
@@ -141,7 +154,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: *ref_3
+      tags: *ref_5
 info:
   title: Presupuesto Contractual API MID
   description: API

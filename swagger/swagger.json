@@ -186,6 +186,29 @@
         ]
       }
     },
+    "/plantilla/plan-trabajo/{idAuditoria}": {
+      "get": {
+        "operationId": "PlantillaController_getPlantillaPlanTrabajo",
+        "parameters": [
+          {
+            "name": "idAuditoria",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Plantilla"
+        ]
+      }
+    },
     "/cargue-masivo/auditorias": {
       "post": {
         "operationId": "CargueMasivoController_cargueMasivo",

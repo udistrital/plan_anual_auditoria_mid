@@ -3,6 +3,7 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
 import { environment } from 'src/config/configuration';
+import { Console, log } from 'console';
 
 @Injectable()
 export class AuditoriaService {
@@ -22,33 +23,35 @@ export class AuditoriaService {
   constructor(
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
-  ) { }
+  ) {}
 
-  async getdAll(queryParams: any) {
+  async getAll(queryParams: any) {
     const data = await this.traerDataCrud(null, queryParams);
-  
+
     if (data.Data && Array.isArray(data.Data)) {
-  
-      const auditoriasActivas = data.Data.filter(auditoria => auditoria.activo === true);
+      const auditoriasActivas = data.Data.filter(
+        (auditoria) => auditoria.activo === true,
+      );
 
+      // const planId = queryParams?.query?.split(':')[1];
+      // if (planId) {
+      //   // Obtener el campo "auditorias" del plan
+      //   const planData = await this.obtenerPlanPorId(planId);
+      //   console.log('sdsadsasadasasdsa');
+      //   console.log(data.Data);
+      //   const auditoriasOrden = planData?.auditorias || [];
 
-      const planId = queryParams?.query?.split(':')[1];
-      if (planId) {
-        // Obtener el campo "auditorias" del plan
-        const planData = await this.obtenerPlanPorId(planId);
-        const auditoriasOrden = planData?.auditorias || [];
-  
-        // Ordenar las auditorías activas según el campo "auditorias" del plan
-        data.Data = this.ordenarAuditorias(auditoriasActivas, auditoriasOrden);
-      } else {
-        data.Data = auditoriasActivas; 
-      }
-  
+      //   // Ordenar las auditorías activas según el campo "auditorias" del plan
+      //   data.Data = this.ordenarAuditorias(auditoriasActivas, auditoriasOrden);
+      // } else {
+      //   data.Data = auditoriasActivas;
+      // }
+
       if (await this.identificarCampo(data)) {
         this.reemplazarCampos(data);
       }
     }
-  
+
     return data;
   }
 
@@ -74,19 +77,23 @@ export class AuditoriaService {
       );
     }
   }
-  
+
   private ordenarAuditorias(auditorias: any[], auditoriasOrden: string[]) {
     // Crear un mapa de auditorías para acceso rápido por ID
-    const auditoriasMap = new Map(auditorias.map(auditoria => [auditoria._id, auditoria]));
-  
+    const auditoriasMap = new Map(
+      auditorias.map((auditoria) => [auditoria._id, auditoria]),
+    );
+
     // Ordenar las auditorías según el orden de los IDs en auditoriasOrden
     const auditoriasOrdenadas = auditoriasOrden
-      .map(id => auditoriasMap.get(id))
-      .filter(auditoria => auditoria !== undefined); 
-  
+      .map((id) => auditoriasMap.get(id))
+      .filter((auditoria) => auditoria !== undefined);
+
     // Agregar al final las auditorías activas no incluidas en auditoriasOrden
-    const restantes = auditorias.filter(auditoria => !auditoriasOrden.includes(auditoria._id));
-  
+    const restantes = auditorias.filter(
+      (auditoria) => !auditoriasOrden.includes(auditoria._id),
+    );
+
     return [...auditoriasOrdenadas, ...restantes];
   }
 
@@ -243,7 +250,9 @@ export class AuditoriaService {
     const value = element[campo];
 
     //se realiza reemplazo de sufijo _id si existe, por _nombre
-    const nuevoCampo = campo.endsWith('_id') ? campo.replace('_id', '_nombre') : `${campo}_nombre`;
+    const nuevoCampo = campo.endsWith('_id')
+      ? campo.replace('_id', '_nombre')
+      : `${campo}_nombre`;
 
     if (Array.isArray(value)) {
       element[nuevoCampo] = value.map((id) => {

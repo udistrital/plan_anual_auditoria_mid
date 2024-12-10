@@ -74,7 +74,6 @@ export class PlanEstadoService {
           }
           if (element.usuario_id !== undefined) {
             await this.reemplazarCampoUsuario(element);
-            console.log(element);
           }
         }),
       );
