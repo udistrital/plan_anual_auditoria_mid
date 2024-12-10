@@ -79,8 +79,6 @@ export class PlantillaPlanTrabajoService {
   private async renderizar(data: any) {
     const apiUrl = `${environment.PLANTILLAS_MID_SERVICE}`;
     let urlPlanAuditoria = `${apiUrl}v1/plantilla/renderizar`;
-    console.log(urlPlanAuditoria);
-    console.log(data);
     try {
       const response = await lastValueFrom(
         this.httpService.post(urlPlanAuditoria, data),
