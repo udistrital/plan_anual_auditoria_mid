@@ -223,6 +223,20 @@
         ]
       }
     },
+    "/cargue-masivo/actividades": {
+      "post": {
+        "operationId": "CargueMasivoController_cargueMasivoActividades",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "CargueMasivo"
+        ]
+      }
+    },
     "/auditor": {
       "get": {
         "operationId": "AuditorController_getAll",

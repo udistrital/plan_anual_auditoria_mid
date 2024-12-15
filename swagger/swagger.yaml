@@ -131,8 +131,16 @@ paths:
       responses:
         '201':
           description: ''
-      tags:
+      tags: &ref_5
         - CargueMasivo
+  /cargue-masivo/actividades:
+    post:
+      operationId: CargueMasivoController_cargueMasivoActividades
+      parameters: []
+      responses:
+        '201':
+          description: ''
+      tags: *ref_5
   /auditor:
     get:
       operationId: AuditorController_getAll
@@ -140,7 +148,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: &ref_5
+      tags: &ref_6
         - Auditor
   /auditor/{id}:
     get:
@@ -154,7 +162,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: *ref_5
+      tags: *ref_6
 info:
   title: Presupuesto Contractual API MID
   description: API
