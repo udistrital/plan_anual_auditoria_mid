@@ -53,9 +53,9 @@ paths:
         '200':
           description: ''
       tags: *ref_1
-  /auditoria/reordenadas:
+  /auditoria/ordenadas:
     get:
-      operationId: AuditoriaController_getAuditoriasReordenadas
+      operationId: AuditoriaController_getAuditoriasOrdenadas
       parameters: []
       responses:
         '200':

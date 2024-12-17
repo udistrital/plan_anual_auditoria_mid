@@ -43,7 +43,7 @@ export class AuditoriaService {
     return data;
   }
 
-  async getAuditoriasReordenadas(queryParams: any) {
+  async getAuditoriasOrdenadas(queryParams: any) {
     const match = queryParams.query.match(/plan_auditoria_id:([^,]+)/);
     const planId = match ? match[1] : null;
   

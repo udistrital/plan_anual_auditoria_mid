@@ -13,16 +13,16 @@ export class AuditoriaController {
   
   constructor(private readonly auditoriaService: AuditoriaService) { }
 
-  @Get('reordenadas')
-  async getAuditoriasReordenadas(@Res() res, @Query() queryParams) {
+  @Get('ordenadas')
+  async getAuditoriasOrdenadas(@Res() res, @Query() queryParams) {
     try {
-      const data = await this.auditoriaService.getAuditoriasReordenadas(queryParams);
+      const data = await this.auditoriaService.getAuditoriasOrdenadas(queryParams);
       res.status(HttpStatus.OK).json(data);
     } catch (error) {
       res.status(error.status || HttpStatus.INTERNAL_SERVER_ERROR).json({
         Success: false,
         Status: error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-        Message: 'Error en servicio reordenadas: la peticion contiene un parametro incorrecto o no existe un registro',
+        Message: 'Error en servicio ordenadas: la peticion contiene un parametro incorrecto o no existe un registro',
         Data: error.message,
       });
     }

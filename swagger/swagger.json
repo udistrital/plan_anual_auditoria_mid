@@ -89,9 +89,9 @@
         ]
       }
     },
-    "/auditoria/reordenadas": {
+    "/auditoria/ordenadas": {
       "get": {
-        "operationId": "AuditoriaController_getAuditoriasReordenadas",
+        "operationId": "AuditoriaController_getAuditoriasOrdenadas",
         "parameters": [],
         "responses": {
           "200": {
