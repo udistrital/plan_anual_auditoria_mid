@@ -89,6 +89,20 @@
         ]
       }
     },
+    "/auditoria/reordenadas": {
+      "get": {
+        "operationId": "AuditoriaController_getAuditoriasReordenadas",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auditoria"
+        ]
+      }
+    },
     "/auditoria": {
       "get": {
         "operationId": "AuditoriaController_getAll",

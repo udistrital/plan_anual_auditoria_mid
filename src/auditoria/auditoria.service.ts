@@ -23,33 +23,13 @@ export class AuditoriaService {
   constructor(
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   async getAll(queryParams: any) {
     const data = await this.traerDataCrud(null, queryParams);
 
-    if (data.Data && Array.isArray(data.Data)) {
-      const auditoriasActivas = data.Data.filter(
-        (auditoria) => auditoria.activo === true,
-      );
-
-      // const planId = queryParams?.query?.split(':')[1];
-      // if (planId) {
-      //   // Obtener el campo "auditorias" del plan
-      //   const planData = await this.obtenerPlanPorId(planId);
-      //   console.log('sdsadsasadasasdsa');
-      //   console.log(data.Data);
-      //   const auditoriasOrden = planData?.auditorias || [];
-
-      //   // Ordenar las auditorías activas según el campo "auditorias" del plan
-      //   data.Data = this.ordenarAuditorias(auditoriasActivas, auditoriasOrden);
-      // } else {
-      //   data.Data = auditoriasActivas;
-      // }
-
-      if (await this.identificarCampo(data)) {
-        this.reemplazarCampos(data);
-      }
+    if (await this.identificarCampo(data)) {
+      this.reemplazarCampos(data);
     }
 
     return data;
@@ -62,6 +42,41 @@ export class AuditoriaService {
     }
     return data;
   }
+
+  async getAuditoriasReordenadas(queryParams: any) {
+    const match = queryParams.query.match(/plan_auditoria_id:([^,]+)/);
+    const planId = match ? match[1] : null;
+  
+    // Validar que el planId se haya encontrado
+    if (!planId) {
+      throw new HttpException(
+        'El parámetro "plan_auditoria_id" es obligatorio.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  
+    const data = await this.traerDataCrud(null, queryParams);
+  
+    if (data.Data && Array.isArray(data.Data)) {
+      const auditoriasActivas = data.Data.filter(
+        (auditoria) => auditoria.activo === true,
+      );
+  
+      // Obtener el campo "auditorias" del plan
+      const planData = await this.obtenerPlanPorId(planId);
+      const auditoriasOrden = planData?.auditorias || [];
+  
+      // Ordenar las auditorías activas según el campo "auditorias" del plan
+      data.Data = this.ordenarAuditorias(auditoriasActivas, auditoriasOrden);
+  
+      if (await this.identificarCampo(data)) {
+        this.reemplazarCampos(data);
+      }
+    }
+  
+    return data;
+  }
+  
 
   private async obtenerPlanPorId(planId: string) {
     const apiUrl = `${environment.PLAN_AUDITORIA_CRUD_SERVICE}`;
@@ -79,7 +94,6 @@ export class AuditoriaService {
   }
 
   private ordenarAuditorias(auditorias: any[], auditoriasOrden: string[]) {
-    // Crear un mapa de auditorías para acceso rápido por ID
     const auditoriasMap = new Map(
       auditorias.map((auditoria) => [auditoria._id, auditoria]),
     );

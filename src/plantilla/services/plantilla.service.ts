@@ -16,7 +16,7 @@ export class PlantillaService {
   private async traerDataCrud(id: string) {
     const apiUrl = `${environment.PLAN_AUDITORIA_CRUD_SERVICE}`;
     let urlPlanAuditoria = `${apiUrl}plan-auditoria/${id}`;
-    let urlAuditioria = `${apiUrl}auditoria?query=plan_auditoria_id:${id}&fields=titulo,cronograma_id`;
+    let urlAuditioria = `${apiUrl}auditoria?query=plan_auditoria_id:${id},activo:true&fields=titulo,cronograma_id`;
     try {
       const responsePlanAuditoria = await lastValueFrom(
         this.httpService.get(urlPlanAuditoria),
@@ -40,9 +40,12 @@ export class PlantillaService {
     const json = new jsonPlantillaDto();
 
     const auditorias = data.dataAuditoria?.Data || [];
+    const auditoriasOrden = data.dataPlanAuditoria?.Data?.auditorias || [];
+
+    const auditoriasOrdenadas = this.ordenarAuditorias(auditorias, auditoriasOrden);
 
     const items: PlantillaDto[] = Array.isArray(auditorias)
-      ? auditorias.map((auditoria: any) => this.organizarItems(auditoria))
+      ? auditoriasOrdenadas.map((auditoria: any) => this.organizarItems(auditoria))
       : [];
 
     json.plantilla_id = '670f39835d9c11db9d50ea67';
@@ -95,6 +98,24 @@ export class PlantillaService {
       actividad: data.titulo || '',
       ...mesesMarcados,
     };
+  }
+
+  private ordenarAuditorias(auditorias: any[], auditoriasOrden: string[]) {
+    const auditoriasMap = new Map(
+      auditorias.map((auditoria) => [auditoria._id, auditoria]),
+    );
+
+    // Ordenar las auditorías según el orden de los IDs en auditoriasOrden
+    const auditoriasOrdenadas = auditoriasOrden
+      .map((id) => auditoriasMap.get(id))
+      .filter((auditoria) => auditoria !== undefined);
+
+    // Agregar al final las auditorías activas no incluidas en auditoriasOrden
+    const restantes = auditorias.filter(
+      (auditoria) => !auditoriasOrden.includes(auditoria._id),
+    );
+
+    return [...auditoriasOrdenadas, ...restantes];
   }
 
   private async renderizar(data: jsonPlantillaDto) {
