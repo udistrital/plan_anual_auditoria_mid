@@ -53,6 +53,15 @@ paths:
         '200':
           description: ''
       tags: *ref_1
+  /auditoria/ordenadas:
+    get:
+      operationId: AuditoriaController_getAuditoriasOrdenadas
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      tags: &ref_2
+        - Auditoria
   /auditoria:
     get:
       operationId: AuditoriaController_getAll
@@ -60,8 +69,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: &ref_2
-        - Auditoria
+      tags: *ref_2
   /auditoria/{id}:
     get:
       operationId: AuditoriaController_getById
