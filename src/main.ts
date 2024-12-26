@@ -1,6 +1,5 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import * as fs from 'fs';
@@ -30,9 +29,6 @@ async function bootstrap() {
     JSON.stringify(document, null, 2),
   );
   fs.writeFileSync(join(outputPath, 'swagger.yaml'), yaml.dump(document));
-
-  //Validation
-  app.useGlobalPipes(new ValidationPipe());
 
   //Enable CORS
   app.enableCors();
