@@ -1,16 +1,15 @@
 import { Injectable } from '@nestjs/common';
+import { environment } from 'src/config/configuration';
 
 @Injectable()
 export class CargueMasivoService {
-
-    crearEstructura(base64data: string, planAuditoriaId: number, typeUpload: string): any {
+    
+    crearEstructura(base64data: string, complement: Object, typeUpload: string): any {
         return {
             base64data: base64data,
-            service: process.env.PLAN_AUDITORIA_CRUD_SERVICE,
+            service: environment.PLAN_AUDITORIA_CRUD_SERVICE,
             endpoint: "auditoria",
-            complement: {
-                plan_auditoria_id: planAuditoriaId,
-            },
+            complement:  complement,
             structure: {
                 titulo: {
                     file_name_column: "Auditoría",
@@ -29,18 +28,67 @@ export class CargueMasivoService {
                     column_group: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
                     mapping: {
                         "Ene": 6779,
-                        "Feb": 6795,
-                        "Mar": 6780,
-                        "Abr": 6781,
-                        "May": 6782,
-                        "Jun": 6783,
-                        "Jul": 6784,
-                        "Ago": 6785,
-                        "Sep": 6786,
-                        "Oct": 6787,
-                        "Nov": 6788,
-                        "Dic": 6789
+                        "Feb": 6780,
+                        "Mar": 6781,
+                        "Abr": 6782,
+                        "May": 6783,
+                        "Jun": 6784,
+                        "Jul": 6785,
+                        "Ago": 6786,
+                        "Sep": 6787,
+                        "Oct": 6788,
+                        "Nov": 6789,
+                        "Dic": 6795
                     },
+                },
+            },
+        };
+        
+    }
+
+    crearEstructuraActividad(base64data: string, complement: Object, typeUpload: string): any {
+        return {
+            base64data: base64data,
+            service: environment.PLAN_AUDITORIA_CRUD_SERVICE,
+            endpoint: "actividad",
+            complement:  complement,
+            structure: {
+                titulo: {
+                    file_name_column: "Titulo",
+                    required: true,
+                },
+                fecha_inicio: {
+                    file_name_column: "Fecha Inicio",
+                    required: false,
+                },
+                fecha_fin: {
+                    file_name_column: "Fecha Fin",
+                    required: false,
+                },
+                referencia: {
+                    file_name_column: "Referencia",
+                    required: false,
+                },
+                descripcion: {
+                    file_name_column: "Descripcion",
+                    required: false,
+                },
+                folio: {
+                    file_name_column: "Folio",
+                    required: false,
+                },
+                Medio_id: {
+                    file_name_column: "Medio",
+                    required: false,
+                    mapping: {
+                        "Fisico": 6770,
+                        "Digital": 6771,
+                        "Otro": 6772
+                    },
+                },
+                carpeta: {
+                    file_name_column: "Carpeta",
+                    required: false,
                 },
             },
         };

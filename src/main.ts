@@ -1,16 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import * as fs from 'fs';
-import { environment } from './config/configuration';
 import * as yaml from 'js-yaml';
+import { environment } from './config/configuration';
 
 async function bootstrap() {
-
   const app = await NestFactory.create(AppModule);
-  const port = Number(environment.PLAN_AUDITORIA_MID_PORT);
+  const port = environment.PLAN_AUDITORIA_MID_PORT;
 
   //Swagger
   const config = new DocumentBuilder()
@@ -32,11 +30,8 @@ async function bootstrap() {
   );
   fs.writeFileSync(join(outputPath, 'swagger.yaml'), yaml.dump(document));
 
-  //Validation
-  app.useGlobalPipes(new ValidationPipe());
-
   //Enable CORS
   app.enableCors();
-  await app.listen(port || 8080);
+  await app.listen(port);
 }
 bootstrap();

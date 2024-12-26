@@ -15,6 +15,43 @@
         ]
       }
     },
+    "/plan-estado": {
+      "get": {
+        "operationId": "PlanEstadoController_getAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "PlanEstado"
+        ]
+      }
+    },
+    "/plan-estado/{id}": {
+      "get": {
+        "operationId": "PlanEstadoController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "PlanEstado"
+        ]
+      }
+    },
     "/plan-auditoria": {
       "get": {
         "operationId": "PlanAuditoriaController_getAll",
@@ -49,6 +86,20 @@
         },
         "tags": [
           "PlanAuditoria"
+        ]
+      }
+    },
+    "/auditoria/ordenadas": {
+      "get": {
+        "operationId": "AuditoriaController_getAuditoriasOrdenadas",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auditoria"
         ]
       }
     },
@@ -149,6 +200,29 @@
         ]
       }
     },
+    "/plantilla/plan-trabajo/{idAuditoria}": {
+      "get": {
+        "operationId": "PlantillaController_getPlantillaPlanTrabajo",
+        "parameters": [
+          {
+            "name": "idAuditoria",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Plantilla"
+        ]
+      }
+    },
     "/cargue-masivo/auditorias": {
       "post": {
         "operationId": "CargueMasivoController_cargueMasivo",
@@ -160,6 +234,57 @@
         },
         "tags": [
           "CargueMasivo"
+        ]
+      }
+    },
+    "/cargue-masivo/actividades": {
+      "post": {
+        "operationId": "CargueMasivoController_cargueMasivoActividades",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "CargueMasivo"
+        ]
+      }
+    },
+    "/auditor": {
+      "get": {
+        "operationId": "AuditorController_getAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auditor"
+        ]
+      }
+    },
+    "/auditor/{id}": {
+      "get": {
+        "operationId": "AuditorController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auditor"
         ]
       }
     }
