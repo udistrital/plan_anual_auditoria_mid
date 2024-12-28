@@ -8,7 +8,7 @@ export class ActividadController {
     @Get()
     async getAll(@Res() res, @Query() queryParams) {
         try {
-            const data = await this.auditoriaService.getdAll(queryParams);
+            const data = await this.auditoriaService.getAll(queryParams);
             res.status(HttpStatus.OK).json(data);
         } catch (error) {
             res.status(HttpStatus.NOT_FOUND).json({

@@ -14,7 +14,7 @@ export class PlanAuditoriaService {
         private readonly configService: ConfigService,
     ) { }
 
-    async getdAll(queryParams: any) {
+    async getAll(queryParams: any) {
         const data = await this.traerDataCrud(null, queryParams);
         if (await this.identificarCampo(data)) {
             this.reemplazarCampos(data);

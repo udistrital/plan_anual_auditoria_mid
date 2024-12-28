@@ -14,14 +14,14 @@ export class CargueMasivoController {
   constructor(private readonly cargueMasivoService: CargueMasivoService) {}
   private serverlessUrl = environment.CARGUE_MASIVO_SERVERLESS_MID;
   @Post('auditorias')
-  async cargueMasivo(@Body() payload: any): Promise<any> {
+  async cargueMasivo(@Body() cargaDatos: any): Promise<any> {
     try {
-      const { base64data, complement, type_upload } = payload;
+      const { base64data, complemento, tipoCarga } = cargaDatos;
 
       const estructura = await this.cargueMasivoService.crearEstructura(
         base64data,
-        complement,
-        type_upload,
+        complemento,
+        tipoCarga,
       );
 
      // const serverlessUrl = environment.CARGUE_MASIVO_SERVERLESS_MID;
@@ -46,11 +46,11 @@ export class CargueMasivoController {
   }
   
   @Post('actividades')
-  async cargueMasivoActividades(@Body() payload: any): Promise<any> {
+  async cargueMasivoActividades(@Body() cargaDatos: any): Promise<any> {
     try {
-      const { base64data, complement, type_upload } = payload;
+      const { base64data, complemento, tipoCarga } = cargaDatos;
 
-      const estructura = await this.cargueMasivoService.crearEstructuraActividad(base64data,complement,type_upload,);
+      const estructura = await this.cargueMasivoService.crearEstructuraActividad(base64data,complemento,tipoCarga,);
       console.log("url: ", this.serverlessUrl)
       console.log("estructura: ", estructura)
 

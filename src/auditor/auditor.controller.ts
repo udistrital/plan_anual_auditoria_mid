@@ -8,7 +8,7 @@ export class AuditorController {
     @Get()
     async getAll(@Res() res, @Query() queryParams) {
         try {
-            const data = await this.auditorService.getdAll(queryParams);
+            const data = await this.auditorService.getAll(queryParams);
             res.status(HttpStatus.OK).json(data);
         } catch (error) {
             res.status(HttpStatus.NOT_FOUND).json({

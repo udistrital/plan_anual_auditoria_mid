@@ -4,12 +4,12 @@ import { environment } from 'src/config/configuration';
 @Injectable()
 export class CargueMasivoService {
     
-    crearEstructura(base64data: string, complement: Object, typeUpload: string): any {
+    crearEstructura(base64data: string, complemento: Object, tipoCarga: string): any {
         return {
             base64data: base64data,
             service: environment.PLAN_AUDITORIA_CRUD_SERVICE,
             endpoint: "auditoria",
-            complement:  complement,
+            complement:  complemento,
             structure: {
                 titulo: {
                     file_name_column: "Auditoría",
@@ -46,12 +46,12 @@ export class CargueMasivoService {
         
     }
 
-    crearEstructuraActividad(base64data: string, complement: Object, typeUpload: string): any {
+    crearEstructuraActividad(base64data: string, complemento: Object, tipoCarga: string): any {
         return {
             base64data: base64data,
             service: environment.PLAN_AUDITORIA_CRUD_SERVICE,
             endpoint: "actividad",
-            complement:  complement,
+            complement:  complemento,
             structure: {
                 titulo: {
                     file_name_column: "Titulo",
