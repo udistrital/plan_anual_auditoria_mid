@@ -13,7 +13,7 @@ export class AuditorService {
     private readonly configService: ConfigService,
   ) {}
 
-  async getdAll(queryParams: any) {
+  async getAll(queryParams: any) {
     let data = await this.traerDataCrud(null, queryParams);
 
     await this.reemplazarCampos(data);
