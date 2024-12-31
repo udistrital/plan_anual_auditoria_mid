@@ -9,7 +9,7 @@ export class PlanAuditoriaController {
     @Get()
     async getAll(@Res() res, @Query() queryParams) {
         try {
-            const data = await this.planAuditoriaService.getdAll(queryParams);
+            const data = await this.planAuditoriaService.getAll(queryParams);
             res.status(HttpStatus.OK).json(data);
         } catch (error) {
             res.status(HttpStatus.NOT_FOUND).json({
