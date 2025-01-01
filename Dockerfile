@@ -1,4 +1,4 @@
-FROM node:current-alpine
+FROM node:alpine
 RUN apk update
 RUN apk add bash
 RUN apk add python3
