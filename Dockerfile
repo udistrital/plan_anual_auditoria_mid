@@ -1,5 +1,5 @@
-FROM node:alpine
-RUN apk update
+FROM node:current-alpine
+RUN apk --no-cache --no-progress --retry=5 update
 RUN apk add bash
 RUN apk add python3
 RUN apk add py3-pip
