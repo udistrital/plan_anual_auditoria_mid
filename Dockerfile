@@ -1,4 +1,4 @@
-FROM node:16.5.0-alpine
+FROM node:current-alpine
 RUN apk update
 RUN apk add bash
 RUN apk add python3
