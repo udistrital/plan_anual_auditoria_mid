@@ -1,8 +1,9 @@
-FROM node:16.5.0-alpine
-RUN apk update && apk add bash
-RUN apk add python3
-RUN apk add py3-pip
-RUN pip3 install awscli
+FROM amazon/aws-cli:latest
+
+# Instalar Node.js
+RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - && \
+    apk update && \
+    apk install -y nodejs
 
 WORKDIR /
 COPY dist dist
