@@ -1,9 +1,7 @@
 FROM amazon/aws-cli:latest
 
 # Instalar Node.js
-RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - && \
-    apt-get update && \
-    apt-get install -y nodejs
+RUN apk add --no-cache nodejs npm
 
 WORKDIR /
 COPY dist dist
