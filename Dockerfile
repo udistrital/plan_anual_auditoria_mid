@@ -1,8 +1,9 @@
 FROM node:16.5.0-alpine
-RUN apk update && apk add bash
-RUN apk add python3
-RUN apk add py3-pip
-RUN pip3 install awscli
+
+# Instalar dependencias necesarias en una sola capa
+RUN apk update && \
+    apk add --no-cache bash python3 py3-pip && \
+    pip3 install awscli
 
 WORKDIR /
 COPY dist dist
