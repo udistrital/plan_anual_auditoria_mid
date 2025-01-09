@@ -1,16 +1,4 @@
-FROM node:18.20.5
-
-# Instala dependencias necesarias
-RUN apt-get update && apt-get install -y \
-    curl \
-    unzip \
-    && apt-get clean
-
-# Descarga e instala AWS CLI v2
-RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
-    unzip awscliv2.zip && \
-    ./aws/install && \
-    rm -rf aws awscliv2.zip
+FROM sleavely/node-awscli:18.x
 
 WORKDIR /
 COPY dist dist
