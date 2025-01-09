@@ -1,9 +1,16 @@
 FROM node:18.20.5
 
-RUN apt-get update && apt-get install -y bash
-RUN apt-get install -y python3
-RUN apt-get install -y python3-pip
-RUN pip3 install awscli
+# Instala dependencias necesarias
+RUN apt-get update && apt-get install -y \
+    curl \
+    unzip \
+    && apt-get clean
+
+# Descarga e instala AWS CLI v2
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
+    unzip awscliv2.zip && \
+    ./aws/install && \
+    rm -rf aws awscliv2.zip
 
 WORKDIR /
 COPY dist dist
