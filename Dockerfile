@@ -1,4 +1,4 @@
-FROM node:16.5.0
+FROM node:18.20.5
 
 RUN apt-get update && apt-get install -y bash
 RUN apt-get install -y python3
