@@ -1,9 +1,9 @@
-FROM node:16.5.0-alpine
+FROM node:16.5.0
 
-# Instalar dependencias necesarias en una sola capa
-RUN apk update && \
-    apk add --no-cache bash python3 py3-pip && \
-    pip3 install awscli
+RUN apt-get update && apt-get install -y bash
+RUN apt-get install -y python3
+RUN apt-get install -y python3-pip
+RUN pip3 install awscli
 
 WORKDIR /
 COPY dist dist
