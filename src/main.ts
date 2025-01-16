@@ -12,10 +12,11 @@ async function bootstrap() {
 
   //Swagger
   const config = new DocumentBuilder()
-    .setTitle('Presupuesto Contractual API MID')
-    .setDescription('API')
+    .setTitle('Plan Anual Auditoria MID')
+    .setDescription(
+      'API MID para la gestion de planes de auditorias, auditorias y actividades',
+    )
     .setVersion('1.0')
-    .addTag('API')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -32,6 +33,6 @@ async function bootstrap() {
 
   //Enable CORS
   app.enableCors();
-  await app.listen(parseInt(port,10)|| 8080);
+  await app.listen(parseInt(port, 10) || 8080);
 }
 bootstrap();
