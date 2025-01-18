@@ -16,7 +16,7 @@ export class PlantillaService {
   private async traerDataCrud(id: string) {
     const apiUrl = `${environment.PLAN_AUDITORIA_CRUD_SERVICE}`;
     let urlPlanAuditoria = `${apiUrl}plan-auditoria/${id}`;
-    let urlAuditioria = `${apiUrl}auditoria?query=plan_auditoria_id:${id},activo:true&fields=titulo,cronograma_id`;
+    let urlAuditioria = `${apiUrl}auditoria?query=plan_auditoria_id:${id},activo:true&fields=titulo,cronograma_id&limit=0`;
     try {
       const responsePlanAuditoria = await lastValueFrom(
         this.httpService.get(urlPlanAuditoria),
