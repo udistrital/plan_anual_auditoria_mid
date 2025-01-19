@@ -15,140 +15,27 @@
         ]
       }
     },
-    "/plan-estado": {
-      "get": {
-        "operationId": "PlanEstadoController_getAll",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "PlanEstado"
-        ]
-      }
-    },
-    "/plan-estado/{id}": {
-      "get": {
-        "operationId": "PlanEstadoController_getById",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "PlanEstado"
-        ]
-      }
-    },
-    "/plan-auditoria": {
-      "get": {
-        "operationId": "PlanAuditoriaController_getAll",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "PlanAuditoria"
-        ]
-      }
-    },
-    "/plan-auditoria/{id}": {
-      "get": {
-        "operationId": "PlanAuditoriaController_getById",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "PlanAuditoria"
-        ]
-      }
-    },
-    "/auditoria/ordenadas": {
-      "get": {
-        "operationId": "AuditoriaController_getAuditoriasOrdenadas",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Auditoria"
-        ]
-      }
-    },
-    "/auditoria": {
-      "get": {
-        "operationId": "AuditoriaController_getAll",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Auditoria"
-        ]
-      }
-    },
-    "/auditoria/{id}": {
-      "get": {
-        "operationId": "AuditoriaController_getById",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Auditoria"
-        ]
-      }
-    },
     "/actividad": {
       "get": {
         "operationId": "ActividadController_getAll",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "queryParams",
+            "required": false,
+            "in": "query",
+            "description": "Filtros opcionales.",
+            "schema": {}
+          }
+        ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Actividades obtenidas."
+          },
+          "404": {
+            "description": "Sin resultados."
           }
         },
+        "summary": "Obtener todas las actividades",
         "tags": [
           "Actividad"
         ]
@@ -162,6 +49,7 @@
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "ID de la actividad.",
             "schema": {
               "type": "string"
             }
@@ -169,22 +57,89 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Actividad obtenida."
+          },
+          "404": {
+            "description": "No encontrada."
           }
         },
+        "summary": "Obtener actividad por ID",
         "tags": [
           "Actividad"
         ]
       }
     },
-    "/plantilla/{id}": {
+    "/auditoria/ordenadas": {
       "get": {
-        "operationId": "PlantillaController_getById",
+        "operationId": "AuditoriaController_getAuditoriasOrdenadas",
+        "parameters": [
+          {
+            "name": "orderDirection",
+            "required": false,
+            "in": "query",
+            "description": "Dirección (ASC o DESC).",
+            "schema": {}
+          },
+          {
+            "name": "orderBy",
+            "required": false,
+            "in": "query",
+            "description": "Campo de orden.",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Auditorías obtenidas."
+          },
+          "400": {
+            "description": "Parámetros inválidos."
+          },
+          "500": {
+            "description": "Error interno."
+          }
+        },
+        "summary": "Obtener auditorías ordenadas",
+        "tags": [
+          "Auditoria"
+        ]
+      }
+    },
+    "/auditoria": {
+      "get": {
+        "operationId": "AuditoriaController_getAll",
+        "parameters": [
+          {
+            "name": "filter",
+            "required": false,
+            "in": "query",
+            "description": "Filtro opcional.",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Auditorías obtenidas."
+          },
+          "404": {
+            "description": "Sin resultados."
+          }
+        },
+        "summary": "Obtener todas las auditorías",
+        "tags": [
+          "Auditoria"
+        ]
+      }
+    },
+    "/auditoria/{id}": {
+      "get": {
+        "operationId": "AuditoriaController_getById",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "ID de auditoría.",
             "schema": {
               "type": "string"
             }
@@ -192,74 +147,39 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Auditoría obtenida."
+          },
+          "404": {
+            "description": "Auditoría no encontrada."
           }
         },
+        "summary": "Obtener auditoría por ID",
         "tags": [
-          "Plantilla"
-        ]
-      }
-    },
-    "/plantilla/plan-trabajo/{idAuditoria}": {
-      "get": {
-        "operationId": "PlantillaController_getPlantillaPlanTrabajo",
-        "parameters": [
-          {
-            "name": "idAuditoria",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "Plantilla"
-        ]
-      }
-    },
-    "/cargue-masivo/auditorias": {
-      "post": {
-        "operationId": "CargueMasivoController_cargueMasivo",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "CargueMasivo"
-        ]
-      }
-    },
-    "/cargue-masivo/actividades": {
-      "post": {
-        "operationId": "CargueMasivoController_cargueMasivoActividades",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "CargueMasivo"
+          "Auditoria"
         ]
       }
     },
     "/auditor": {
       "get": {
         "operationId": "AuditorController_getAll",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "queryParams",
+            "required": false,
+            "in": "query",
+            "description": "Filtros opcionales.",
+            "schema": {}
+          }
+        ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Auditores obtenidos."
+          },
+          "404": {
+            "description": "Sin resultados."
           }
         },
+        "summary": "Obtener todos los auditores",
         "tags": [
           "Auditor"
         ]
@@ -273,6 +193,7 @@
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "ID del auditor.",
             "schema": {
               "type": "string"
             }
@@ -280,27 +201,286 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Auditor obtenido."
+          },
+          "404": {
+            "description": "No encontrado."
           }
         },
+        "summary": "Obtener auditor por ID",
         "tags": [
           "Auditor"
+        ]
+      }
+    },
+    "/cargue-masivo/auditorias": {
+      "post": {
+        "operationId": "CargueMasivoController_cargueMasivo",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Carga masiva de auditorías con datos en formato Base64.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "base64data": {
+                    "type": "string",
+                    "description": "Archivo en formato Base64."
+                  },
+                  "complemento": {
+                    "type": "object",
+                    "description": "Datos complementarios."
+                  },
+                  "tipoCarga": {
+                    "type": "string",
+                    "description": "Tipo de carga."
+                  }
+                },
+                "required": [
+                  "base64data",
+                  "complemento",
+                  "tipoCarga"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Carga masiva exitosa."
+          },
+          "400": {
+            "description": "Datos inválidos."
+          },
+          "500": {
+            "description": "Error interno."
+          }
+        },
+        "summary": "Carga masiva de auditorías",
+        "tags": [
+          "Cargue Masivo"
+        ]
+      }
+    },
+    "/cargue-masivo/actividades": {
+      "post": {
+        "operationId": "CargueMasivoController_cargueMasivoActividades",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Carga masiva de actividades con datos en formato Base64.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "base64data": {
+                    "type": "string",
+                    "description": "Archivo en formato Base64."
+                  },
+                  "complemento": {
+                    "type": "object",
+                    "description": "Datos complementarios."
+                  },
+                  "tipoCarga": {
+                    "type": "string",
+                    "description": "Tipo de carga."
+                  }
+                },
+                "required": [
+                  "base64data",
+                  "complemento",
+                  "tipoCarga"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Carga masiva exitosa."
+          },
+          "400": {
+            "description": "Datos inválidos."
+          },
+          "500": {
+            "description": "Error interno."
+          }
+        },
+        "summary": "Carga masiva de actividades",
+        "tags": [
+          "Cargue Masivo"
+        ]
+      }
+    },
+    "/plan-auditoria": {
+      "get": {
+        "operationId": "PlanAuditoriaController_getAll",
+        "parameters": [
+          {
+            "name": "filter",
+            "required": false,
+            "in": "query",
+            "description": "Filtro opcional.",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista obtenida con éxito."
+          },
+          "404": {
+            "description": "No se encontraron planes."
+          }
+        },
+        "summary": "Obtiene todos los planes de auditoría.",
+        "tags": [
+          "Plan Auditoría"
+        ]
+      }
+    },
+    "/plan-auditoria/{id}": {
+      "get": {
+        "operationId": "PlanAuditoriaController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID del plan.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plan obtenido con éxito."
+          },
+          "404": {
+            "description": "No se encontró el plan."
+          }
+        },
+        "summary": "Obtiene un plan por ID.",
+        "tags": [
+          "Plan Auditoría"
+        ]
+      }
+    },
+    "/plan-estado": {
+      "get": {
+        "operationId": "PlanEstadoController_getAll",
+        "parameters": [
+          {
+            "name": "filter",
+            "required": false,
+            "in": "query",
+            "description": "Filtro opcional.",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista obtenida con éxito."
+          },
+          "404": {
+            "description": "No se encontraron estados."
+          }
+        },
+        "summary": "Obtiene todos los estados de planes.",
+        "tags": [
+          "Plan Estado"
+        ]
+      }
+    },
+    "/plan-estado/{id}": {
+      "get": {
+        "operationId": "PlanEstadoController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID del estado del plan.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado obtenido con éxito."
+          },
+          "404": {
+            "description": "No se encontró el estado."
+          }
+        },
+        "summary": "Obtiene un estado de plan por ID.",
+        "tags": [
+          "Plan Estado"
+        ]
+      }
+    },
+    "/plantilla/{id}": {
+      "get": {
+        "operationId": "PlantillaController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID de la plantilla",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plantilla encontrada."
+          }
+        },
+        "summary": "Obtener plantilla por ID",
+        "tags": [
+          "Plantilla"
+        ]
+      }
+    },
+    "/plantilla/plan-trabajo/{idAuditoria}": {
+      "get": {
+        "operationId": "PlantillaController_getPlantillaPlanTrabajo",
+        "parameters": [
+          {
+            "name": "idAuditoria",
+            "required": true,
+            "in": "path",
+            "description": "ID de la auditoría",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plan de trabajo encontrado."
+          }
+        },
+        "summary": "Obtener plantilla de plan de trabajo",
+        "tags": [
+          "Plantilla"
         ]
       }
     }
   },
   "info": {
-    "title": "Presupuesto Contractual API MID",
-    "description": "API",
+    "title": "Plan Anual Auditoria MID",
+    "description": "API MID para la gestion de planes de auditorias, auditorias y actividades",
     "version": "1.0",
     "contact": {}
   },
-  "tags": [
-    {
-      "name": "API",
-      "description": ""
-    }
-  ],
+  "tags": [],
   "servers": [],
   "components": {
     "schemas": {}
