@@ -53,7 +53,7 @@ export class AuditorService {
     if (queryParams) {
       const queryString = new URLSearchParams(queryParams).toString();
       url += `?${queryString}`;
-      console.log("URL ",url)
+     // console.log("URL ",url)
     }
     try {
       const response = await lastValueFrom(this.httpService.get(url));
