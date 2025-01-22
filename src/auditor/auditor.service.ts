@@ -14,9 +14,11 @@ export class AuditorService {
   ) {}
 
   async getAll(queryParams: any) {
+    console.log("entra")
     let data = await this.traerDataCrud(null, queryParams);
 
     await this.reemplazarCampos(data);
+    console.log("getAll auditor ",data)
     return data;
   }
 
@@ -51,6 +53,7 @@ export class AuditorService {
     if (queryParams) {
       const queryString = new URLSearchParams(queryParams).toString();
       url += `?${queryString}`;
+      console.log("URL ",url)
     }
     try {
       const response = await lastValueFrom(this.httpService.get(url));
