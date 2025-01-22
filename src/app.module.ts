@@ -12,16 +12,16 @@ import { AuditorModule } from './auditor/auditor.module';
 
 @Module({
   imports: [
-    PlanEstadoModule,
-    PlanAuditoriaModule,
-    AuditoriaModule,
     ActividadModule,
+    AuditoriaModule,
+    AuditorModule,
+    CargueMasivoModule,
+    PlanAuditoriaModule,
+    PlanEstadoModule,
+    PlantillaModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    PlantillaModule,
-    CargueMasivoModule,
-    AuditorModule,
   ],
   controllers: [AppController],
   providers: [AppService],
