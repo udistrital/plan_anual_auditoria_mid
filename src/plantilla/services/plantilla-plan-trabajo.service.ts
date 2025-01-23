@@ -4,22 +4,27 @@ import { environment } from 'src/config/configuration';
 import { lastValueFrom } from 'rxjs';
 import * as moment from 'moment';
 import 'moment/locale/es';
+import { PlantillaUtilsService } from '../utils/plantilla.utils';
 
 @Injectable()
 export class PlantillaPlanTrabajoService {
-  constructor(private readonly httpService: HttpService) {}
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly plantillaUtils: PlantillaUtilsService,
+  ) {}
 
   async get(idAuditoria: string) {
-    const data = await this.obtenerAuditoria(idAuditoria);
-    const infoParaPlantilla = await this.organizarData(data);
-    const baseRenderizado = await this.renderizar(infoParaPlantilla);
+    const auditoria = await this.obtenerAuditoria(idAuditoria);
+    const infoParaPlantilla = await this.organizarData(auditoria);
+    const baseRenderizado =
+      await this.plantillaUtils.renderizarPlantilla(infoParaPlantilla);
     return baseRenderizado;
   }
 
   private async obtenerAuditoria(idAuditoria: string) {
     const apiUrl = `${environment.PLAN_AUDITORIA_CRUD_SERVICE}`;
     let urlAuditoria = `${apiUrl}auditoria/${idAuditoria}`;
-    let urlActividades = `${apiUrl}actividad?query=auditoria_id:673ce5d37cf5a06432446c5a,activo:true&limit=0`;
+    let urlActividades = `${apiUrl}actividad?query=auditoria_id:${idAuditoria},activo:true&limit=0`;
     try {
       const respuestaAuditoria = await lastValueFrom(
         this.httpService.get(urlAuditoria),
@@ -74,18 +79,5 @@ export class PlantillaPlanTrabajoService {
       fechaInicial: moment(actividad.fecha_inicio).format('DD/MM/YYYY'),
       fechaFinal: moment(actividad.fecha_fin).format('DD/MM/YYYY'),
     }));
-  }
-
-  private async renderizar(data: any) {
-    const apiUrl = `${environment.PLANTILLAS_MID_SERVICE}`;
-    let urlPlanAuditoria = `${apiUrl}v1/plantilla/renderizar`;
-    try {
-      const response = await lastValueFrom(
-        this.httpService.post(urlPlanAuditoria, data),
-      );
-      return response.data;
-    } catch (error) {
-      throw new Error('No se pudo enviar el plan');
-    }
   }
 }

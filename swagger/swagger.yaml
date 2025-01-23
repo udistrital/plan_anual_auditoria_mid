@@ -287,10 +287,18 @@ paths:
       summary: Obtener plantilla por ID
       tags: &ref_6
         - Plantilla
-  /plantilla/plan-trabajo/{idAuditoria}:
+  /plantilla/{tipo}/{idAuditoria}:
     get:
-      operationId: PlantillaController_getPlantillaPlanTrabajo
+      operationId: PlantillaController_getPlantilla
       parameters:
+        - name: tipo
+          required: true
+          in: path
+          description: >-
+            Tipo de la plantilla (ej: plan-trabajo, solicitud-informacion,
+            carta-presentacion)
+          schema:
+            type: string
         - name: idAuditoria
           required: true
           in: path
@@ -299,8 +307,10 @@ paths:
             type: string
       responses:
         '200':
-          description: Plan de trabajo encontrado.
-      summary: Obtener plantilla de plan de trabajo
+          description: Plantilla generada exitosamente.
+        '404':
+          description: Tipo de plantilla no encontrado.
+      summary: Obtener plantilla dinámica según el tipo de auditoría
       tags: *ref_6
 info:
   title: Plan Anual Auditoria MID
