@@ -1,11 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import * as moment from 'moment';
 import 'moment/locale/es';
 import { PlantillaUtilsService } from '../utils/plantilla.utils';
+import { environment } from 'src/config/configuration';
+import { lastValueFrom } from 'rxjs';
+import { HttpService } from '@nestjs/axios';
+import { capitalize, unirListaNombres } from 'src/utils/texto.utils';
 
 @Injectable()
 export class PlantillaSolicitudInformacionService {
-  constructor(private readonly plantillaUtils: PlantillaUtilsService) {}
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly plantillaUtils: PlantillaUtilsService,
+  ) {}
 
   async get(idAuditoria: string) {
     const auditoria = await this.plantillaUtils.obtenerAuditoria(idAuditoria);
@@ -17,40 +24,108 @@ export class PlantillaSolicitudInformacionService {
 
   private async organizarData(data: any) {
     const auditoria = data.auditoria;
+    const [vigencia, auditoriaOSeguimiento, auditores] = await Promise.all([
+      this.traerParametros(auditoria.vigencia_id),
+      this.traerParametros(auditoria.tipo_evaluacion_id),
+      this.obtenerNombresAuditores(auditoria._id),
+    ]);
+
     const infoParaPlantilla = {
       plantilla_id: '67521530e11c6cfdd818c338',
       data: {
-        fecha: '2024-12-05', //hoy
-        ie: '12345', //consecutivo_ie
-        nombreIngeniero: 'Juan Salmón', // cargo lider
-        ciudad: 'Bogotá D.C.', //quemada
-        referencia: 'Auditoría de Control Interno 2024', //titulo
-        anoAuditoria: '2024', //vigencia_id
-        auditoriaOSeguimiento: 'auditoría interna', // tipo_evaluacion_id
-        auditores: 'María Pérez y Carlos López', // auditoria_auditor
+        fecha: moment().locale('es').format('D [de] MMMM [de] YYYY'),
+        oci: auditoria.consecutivo_OCI,
+        ie: auditoria.consecutivo_IE,
+        nombreIngeniero: auditoria.lider_id,
+        ciudad: 'Bogotá D.C.',
+        referencia: auditoria.titulo,
+        anoAuditoria: vigencia.Nombre,
+        auditoriaOSeguimiento: auditoriaOSeguimiento.Nombre,
+        auditores: auditores,
         temas: [
           'Políticas de control interno',
           'Cumplimiento normativo',
           'Análisis de riesgos',
         ], //quemado
         imgFirmaTabla: 'https://example.com/signature-image.png',
-        /////////////////
-        recursosTecnologicos: auditoria.rec_tecnologico,
-        recursosHumanos: auditoria.rec_humano,
-        recursosMateriales: auditoria.rec_fisico,
-        macroproceso: auditoria.macroproceso,
-        lider: auditoria.lider_id,
-        responsable: auditoria.responsable_id,
-        objetivos: auditoria.objetivo,
-        alcance: auditoria.alcance,
-        criterios: auditoria.criterio,
-        grupoAuditor: auditoria.rec_humano,
-        fechaEjecucion: moment(auditoria.fecha_inicio)
-          .locale('es')
-          .format('LL'),
       },
     };
 
     return infoParaPlantilla;
+  }
+
+  private async traerParametros(idParam: string) {
+    const apiUrl = `${environment.PARAMETROS_SERVICE}`;
+    const url = `${apiUrl}/parametro?query=Id:${idParam}&fields=Nombre`;
+    try {
+      const response = await lastValueFrom(this.httpService.get(url));
+      return response.data.Data[0];
+    } catch (error) {
+      throw new HttpException(
+        'Error al obtener los datos del servicio externo',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  private async obtenerNombresAuditores(auditoriaId: string): Promise<string> {
+    const auditores = await this.traerAuditores(auditoriaId);
+
+    if (!auditores?.length) return 'No se encontraron auditores.';
+
+    const nombres = await Promise.all(
+      auditores.map(async (auditor) => {
+        try {
+          const tercero = await this.traerTercero(auditor.auditor_id);
+          return tercero?.NombreCompleto
+            ? capitalize(tercero.NombreCompleto)
+            : null;
+        } catch (error) {
+          console.error(
+            `Error al obtener tercero ${auditor.auditor_id}:`,
+            error,
+          );
+          return null;
+        }
+      }),
+    );
+
+    const todosValidos = nombres.every((nombre) => nombre !== null);
+
+    if (!todosValidos) {
+      return 'Error al obtener los nombres de los auditores';
+    }
+
+    return unirListaNombres(nombres);
+  }
+
+  private async traerAuditores(auditoriaId: string) {
+    const apiUrl = `${environment.PLAN_AUDITORIA_CRUD_SERVICE}`;
+    const url = `${apiUrl}auditor?query=auditoria_id:${auditoriaId},activo:true&limit=0&fields=auditor_id`;
+
+    try {
+      const response = await lastValueFrom(this.httpService.get(url));
+      return response.data.Data;
+    } catch (error) {
+      throw new HttpException(
+        'Error al obtener los datos de terceros',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  private async traerTercero(terceroId: number) {
+    const apiUrl = `${environment.TERCEROS_SERVICE}`;
+    const url = `${apiUrl}/tercero/${terceroId}`;
+
+    try {
+      const response = await lastValueFrom(this.httpService.get(url));
+      return response.data;
+    } catch (error) {
+      throw new HttpException(
+        'Error al obtener los datos de terceros',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }

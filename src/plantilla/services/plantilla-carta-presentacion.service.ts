@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import * as moment from 'moment';
 import 'moment/locale/es';
 import { PlantillaUtilsService } from '../utils/plantilla.utils';
 
@@ -16,15 +17,16 @@ export class PlantillaCartaPresentacionService {
 
   private async organizarData(data: any) {
     const auditoria = data.auditoria;
+    const fechaInicio = moment(auditoria.fecha_inicio);
     const infoParaPlantilla = {
       plantilla_id: '6752188ddddf9a06db2a0b3c',
       data: {
-        ciudad: 'Bogotá D.C.', //quemada
-        auditoria: 'Auditoría Interna', //auditoria titulo
-        dia: '5', //fecha inicio
-        mes: 'diciembre',
-        anio: '2024',
-        objetivo: 'Revisión de procesos financieros', //auditoria objetivo
+        ciudad: 'Bogotá D.C.',
+        auditoria: auditoria.titulo,
+        dia: fechaInicio.date(),
+        mes: fechaInicio.format('MMMM'),
+        anio: fechaInicio.year(),
+        objetivo: auditoria.objetivo,
       },
     };
 
