@@ -12,8 +12,13 @@ El API mid permite proporcionar la información completa requerida por el microc
 * [Docker Compose](https://docs.docker.com/compose/)
 
 ### Variables de Entorno
-
-PORT=[puerto de ejecucion]
+```shel
+PLAN_AUDITORIA_MID_PORT=[puerto de ejecucion]
+PARAMETROS_SERVICE=[direccion donde se encuentra el api crud de parametros inluyendo el puerto]
+PLAN_AUDITORIA_CRUD_SERVICE=[direccion donde se encuentra el api crud de plan auditoria inluyendo el puerto]
+CARGUE_MASIVO_SERVERLESS_MID=[direccion donde se encuentra el api mid de cargue masivo inluyendo el puerto]
+PLANTILLAS_MID_SERVICE=[direccion donde se encuentra el api mid de plantillas inluyendo el puerto]
+```
 
 ### Ejecución del Proyecto
 ```shel

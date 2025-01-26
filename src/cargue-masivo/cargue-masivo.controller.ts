@@ -14,7 +14,7 @@ import { environment } from 'src/config/configuration';
 @Controller('cargue-masivo')
 export class CargueMasivoController {
   constructor(private readonly cargueMasivoService: CargueMasivoService) {}
-  private serverlessUrl = environment.CARGUE_MASIVO_SERVERLESS_MID;
+  private cargueMasivoUrl = `${environment.CARGUE_MASIVO_SERVERLESS_MID}registro-datos-archivo`;
 
   @Post('auditorias')
   @ApiOperation({ summary: 'Carga masiva de auditorías' })
@@ -44,7 +44,7 @@ export class CargueMasivoController {
         complemento,
         tipoCarga,
       );
-      const response = await axios.post(this.serverlessUrl, estructura);
+      const response = await axios.post(this.cargueMasivoUrl, estructura);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
@@ -89,7 +89,7 @@ export class CargueMasivoController {
           complemento,
           tipoCarga,
         );
-      const response = await axios.post(this.serverlessUrl, estructura);
+      const response = await axios.post(this.cargueMasivoUrl, estructura);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
