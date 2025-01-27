@@ -24,11 +24,13 @@ export class PlantillaSolicitudInformacionService {
 
   private async organizarData(data: any) {
     const auditoria = data.auditoria;
-    const [vigencia, auditoriaOSeguimiento, auditores] = await Promise.all([
-      this.traerParametros(auditoria.vigencia_id),
-      this.traerParametros(auditoria.tipo_evaluacion_id),
-      this.obtenerNombresAuditores(auditoria._id),
-    ]);
+    const [cargoLider, vigencia, auditoriaOSeguimiento, auditores] =
+      await Promise.all([
+        this.traerParametros(auditoria.lider_id),
+        this.traerParametros(auditoria.tipo_evaluacion_id),
+        this.traerParametros(auditoria.tipo_evaluacion_id),
+        this.obtenerNombresAuditores(auditoria._id),
+      ]);
 
     const infoParaPlantilla = {
       plantilla_id: '67521530e11c6cfdd818c338',
@@ -36,7 +38,7 @@ export class PlantillaSolicitudInformacionService {
         fecha: moment().locale('es').format('D [de] MMMM [de] YYYY'),
         oci: auditoria.consecutivo_OCI,
         ie: auditoria.consecutivo_IE,
-        nombreIngeniero: auditoria.lider_id,
+        nombreIngeniero: cargoLider.Nombre,
         ciudad: 'Bogotá D.C.',
         referencia: auditoria.titulo,
         anoAuditoria: vigencia.Nombre,
