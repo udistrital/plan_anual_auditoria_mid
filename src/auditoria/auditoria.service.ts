@@ -3,10 +3,11 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
 import { environment } from 'src/config/configuration';
-import { Console, log } from 'console';
+import { AuditorService } from '../auditor/auditor.service';
 
 @Injectable()
 export class AuditoriaService {
+
   private tiposEvaluacion: any[] = [];
   private cronogramasActividad: any[] = [];
   private estados: { Id: number; Nombre: string }[] = [
@@ -23,11 +24,32 @@ export class AuditoriaService {
   constructor(
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
+    private readonly auditorService: AuditorService,
   ) { }
 
   async getAll(queryParams: any) {
-    const data = await this.traerDataCrud(null, queryParams);
+    //console.log("queryParams ", queryParams);
 
+    const queryParamsCopia = { ...queryParams };
+    let auditores: any;
+
+    if ('auditores' in queryParamsCopia) {
+      delete queryParamsCopia.auditores;
+    }
+
+    const data = await this.traerDataCrud(null, queryParamsCopia);
+
+    if ('auditores' in queryParams) {
+      for (const item of data.Data) {
+        auditores = await this.asociarAuditores(item._id);
+        //console.log("AUDITORES ", auditores);
+        if (auditores) {
+          item.auditores = auditores;
+        } else {
+          item.auditores = [];
+        }
+      }
+    }
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
     }
@@ -46,7 +68,7 @@ export class AuditoriaService {
   async getAuditoriasOrdenadas(queryParams: any) {
     const match = queryParams.query.match(/plan_auditoria_id:([^,]+)/);
     const planId = match ? match[1] : null;
-  
+
     // Validar que el planId se haya encontrado
     if (!planId) {
       throw new HttpException(
@@ -54,29 +76,29 @@ export class AuditoriaService {
         HttpStatus.BAD_REQUEST,
       );
     }
-  
+
     const data = await this.traerDataCrud(null, queryParams);
-  
+
     if (data.Data && Array.isArray(data.Data)) {
       const auditoriasActivas = data.Data.filter(
         (auditoria) => auditoria.activo === true,
       );
-  
+
       // Obtener el campo "auditorias" del plan
       const planData = await this.obtenerPlanPorId(planId);
       const auditoriasOrden = planData?.auditorias || [];
-  
+
       // Ordenar las auditorías activas según el campo "auditorias" del plan
       data.Data = this.ordenarAuditorias(auditoriasActivas, auditoriasOrden);
-  
+
       if (await this.identificarCampo(data)) {
         this.reemplazarCampos(data);
       }
     }
-  
+
     return data;
   }
-  
+
 
   private async obtenerPlanPorId(planId: string) {
     const apiUrl = `${environment.PLAN_AUDITORIA_CRUD_SERVICE}`;
@@ -285,4 +307,24 @@ export class AuditoriaService {
 
     return element;
   }
+
+  private async asociarAuditores(idAuditor: string) {
+    const query = {
+      auditoria_id: idAuditor,
+      activo: true
+    };
+    const queryString = Object.entries(query)
+      .map(([key, value]) => `${key}:${value}`)
+      .join(',');
+    
+    const queryParam = {
+      query: queryString,
+      limit: 0,
+      fields: "_id,auditor_lider,auditor_id,asignado_por_id"
+    };
+    let auditoresAuditoria = await this.auditorService.getAll(queryParam);
+    //console.log("auditoresAuditoria", auditoresAuditoria.Data)
+    return auditoresAuditoria.Data;
+  }
+
 }
