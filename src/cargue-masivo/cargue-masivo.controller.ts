@@ -44,6 +44,8 @@ export class CargueMasivoController {
         complemento,
         tipoCarga,
       );
+      console.log("Endpoint cargue masivo: ", this.cargueMasivoUrl);
+      console.log("Estructura: ", estructura);
       const response = await axios.post(this.cargueMasivoUrl, estructura);
       return response.data;
     } catch (error) {
