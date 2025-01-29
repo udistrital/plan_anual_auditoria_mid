@@ -1,4 +1,4 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { environment } from 'src/config/configuration';
 import { lastValueFrom } from 'rxjs';
@@ -42,10 +42,15 @@ export class PlantillaService {
     const auditorias = data.dataAuditoria?.Data || [];
     const auditoriasOrden = data.dataPlanAuditoria?.Data?.auditorias || [];
 
-    const auditoriasOrdenadas = this.ordenarAuditorias(auditorias, auditoriasOrden);
+    const auditoriasOrdenadas = this.ordenarAuditorias(
+      auditorias,
+      auditoriasOrden,
+    );
 
     const items: PlantillaDto[] = Array.isArray(auditorias)
-      ? auditoriasOrdenadas.map((auditoria: any) => this.organizarItems(auditoria))
+      ? auditoriasOrdenadas.map((auditoria: any) =>
+          this.organizarItems(auditoria),
+        )
       : [];
 
     json.plantilla_id = '670f39835d9c11db9d50ea67';
