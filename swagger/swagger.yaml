@@ -134,31 +134,6 @@ paths:
           description: No encontrado.
       summary: Obtener auditor por ID
       tags: *ref_2
-  /auditor:
-    get:
-      operationId: AuditorController_getAll
-      parameters: []
-      responses:
-        '200':
-          description: ''
-      tags: &ref_3
-        - Auditor
-  /auditor/{id}:
-    get:
-      operationId: AuditorController_getById
-      parameters:
-        - name: id
-          required: true
-          in: path
-          schema:
-            type: string
-      responses:
-        '200':
-          description: ''
-      tags: *ref_3
-  /actividad:
-    get:
-      operationId: ActividadController_getAll
   /cargue-masivo/auditorias:
     post:
       operationId: CargueMasivoController_cargueMasivo
@@ -185,12 +160,6 @@ paths:
                 - complemento
                 - tipoCarga
       responses:
-        '200':
-          description: ''
-      tags: &ref_4
-        - Actividad
-  /actividad/{id}:
-
         '201':
           description: Carga masiva exitosa.
         '400':
@@ -263,18 +232,12 @@ paths:
             type: string
       responses:
         '200':
-
-          description: ''
-      tags: *ref_4
-  /plantilla/{id}:
-
           description: Plan obtenido con éxito.
         '404':
           description: No se encontró el plan.
       summary: Obtiene un plan por ID.
       tags: *ref_4
   /plan-estado:
-
     get:
       operationId: PlanEstadoController_getAll
       parameters:
@@ -303,19 +266,12 @@ paths:
             type: string
       responses:
         '200':
-
-          description: ''
-      tags: &ref_5
-        - Plantilla
-  /plantilla/plan-trabajo/{idAuditoria}:
-
           description: Estado obtenido con éxito.
         '404':
           description: No se encontró el estado.
       summary: Obtiene un estado de plan por ID.
       tags: *ref_5
   /plantilla/{id}:
-
     get:
       operationId: PlantillaController_getById
       parameters:
@@ -327,26 +283,6 @@ paths:
             type: string
       responses:
         '200':
-
-          description: ''
-      tags: *ref_5
-  /cargue-masivo/auditorias:
-    post:
-      operationId: CargueMasivoController_cargueMasivo
-      parameters: []
-      responses:
-        '201':
-          description: ''
-      tags: &ref_6
-        - CargueMasivo
-  /cargue-masivo/actividades:
-    post:
-      operationId: CargueMasivoController_cargueMasivoActividades
-      parameters: []
-      responses:
-        '201':
-          description: ''
-
           description: Plantilla encontrada.
       summary: Obtener plantilla por ID
       tags: &ref_6
@@ -375,6 +311,7 @@ paths:
         '404':
           description: Tipo de plantilla no encontrado.
       summary: Obtener plantilla dinámica según el tipo de auditoría
+
       tags: *ref_6
 info:
   title: Plan Anual Auditoria MID
