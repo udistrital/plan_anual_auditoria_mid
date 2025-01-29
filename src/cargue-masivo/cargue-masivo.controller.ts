@@ -37,16 +37,18 @@ export class CargueMasivoController {
   @ApiResponse({ status: 400, description: 'Datos inválidos.' })
   @ApiResponse({ status: 500, description: 'Error interno.' })
   async cargueMasivo(@Body() cargaDatos: any): Promise<any> {
-    try {
-      const { base64data, complemento, tipoCarga } = cargaDatos;
+    try {      
+      const { base64data, complement: complemento, type_upload: tipoCarga } = cargaDatos;
       const estructura = await this.cargueMasivoService.crearEstructura(
         base64data,
         complemento,
         tipoCarga,
       );
+      
       const response = await axios.post(this.cargueMasivoUrl, estructura);
       return response.data;
-    } catch (error) {
+    } catch (error) {      
+      console.error('Error en el MID:', error);
       if (axios.isAxiosError(error) && error.response) {
         throw new HttpException(
           `Error en el serverless: ${error.response.data.message || error.response.statusText}`,
