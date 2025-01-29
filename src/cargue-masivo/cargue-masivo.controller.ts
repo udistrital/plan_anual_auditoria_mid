@@ -44,7 +44,7 @@ export class CargueMasivoController {
         complemento,
         tipoCarga,
       );
-      
+
       const response = await axios.post(this.cargueMasivoUrl, estructura);
       return response.data;
     } catch (error) {      
