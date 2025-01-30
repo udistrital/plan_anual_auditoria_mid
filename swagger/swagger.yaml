@@ -311,7 +311,6 @@ paths:
         '404':
           description: Tipo de plantilla no encontrado.
       summary: Obtener plantilla dinámica según el tipo de auditoría
-
       tags: *ref_6
 info:
   title: Plan Anual Auditoria MID
