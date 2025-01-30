@@ -16,7 +16,7 @@ async function bootstrap() {
     .setDescription(
       'API MID para la gestion de planes de auditorias, auditorias y actividades',
     )
-    .setVersion('1.0')
+    .setVersion('1.0.0')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
