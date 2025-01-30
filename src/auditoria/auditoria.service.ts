@@ -4,10 +4,10 @@ import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
 import { environment } from 'src/config/configuration';
 import { AuditorService } from '../auditor/auditor.service';
+import { unirListaNombres } from 'src/utils/texto.utils';
 
 @Injectable()
 export class AuditoriaService {
-
   private tiposEvaluacion: any[] = [];
   private cronogramasActividad: any[] = [];
   private estados: { Id: number; Nombre: string }[] = [
@@ -25,7 +25,7 @@ export class AuditoriaService {
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
     private readonly auditorService: AuditorService,
-  ) { }
+  ) {}
 
   async getAll(queryParams: any) {
     //console.log("queryParams ", queryParams);
@@ -99,7 +99,6 @@ export class AuditoriaService {
     return data;
   }
 
-
   private async obtenerPlanPorId(planId: string) {
     const apiUrl = `${environment.PLAN_AUDITORIA_CRUD_SERVICE}`;
     const url = `${apiUrl}plan-auditoria/${planId}`;
@@ -130,7 +129,9 @@ export class AuditoriaService {
       (auditoria) => !auditoriasOrden.includes(auditoria._id),
     );
 
-    return [...auditoriasOrdenadas, ...restantes];
+    const auditoriasTotales = [...auditoriasOrdenadas, ...restantes];
+
+    return auditoriasTotales;
   }
 
   private async identificarCampo(data: any) {
@@ -252,6 +253,10 @@ export class AuditoriaService {
         if (element.responsable_id !== undefined) {
           this.reemplazar(this.responsables, element, 'responsable_id');
         }
+
+        element.cronograma = this.unirCronogramaNombres(
+          element.cronograma_nombre,
+        );
       });
     } else if (typeof data.Data === 'object' && data.Data !== null) {
       if (data.Data.tipo_evaluacion_id !== undefined) {
@@ -311,20 +316,23 @@ export class AuditoriaService {
   private async asociarAuditores(idAuditor: string) {
     const query = {
       auditoria_id: idAuditor,
-      activo: true
+      activo: true,
     };
     const queryString = Object.entries(query)
       .map(([key, value]) => `${key}:${value}`)
       .join(',');
-    
+
     const queryParam = {
       query: queryString,
       limit: 0,
-      fields: "_id,auditor_lider,auditor_id,asignado_por_id"
+      fields: '_id,auditor_lider,auditor_id,asignado_por_id',
     };
     let auditoresAuditoria = await this.auditorService.getAll(queryParam);
     //console.log("auditoresAuditoria", auditoresAuditoria.Data)
     return auditoresAuditoria.Data;
   }
 
+  private unirCronogramaNombres(cronograma_nombre: any[]) {
+    return unirListaNombres(cronograma_nombre);
+  }
 }
