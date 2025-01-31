@@ -15,3 +15,7 @@ export function unirListaNombres(nombres: string[]): string {
   const todosMenosUltimo = nombres.slice(0, -1).join(', ');
   return `${todosMenosUltimo} y ${nombres[nombres.length - 1]}`;
 }
+
+export function unirListaNombresConComas(nombres: string[]): string {
+  return nombres.join(', ');
+}
