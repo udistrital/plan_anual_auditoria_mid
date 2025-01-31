@@ -315,7 +315,7 @@ paths:
 info:
   title: Plan Anual Auditoria MID
   description: API MID para la gestion de planes de auditorias, auditorias y actividades
-  version: 1.0.0
+  version: '1.0.1'
   contact: {}
 tags: []
 servers: []
