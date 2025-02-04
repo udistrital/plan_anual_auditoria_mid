@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
 import { environment } from 'src/config/configuration';
 import { AuditorService } from '../auditor/auditor.service';
-import { unirListaNombres } from 'src/utils/texto.utils';
+import { unirListaNombresConComas } from 'src/utils/texto.utils';
 
 @Injectable()
 export class AuditoriaService {
@@ -333,6 +333,6 @@ export class AuditoriaService {
   }
 
   private unirCronogramaNombres(cronograma_nombre: any[]) {
-    return unirListaNombres(cronograma_nombre);
+    return unirListaNombresConComas(cronograma_nombre);
   }
 }
