@@ -1,4 +1,4 @@
-import { Injectable, HttpException } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { environment } from 'src/config/configuration';
 import { lastValueFrom } from 'rxjs';
@@ -48,6 +48,11 @@ export class PlantillaPlanTrabajoService {
 
   private async organizarData(data: any) {
     const auditoria = data.auditoria;
+    const [macroproceso, lider, responsable] = await Promise.all([
+      this.traerParametros(auditoria.macroproceso),
+      this.traerParametros(auditoria.lider_id),
+      this.traerParametros(auditoria.responsable_id),
+    ]);
     const actividades = this.organizarActividades(data.actividadesAuditoria);
     const infoParaPlantilla = {
       plantilla_id: '675214b4e11c6cfdd818c336',
@@ -55,9 +60,9 @@ export class PlantillaPlanTrabajoService {
         recursosTecnologicos: auditoria.rec_tecnologico,
         recursosHumanos: auditoria.rec_humano,
         recursosMateriales: auditoria.rec_fisico,
-        macroproceso: auditoria.macroproceso,
-        lider: auditoria.lider_id,
-        responsable: auditoria.responsable_id,
+        macroproceso: macroproceso.Nombre,
+        lider: lider.Nombre,
+        responsable: responsable.Nombre,
         objetivos: auditoria.objetivo,
         alcance: auditoria.alcance,
         criterios: auditoria.criterio,
@@ -79,5 +84,19 @@ export class PlantillaPlanTrabajoService {
       fechaInicial: moment(actividad.fecha_inicio).format('DD/MM/YYYY'),
       fechaFinal: moment(actividad.fecha_fin).format('DD/MM/YYYY'),
     }));
+  }
+
+  private async traerParametros(idParam: string) {
+    const apiUrl = `${environment.PARAMETROS_SERVICE}`;
+    const url = `${apiUrl}/parametro?query=Id:${idParam}&fields=Nombre`;
+    try {
+      const response = await lastValueFrom(this.httpService.get(url));
+      return response.data.Data[0];
+    } catch (error) {
+      throw new HttpException(
+        'Error al obtener los datos del servicio externo',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }
