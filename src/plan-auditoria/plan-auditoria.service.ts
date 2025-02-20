@@ -1,6 +1,5 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
 import { environment } from 'src/config/configuration';
 
@@ -9,10 +8,7 @@ export class PlanAuditoriaService {
     private vigencias: any[] = [];
     private estados: any[] = [];
 
-    constructor(
-        private readonly httpService: HttpService,
-        private readonly configService: ConfigService,
-    ) { }
+    constructor(private readonly httpService: HttpService) {}
 
     async getAll(queryParams: any) {
         const data = await this.traerDataCrud(null, queryParams);
@@ -28,6 +24,20 @@ export class PlanAuditoriaService {
             this.reemplazarCampos(data);
         }
         return data;
+    }
+
+    private async traerTercero(documento: string) {
+        const apiUrl = `${environment.TERCEROS_SERVICE}`;
+        const url = `${apiUrl}/tercero/${documento}`;        
+        try {
+            const response = await lastValueFrom(this.httpService.get(url));
+            return response.data;
+        } catch (error) {
+            throw new HttpException(
+                'Error al obtener los datos del servicio externo',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
     }
 
     private async identificarCampo(data: any) {
@@ -90,6 +100,14 @@ export class PlanAuditoriaService {
                     if (estado && estado.actual) {
                         plan.estado = estado;
                     }
+
+                    const tieneRechazos = await this.traerMotivosRechazo(plan._id, 6806);
+                    plan.tiene_rechazos = tieneRechazos;
+
+                    if (plan.creado_por_id) {
+                        const tercero = await this.traerTercero(plan.creado_por_id)
+                        plan.creado_por_nombre = tercero?.NombreCompleto || null;
+                    }
                 }
             } else if (response.data.Data && response.data.Data._id) {
                 const estado = await this.traerEstadoPorPlan(response.data.Data._id);
@@ -102,6 +120,23 @@ export class PlanAuditoriaService {
             // Maneja los errores si la solicitud falla
             throw new HttpException(
                 'Error al obtener los datos del servicio externo',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    private async traerMotivosRechazo(planAuditoriaId: string, estadoId: number) {
+        const apiUrl = `${environment.PLAN_AUDITORIA_CRUD_SERVICE}`;
+        const url = `${apiUrl}estado?query=plan_auditoria_id:${planAuditoriaId},estado_id:${estadoId},activo:true&limit=1&fields=_id`;
+        try {
+            const response = await lastValueFrom(this.httpService.get(url));
+            if (response.data.MetaData.Count) {
+                return true;
+            }
+            return false;
+        } catch (error) {
+            throw new HttpException(
+                'Error al obtener los datos del estado',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
         }
