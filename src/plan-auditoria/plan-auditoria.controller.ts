@@ -22,7 +22,7 @@ export class PlanAuditoriaController {
   })
   @ApiResponse({ status: 200, description: 'Lista obtenida con éxito.' })
   @ApiResponse({ status: 404, description: 'No se encontraron planes.' })
-  async getAll(@Res() res, @Query() queryParams) {
+  async getAll(@Res() res: any, @Query() queryParams: any) {
     try {
       const data = await this.planAuditoriaService.getAll(queryParams);
       res.status(HttpStatus.OK).json(data);

@@ -22,7 +22,7 @@ export class AuditorController {
     required: false,
     description: 'Filtros opcionales.',
   })
-  async getAll(@Res() res, @Query() queryParams) {
+  async getAll(@Res() res: any, @Query() queryParams: any) {
     try {
       const data = await this.auditorService.getAll(queryParams);
       res.status(HttpStatus.OK).json(data);

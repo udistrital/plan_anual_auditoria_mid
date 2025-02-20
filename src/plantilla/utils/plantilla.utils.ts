@@ -25,12 +25,10 @@ export class PlantillaUtilsService {
   async obtenerAuditoria(idAuditoria: string) {
     const apiUrl = `${environment.PLAN_AUDITORIA_CRUD_SERVICE}`;
     let urlAuditoria = `${apiUrl}auditoria/${idAuditoria}`;
-
     try {
       const respuestaAuditoria = await lastValueFrom(
         this.httpService.get(urlAuditoria),
       );
-
       return {
         auditoria: respuestaAuditoria.data.Data,
       };

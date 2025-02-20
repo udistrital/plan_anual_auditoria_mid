@@ -33,7 +33,7 @@ export class PlantillaSolicitudInformacionService {
       ]);
 
     const infoParaPlantilla = {
-      plantilla_id: '67521530e11c6cfdd818c338',
+      plantilla_id: environment.PLANTILLAS.SOLICITUD_INFORMACION,
       data: {
         fecha: moment().locale('es').format('D [de] MMMM [de] YYYY'),
         oci: auditoria.consecutivo_OCI,

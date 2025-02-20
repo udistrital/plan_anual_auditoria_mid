@@ -28,7 +28,7 @@ export class AuditoriaController {
   @ApiResponse({ status: 200, description: 'Auditorías obtenidas.' })
   @ApiResponse({ status: 400, description: 'Parámetros inválidos.' })
   @ApiResponse({ status: 500, description: 'Error interno.' })
-  async getAuditoriasOrdenadas(@Res() res, @Query() queryParams) {
+  async getAuditoriasOrdenadas(@Res() res: any, @Query() queryParams: any) {
     try {
       const data =
         await this.auditoriaService.getAuditoriasOrdenadas(queryParams);
@@ -52,7 +52,7 @@ export class AuditoriaController {
   })
   @ApiResponse({ status: 200, description: 'Auditorías obtenidas.' })
   @ApiResponse({ status: 404, description: 'Sin resultados.' })
-  async getAll(@Res() res, @Query() queryParams) {
+  async getAll(@Res() res: any, @Query() queryParams: any) {
     try {
       const data = await this.auditoriaService.getAll(queryParams);
       res.status(HttpStatus.OK).json(data);

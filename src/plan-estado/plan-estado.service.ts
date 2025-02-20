@@ -1,8 +1,14 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
 import { environment } from 'src/config/configuration';
+
+const {
+  PARAMETROS_SERVICE,
+  PLAN_AUDITORIA_CRUD_SERVICE,
+  TERCEROS_SERVICE,
+  TIPO_PARAMETRO,
+} = environment;
 
 @Injectable()
 export class PlanEstadoService {
@@ -35,21 +41,19 @@ export class PlanEstadoService {
     let validacion = false;
     try {
       const firstElement = Array.isArray(data.Data) ? data.Data[0] : data.Data;
-
       if ('estado_id' in firstElement) {
-        let param = await this.traerParametros('138'); // Cambia "201" al ID correcto.
+        let param = await this.traerParametros(TIPO_PARAMETRO.ESTADOS);
         this.estados.push(...param);
         validacion = true;
       }
-
       return validacion;
     } catch (error) {
       console.error(error);
     }
   }
 
-  private async traerParametros(idParam: string) {
-    const apiUrl = `${environment.PARAMETROS_SERVICE}`;
+  private async traerParametros(idParam: number) {
+    const apiUrl = `${PARAMETROS_SERVICE}`;
     const url = `${apiUrl}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
@@ -115,16 +119,13 @@ export class PlanEstadoService {
         element[campoNuevo] = { id: value, nombre: null };
       }
     }
-
     delete element[campo];
-
     return element;
   }
 
   private async traerDataCrud(id: string | null, queryParams: any) {
-    const apiUrl = `${environment.PLAN_AUDITORIA_CRUD_SERVICE}`;
+    const apiUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}`;
     let url = `${apiUrl}estado/`;
-
     if (id != null && id != undefined) {
       url = url + `${id}`;
     }
@@ -159,9 +160,8 @@ export class PlanEstadoService {
   }
 
   private async traerUsuario(idUsuario: string) {
-    const apiUrl = `${environment.TERCEROS_SERVICE}`;
+    const apiUrl = `${TERCEROS_SERVICE}`;
     const url = `${apiUrl}/tercero/${idUsuario}`;
-
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       const data = response.data;

@@ -14,25 +14,20 @@ export class AuditorService {
   ) {}
 
   async getAll(queryParams: any) {
-    console.log("entra")
     let data = await this.traerDataCrud(null, queryParams);
-
     await this.reemplazarCampos(data);
-    console.log("getAll auditor ",data)
     return data;
   }
 
   async getOne(id: string) {
     const data = await this.traerDataCrud(id, null);
     await this.reemplazarCampos(data);
-
     return data;
   }
 
   private async traerTercero(documento: string) {
     const apiUrl = `${environment.TERCEROS_SERVICE}`;
     const url = `${apiUrl}/tercero/${documento}`;
-
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data;
@@ -53,7 +48,6 @@ export class AuditorService {
     if (queryParams) {
       const queryString = new URLSearchParams(queryParams).toString();
       url += `?${queryString}`;
-     // console.log("URL ",url)
     }
     try {
       const response = await lastValueFrom(this.httpService.get(url));
@@ -72,13 +66,11 @@ export class AuditorService {
         const tercero = await this.traerTercero(elemento.auditor_id);
         this.reemplazar(tercero, elemento, 'auditor_id');
       }
-
       if (elemento?.asignado_por_id) {
         const asignadoPor = await this.traerTercero(elemento.asignado_por_id);
         this.reemplazar(asignadoPor, elemento, 'asignado_por_id');
       }
     };
-
     if (Array.isArray(data?.Data)) {
       for (const elemento of data.Data) {
         await procesarElemento(elemento);
@@ -91,7 +83,6 @@ export class AuditorService {
 
   private reemplazar(arrayTercero: any[], elemento: any, campo: string) {
     const elementoData = elemento[campo];
-
     if (!Array.isArray(arrayTercero)) {
       arrayTercero = [arrayTercero];
     }

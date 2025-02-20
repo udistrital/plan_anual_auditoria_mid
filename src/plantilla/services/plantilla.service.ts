@@ -3,6 +3,9 @@ import { HttpService } from '@nestjs/axios';
 import { environment } from 'src/config/configuration';
 import { lastValueFrom } from 'rxjs';
 import { jsonPlantillaDto, PlantillaDto } from '../dto/plantilla.dto';
+
+const { PLANTILLAS, MESES } = environment;
+
 @Injectable()
 export class PlantillaService {
   constructor(private readonly httpService: HttpService) {}
@@ -53,7 +56,7 @@ export class PlantillaService {
         )
       : [];
 
-    json.plantilla_id = '670f39835d9c11db9d50ea67';
+    json.plantilla_id = PLANTILLAS.PLAN_ANUAL_AUDITORIA;
     json.data = {
       codigo: 'EC-PR-005-FR-001',
       proceso: 'Gestión de la Evaluación y el Control',
@@ -68,18 +71,18 @@ export class PlantillaService {
   }
   private organizarItems(data: any): PlantillaDto {
     const idMesMap = {
-      6779: 'enero',
-      6780: 'febrero',
-      6781: 'marzo',
-      6782: 'abril',
-      6783: 'mayo',
-      6784: 'junio',
-      6785: 'julio',
-      6786: 'agosto',
-      6787: 'septiembre',
-      6788: 'octubre',
-      6789: 'noviembre',
-      6795: 'diciembre',
+      [MESES.ENERO]: 'enero',
+      [MESES.FEBRERO]: 'febrero',
+      [MESES.MARZO]: 'marzo',
+      [MESES.ABRIL]: 'abril',
+      [MESES.MAYO]: 'mayo',
+      [MESES.JUNIO]: 'junio',
+      [MESES.JULIO]: 'julio',
+      [MESES.AGOSTO]: 'agosto',
+      [MESES.SEPTIEMBRE]: 'septiembre',
+      [MESES.OCTUBRE]: 'octubre',
+      [MESES.NOVIEMBRE]: 'noviembre',
+      [MESES.DICIEMBRE]: 'diciembre',
     };
 
     const mesesMarcados = Object.keys(idMesMap).reduce(

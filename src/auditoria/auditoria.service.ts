@@ -1,35 +1,34 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
 import { environment } from 'src/config/configuration';
 import { AuditorService } from '../auditor/auditor.service';
 import { unirListaNombresConComas } from 'src/utils/texto.utils';
 
+const { PLAN_AUDITORIA_CRUD_SERVICE, PARAMETROS_SERVICE, TIPO_PARAMETRO } =
+  environment;
+
 @Injectable()
 export class AuditoriaService {
   private tiposEvaluacion: any[] = [];
   private cronogramasActividad: any[] = [];
-  private estados: { Id: number; Nombre: string }[] = [
-    { Id: 1, Nombre: 'Activo' },
-    { Id: 2, Nombre: 'Inactivo' },
-    { Id: 3, Nombre: 'Otro' },
-  ];
   private tipos: any[] = [];
   private macroprocesos: any[] = [];
   private lideres: any[] = [];
   private responsables: any[] = [];
   private vigencias: any[] = [];
+  private estados: { Id: number; Nombre: string }[] = [
+    { Id: 1, Nombre: 'Activo' },
+    { Id: 2, Nombre: 'Inactivo' },
+    { Id: 3, Nombre: 'Otro' },
+  ];
 
   constructor(
     private readonly httpService: HttpService,
-    private readonly configService: ConfigService,
     private readonly auditorService: AuditorService,
   ) {}
 
   async getAll(queryParams: any) {
-    //console.log("queryParams ", queryParams);
-
     const queryParamsCopia = { ...queryParams };
     let auditores: any;
 
@@ -42,7 +41,6 @@ export class AuditoriaService {
     if ('auditores' in queryParams) {
       for (const item of data.Data) {
         auditores = await this.asociarAuditores(item._id);
-        //console.log("AUDITORES ", auditores);
         if (auditores) {
           item.auditores = auditores;
         } else {
@@ -53,7 +51,6 @@ export class AuditoriaService {
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
     }
-
     return data;
   }
 
@@ -95,12 +92,11 @@ export class AuditoriaService {
         this.reemplazarCampos(data);
       }
     }
-
     return data;
   }
 
   private async obtenerPlanPorId(planId: string) {
-    const apiUrl = `${environment.PLAN_AUDITORIA_CRUD_SERVICE}`;
+    const apiUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}`;
     const url = `${apiUrl}plan-auditoria/${planId}`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
@@ -130,7 +126,6 @@ export class AuditoriaService {
     );
 
     const auditoriasTotales = [...auditoriasOrdenadas, ...restantes];
-
     return auditoriasTotales;
   }
 
@@ -140,13 +135,13 @@ export class AuditoriaService {
       const firstElement = Array.isArray(data.Data) ? data.Data[0] : data.Data;
 
       if ('tipo_evaluacion_id' in firstElement) {
-        let param = await this.traerParametros('136');
+        let param = await this.traerParametros(TIPO_PARAMETRO.TIPO_EVALUACION);
         this.tiposEvaluacion.push(...param);
         validacion = true;
       }
 
       if ('cronograma_id' in firstElement) {
-        let param = await this.traerParametros('139');
+        let param = await this.traerParametros(TIPO_PARAMETRO.CRONOGRAMA);
         this.cronogramasActividad.push(...param);
         validacion = true;
       }
@@ -156,31 +151,31 @@ export class AuditoriaService {
       }
 
       if ('tipo_id' in firstElement) {
-        let param = await this.traerParametros('139');
+        let param = await this.traerParametros(TIPO_PARAMETRO.CRONOGRAMA);
         this.tipos.push(...param);
         validacion = true;
       }
 
       if ('macroproceso' in firstElement) {
-        let param = await this.traerParametros('139');
+        let param = await this.traerParametros(TIPO_PARAMETRO.CRONOGRAMA);
         this.macroprocesos.push(...param);
         validacion = true;
       }
 
       if ('lider_id' in firstElement) {
-        let param = await this.traerParametros('139');
+        let param = await this.traerParametros(TIPO_PARAMETRO.CRONOGRAMA);
         this.lideres.push(...param);
         validacion = true;
       }
 
       if ('responsable_id' in firstElement) {
-        let param = await this.traerParametros('139');
+        let param = await this.traerParametros(TIPO_PARAMETRO.CRONOGRAMA);
         this.responsables.push(...param);
         validacion = true;
       }
 
       if ('vigencia_id' in firstElement) {
-        let param = await this.traerParametros('121');
+        let param = await this.traerParametros(TIPO_PARAMETRO.VIGENCIA);
         this.vigencias.push(...param);
         validacion = true;
       }
@@ -191,8 +186,8 @@ export class AuditoriaService {
     }
   }
 
-  private async traerParametros(idParam: string) {
-    const apiUrl = `${environment.PARAMETROS_SERVICE}`;
+  private async traerParametros(idParam: number) {
+    const apiUrl = `${PARAMETROS_SERVICE}`;
     const url = `${apiUrl}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre&limit=0`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
@@ -206,7 +201,7 @@ export class AuditoriaService {
   }
 
   private async traerDataCrud(id: string | null, queryParams: any) {
-    const apiUrl = `${environment.PLAN_AUDITORIA_CRUD_SERVICE}`;
+    const apiUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}`;
     let url = `${apiUrl}auditoria/`;
     if (id != null && id != undefined) {
       url = url + `${id}`;
@@ -309,7 +304,6 @@ export class AuditoriaService {
         element[nuevoCampo] = null;
       }
     }
-
     return element;
   }
 
@@ -328,7 +322,6 @@ export class AuditoriaService {
       fields: '_id,auditor_lider,auditor_id,asignado_por_id',
     };
     let auditoresAuditoria = await this.auditorService.getAll(queryParam);
-    //console.log("auditoresAuditoria", auditoresAuditoria.Data)
     return auditoresAuditoria.Data;
   }
 

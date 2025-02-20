@@ -29,11 +29,9 @@ export class PlantillaPlanTrabajoService {
       const respuestaAuditoria = await lastValueFrom(
         this.httpService.get(urlAuditoria),
       );
-
       const respuestaActividades = await lastValueFrom(
         this.httpService.get(urlActividades),
       );
-
       return {
         auditoria: respuestaAuditoria.data.Data,
         actividadesAuditoria: respuestaActividades.data.Data,
@@ -55,7 +53,7 @@ export class PlantillaPlanTrabajoService {
     ]);
     const actividades = this.organizarActividades(data.actividadesAuditoria);
     const infoParaPlantilla = {
-      plantilla_id: '675214b4e11c6cfdd818c336',
+      plantilla_id: environment.PLANTILLAS.PROGRAMA_TRABAJO,
       data: {
         recursosTecnologicos: auditoria.rec_tecnologico,
         recursosHumanos: auditoria.rec_humano,
