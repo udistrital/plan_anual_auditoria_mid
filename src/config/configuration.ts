@@ -1,12 +1,10 @@
 export const environment = {
-  PARAMETROS_SERVICE:
-    'http://pruebasapi.intranetoas.udistrital.edu.co:8510/v1/',
+  PARAMETROS_SERVICE: process.env.PARAMETROS_SERVICE,
   PLAN_AUDITORIA_MID_PORT: process.env.PLAN_AUDITORIA_MID_PORT,
-  PLAN_AUDITORIA_CRUD_SERVICE:
-    'http://pruebasapi.intranetoas.udistrital.edu.co:8572/',
+  PLAN_AUDITORIA_CRUD_SERVICE: process.env.PLAN_AUDITORIA_CRUD_SERVICE,
   PLANTILLAS_MID_SERVICE: process.env.PLANTILLAS_MID_SERVICE,
   CARGUE_MASIVO_SERVERLESS_MID: process.env.CARGUE_MASIVO_SERVERLESS_MID,
-  TERCEROS_SERVICE: 'http://pruebasapi.intranetoas.udistrital.edu.co:8121/v1',
+  TERCEROS_SERVICE: process.env.TERCEROS_SERVICE,
 
   PLANTILLAS: {
     CARTA_PRESENTACION: "6752188ddddf9a06db2a0b3c",
