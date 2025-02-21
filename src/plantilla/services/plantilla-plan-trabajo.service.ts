@@ -4,7 +4,7 @@ import { environment } from 'src/config/configuration';
 import { lastValueFrom } from 'rxjs';
 import * as moment from 'moment';
 import 'moment/locale/es';
-import { PlantillaUtilsService } from '../utils/plantilla.utils';
+import { PlantillaUtilsService } from '../../utils/plantilla.utils';
 
 @Injectable()
 export class PlantillaPlanTrabajoService {

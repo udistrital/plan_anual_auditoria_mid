@@ -8,7 +8,7 @@ const {
   PARAMETROS_SERVICE,
   PLAN_AUDITORIA_CRUD_SERVICE,
   TIPO_PARAMETRO,
-  PLAN_ESTADO
+  PLAN_ESTADO,
 } = environment;
 
 @Injectable()
@@ -57,7 +57,6 @@ export class PlanAuditoriaService {
         this.vigencias.push(...param);
         validacion = true;
       }
-
       if ('estado' in firstElement && firstElement.estado !== null) {
         const estadoId = firstElement.estado.estado_id;
         if (estadoId) {
@@ -96,20 +95,19 @@ export class PlanAuditoriaService {
       const queryString = new URLSearchParams(queryParams).toString();
       url += `?${queryString}`;
     }
-
     try {
       const response = await lastValueFrom(this.httpService.get(url));
-
       if (Array.isArray(response.data.Data)) {
         for (let plan of response.data.Data) {
           const estado = await this.traerEstadoPorPlan(plan._id);
           if (estado && estado.actual) {
             plan.estado = estado;
           }
-
-          const tieneRechazos = await this.traerMotivosRechazo(plan._id, PLAN_ESTADO.RECHAZADO);
+          const tieneRechazos = await this.traerMotivosRechazo(
+            plan._id,
+            PLAN_ESTADO.RECHAZADO,
+          );
           plan.tiene_rechazos = tieneRechazos;
-
           if (plan.creado_por_id) {
             const tercero = await this.traerTercero(plan.creado_por_id);
             plan.creado_por_nombre = tercero?.NombreCompleto || null;
@@ -123,7 +121,6 @@ export class PlanAuditoriaService {
       }
       return response.data;
     } catch (error) {
-      // Maneja los errores si la solicitud falla
       throw new HttpException(
         'Error al obtener los datos del servicio externo',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -151,10 +148,8 @@ export class PlanAuditoriaService {
   private async traerEstadoPorPlan(planAuditoriaId: string) {
     const apiUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}`;
     const url = `${apiUrl}estado?query=plan_auditoria_id:${planAuditoriaId},actual:true`;
-
     try {
       const response = await lastValueFrom(this.httpService.get(url));
-
       if (
         response.data &&
         response.data.Data &&
@@ -177,7 +172,6 @@ export class PlanAuditoriaService {
         if (element.vigencia_id !== undefined) {
           this.reemplazar(this.vigencias, element, 'vigencia_id');
         }
-
         if (element.estado && element.estado.estado_id !== undefined) {
           this.reemplazar(this.estados, element.estado, 'estado_id');
         }
@@ -186,7 +180,6 @@ export class PlanAuditoriaService {
       if (data.Data.vigencia_id !== undefined) {
         this.reemplazar(this.vigencias, data.Data, 'vigencia_id');
       }
-
       if (data.Data.estado && data.Data.estado.estado_id !== undefined) {
         this.reemplazar(this.estados, data.Data.estado, 'estado_id');
       }

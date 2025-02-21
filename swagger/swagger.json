@@ -232,16 +232,11 @@
                   "complemento": {
                     "type": "object",
                     "description": "Datos complementarios."
-                  },
-                  "tipoCarga": {
-                    "type": "string",
-                    "description": "Tipo de carga."
                   }
                 },
                 "required": [
                   "base64data",
-                  "complemento",
-                  "tipoCarga"
+                  "complemento"
                 ]
               }
             }
@@ -283,16 +278,11 @@
                   "complemento": {
                     "type": "object",
                     "description": "Datos complementarios."
-                  },
-                  "tipoCarga": {
-                    "type": "string",
-                    "description": "Tipo de carga."
                   }
                 },
                 "required": [
                   "base64data",
-                  "complemento",
-                  "tipoCarga"
+                  "complemento"
                 ]
               }
             }

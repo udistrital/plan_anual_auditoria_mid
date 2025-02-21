@@ -1,17 +1,11 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
 import { environment } from 'src/config/configuration';
 
 @Injectable()
 export class AuditorService {
-  private documento: any;
-  private asignadoPor: any;
-  constructor(
-    private readonly httpService: HttpService,
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly httpService: HttpService) {}
 
   async getAll(queryParams: any) {
     let data = await this.traerDataCrud(null, queryParams);
@@ -98,7 +92,6 @@ export class AuditorService {
       const encontrado = arrayTercero.find(
         (param) => param.Id === elementoData,
       );
-
       if (encontrado) {
         elemento[nuevoCampo] = encontrado.NombreCompleto;
       } else {

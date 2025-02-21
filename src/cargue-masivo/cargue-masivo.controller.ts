@@ -28,9 +28,8 @@ export class CargueMasivoController {
           description: 'Archivo en formato Base64.',
         },
         complemento: { type: 'object', description: 'Datos complementarios.' },
-        tipoCarga: { type: 'string', description: 'Tipo de carga.' },
       },
-      required: ['base64data', 'complemento', 'tipoCarga'],
+      required: ['base64data', 'complemento'],
     },
   })
   @ApiResponse({ status: 201, description: 'Carga masiva exitosa.' })
@@ -72,9 +71,8 @@ export class CargueMasivoController {
           description: 'Archivo en formato Base64.',
         },
         complemento: { type: 'object', description: 'Datos complementarios.' },
-        tipoCarga: { type: 'string', description: 'Tipo de carga.' },
       },
-      required: ['base64data', 'complemento', 'tipoCarga'],
+      required: ['base64data', 'complemento'],
     },
   })
   @ApiResponse({ status: 201, description: 'Carga masiva exitosa.' })

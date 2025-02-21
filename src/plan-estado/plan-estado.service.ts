@@ -102,7 +102,6 @@ export class PlanEstadoService {
     campoNuevo: string,
   ) {
     const value = element[campo];
-
     if (Array.isArray(value)) {
       element[campoNuevo] = value.map((id) => {
         const encontrado = array.find((param) => param.Id === id);
