@@ -1,8 +1,9 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
 import { environment } from 'src/config/configuration';
+
+const { PLAN_AUDITORIA_CRUD_SERVICE } = environment;
 
 @Injectable()
 export class ActividadService {
@@ -12,10 +13,7 @@ export class ActividadService {
     { Id: 3, Nombre: 'Otro' },
   ];
 
-  constructor(
-    private readonly httpService: HttpService,
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly httpService: HttpService) {}
 
   async getAll(queryParams: any) {
     const data = await this.traerDataCrud(null, queryParams);
@@ -47,7 +45,7 @@ export class ActividadService {
   }
 
   private async traerDataCrud(id: string | null, queryParams: any) {
-    const apiUrl = `${environment.PLAN_AUDITORIA_CRUD_SERVICE}`;
+    const apiUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}`;
     let url = `${apiUrl}actividad/`;
     if (id != null && id != undefined) {
       url = url + `${id}`;
