@@ -45,8 +45,7 @@ export class ActividadService {
   }
 
   private async traerDataCrud(id: string | null, queryParams: any) {
-    const apiUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}`;
-    let url = `${apiUrl}actividad/`;
+    let url = `${PLAN_AUDITORIA_CRUD_SERVICE}actividad/`;
     if (id != null && id != undefined) {
       url = url + `${id}`;
     }

@@ -53,8 +53,7 @@ export class PlanEstadoService {
   }
 
   private async traerParametros(idParam: number) {
-    const apiUrl = `${PARAMETROS_SERVICE}`;
-    const url = `${apiUrl}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre`;
+    const url = `${PARAMETROS_SERVICE}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data.Data;
@@ -123,8 +122,7 @@ export class PlanEstadoService {
   }
 
   private async traerDataCrud(id: string | null, queryParams: any) {
-    const apiUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}`;
-    let url = `${apiUrl}estado/`;
+    let url = `${PLAN_AUDITORIA_CRUD_SERVICE}estado/`;
     if (id != null && id != undefined) {
       url = url + `${id}`;
     }
@@ -159,8 +157,7 @@ export class PlanEstadoService {
   }
 
   private async traerUsuario(idUsuario: string) {
-    const apiUrl = `${TERCEROS_SERVICE}`;
-    const url = `${apiUrl}/tercero/${idUsuario}`;
+    const url = `${TERCEROS_SERVICE}/tercero/${idUsuario}`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       const data = response.data;

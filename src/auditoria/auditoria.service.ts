@@ -96,8 +96,7 @@ export class AuditoriaService {
   }
 
   private async obtenerPlanPorId(planId: string) {
-    const apiUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}`;
-    const url = `${apiUrl}plan-auditoria/${planId}`;
+    const url = `${PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${planId}`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data.Data;
@@ -187,8 +186,7 @@ export class AuditoriaService {
   }
 
   private async traerParametros(idParam: number) {
-    const apiUrl = `${PARAMETROS_SERVICE}`;
-    const url = `${apiUrl}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre&limit=0`;
+    const url = `${PARAMETROS_SERVICE}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre&limit=0`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data.Data;
@@ -201,8 +199,7 @@ export class AuditoriaService {
   }
 
   private async traerDataCrud(id: string | null, queryParams: any) {
-    const apiUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}`;
-    let url = `${apiUrl}auditoria/`;
+    let url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria/`;
     if (id != null && id != undefined) {
       url = url + `${id}`;
     }

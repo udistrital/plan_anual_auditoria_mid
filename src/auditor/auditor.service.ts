@@ -3,6 +3,8 @@ import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
 import { environment } from 'src/config/configuration';
 
+const { TERCEROS_SERVICE, PLAN_AUDITORIA_CRUD_SERVICE } = environment;
+
 @Injectable()
 export class AuditorService {
   constructor(private readonly httpService: HttpService) {}
@@ -20,8 +22,7 @@ export class AuditorService {
   }
 
   private async traerTercero(documento: string) {
-    const apiUrl = `${environment.TERCEROS_SERVICE}`;
-    const url = `${apiUrl}/tercero/${documento}`;
+    const url = `${TERCEROS_SERVICE}/tercero/${documento}`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data;
@@ -34,8 +35,7 @@ export class AuditorService {
   }
 
   private async traerDataCrud(id: string | null, queryParams: any) {
-    const apiUrl = `${environment.PLAN_AUDITORIA_CRUD_SERVICE}`;
-    let url = `${apiUrl}auditor/`;
+    let url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditor/`;
     if (id != null && id != undefined) {
       url = url + `${id}`;
     }

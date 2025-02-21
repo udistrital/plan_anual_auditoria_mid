@@ -4,7 +4,12 @@ import { environment } from 'src/config/configuration';
 import { lastValueFrom } from 'rxjs';
 import { jsonPlantillaDto, PlantillaDto } from '../dto/plantilla.dto';
 
-const { PLANTILLAS, MESES } = environment;
+const {
+  PLAN_AUDITORIA_CRUD_SERVICE,
+  PLANTILLAS,
+  MESES,
+  PLANTILLAS_MID_SERVICE,
+} = environment;
 
 @Injectable()
 export class PlantillaService {
@@ -17,9 +22,8 @@ export class PlantillaService {
   }
 
   private async traerDataCrud(id: string) {
-    const apiUrl = `${environment.PLAN_AUDITORIA_CRUD_SERVICE}`;
-    let urlPlanAuditoria = `${apiUrl}plan-auditoria/${id}`;
-    let urlAuditioria = `${apiUrl}auditoria?query=plan_auditoria_id:${id},activo:true&fields=titulo,cronograma_id&limit=0`;
+    let urlPlanAuditoria = `${PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${id}`;
+    let urlAuditioria = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria?query=plan_auditoria_id:${id},activo:true&fields=titulo,cronograma_id&limit=0`;
     try {
       const responsePlanAuditoria = await lastValueFrom(
         this.httpService.get(urlPlanAuditoria),
@@ -127,8 +131,7 @@ export class PlantillaService {
   }
 
   private async renderizar(data: jsonPlantillaDto) {
-    const apiUrl = `${environment.PLANTILLAS_MID_SERVICE}`;
-    let urlPlanAuditoria = `${apiUrl}/v1/plantilla/renderizar`;
+    let urlPlanAuditoria = `${PLANTILLAS_MID_SERVICE}/v1/plantilla/renderizar`;
     try {
       const response = await lastValueFrom(
         this.httpService.post(urlPlanAuditoria, data),
