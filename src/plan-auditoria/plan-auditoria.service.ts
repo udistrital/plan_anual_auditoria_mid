@@ -35,8 +35,7 @@ export class PlanAuditoriaService {
   }
 
   private async traerTercero(documento: string) {
-    const apiUrl = `${TERCEROS_SERVICE}`;
-    const url = `${apiUrl}/tercero/${documento}`;
+    const url = `${TERCEROS_SERVICE}/tercero/${documento}`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data;
@@ -72,8 +71,7 @@ export class PlanAuditoriaService {
   }
 
   private async traerParametros(idParam: number) {
-    const apiUrl = `${PARAMETROS_SERVICE}`;
-    const url = `${apiUrl}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre&limit=0`;
+    const url = `${PARAMETROS_SERVICE}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre&limit=0`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data.Data;
@@ -86,8 +84,7 @@ export class PlanAuditoriaService {
   }
 
   private async traerDataCrud(id: string | null, queryParams: any) {
-    const apiUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}`;
-    let url = `${apiUrl}plan-auditoria/`;
+    let url = `${PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/`;
     if (id != null && id != undefined) {
       url += `${id}`;
     }
@@ -98,21 +95,19 @@ export class PlanAuditoriaService {
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       if (Array.isArray(response.data.Data)) {
-        for (let plan of response.data.Data) {
-          const estado = await this.traerEstadoPorPlan(plan._id);
-          if (estado && estado.actual) {
-            plan.estado = estado;
-          }
-          const tieneRechazos = await this.traerMotivosRechazo(
-            plan._id,
-            PLAN_ESTADO.RECHAZADO,
-          );
-          plan.tiene_rechazos = tieneRechazos;
-          if (plan.creado_por_id) {
-            const tercero = await this.traerTercero(plan.creado_por_id);
-            plan.creado_por_nombre = tercero?.NombreCompleto || null;
-          }
-        }
+        await Promise.all(
+          response.data.Data.map(async (plan: any) => {
+            const [estado, tieneRechazos, tercero] = await Promise.all([
+              this.traerEstadoPorPlan(plan._id),
+              this.traerMotivosRechazo(plan._id, PLAN_ESTADO.RECHAZADO),
+              plan.creado_por_id ? this.traerTercero(plan.creado_por_id) : null,
+            ]);
+  
+            if (estado?.actual) plan.estado = estado;
+            plan.tiene_rechazos = tieneRechazos;
+            if (tercero) plan.creado_por_nombre = tercero.NombreCompleto ?? null;
+          }),
+        );
       } else if (response.data.Data && response.data.Data._id) {
         const estado = await this.traerEstadoPorPlan(response.data.Data._id);
         if (estado && estado.actual) {
@@ -129,8 +124,7 @@ export class PlanAuditoriaService {
   }
 
   private async traerMotivosRechazo(planAuditoriaId: string, estadoId: number) {
-    const apiUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}`;
-    const url = `${apiUrl}estado?query=plan_auditoria_id:${planAuditoriaId},estado_id:${estadoId},activo:true&limit=1&fields=_id`;
+    const url = `${PLAN_AUDITORIA_CRUD_SERVICE}estado?query=plan_auditoria_id:${planAuditoriaId},estado_id:${estadoId},activo:true&limit=1&fields=_id`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       if (response.data.MetaData.Count) {
@@ -146,8 +140,7 @@ export class PlanAuditoriaService {
   }
 
   private async traerEstadoPorPlan(planAuditoriaId: string) {
-    const apiUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}`;
-    const url = `${apiUrl}estado?query=plan_auditoria_id:${planAuditoriaId},actual:true`;
+    const url = `${PLAN_AUDITORIA_CRUD_SERVICE}estado?query=plan_auditoria_id:${planAuditoriaId},actual:true`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       if (
