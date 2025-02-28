@@ -32,11 +32,19 @@ export class AuditoriaService {
     const queryParamsCopia = { ...queryParams };
     let auditores: any;
 
+    const data = await this.traerDataCrud(null, queryParamsCopia);
+    await Promise.all(
+      data.Data.map(async (auditoria: any) => {
+        const estado = await this.getEstadoAuditoria(auditoria._id);
+        if (estado && estado.actual) {
+          auditoria.estado = estado;
+        }
+      })
+    );
+
     if ('auditores' in queryParamsCopia) {
       delete queryParamsCopia.auditores;
     }
-
-    const data = await this.traerDataCrud(null, queryParamsCopia);
 
     if ('auditores' in queryParams) {
       for (const item of data.Data) {
@@ -213,6 +221,22 @@ export class AuditoriaService {
     } catch (error) {
       throw new HttpException(
         'Error al obtener los datos del servicio externo',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  private async getEstadoAuditoria(auditoriaId: string) {
+    const url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria-estado?query=auditoria_id:${auditoriaId},actual:true`;
+    try {
+      const { data } = await lastValueFrom(this.httpService.get(url));
+      if (data?.Data?.length > 0) {
+        return data.Data[0];
+      }
+      return null;
+    } catch (error) {
+      throw new HttpException(
+        'Error al obtener los datos del estado',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
