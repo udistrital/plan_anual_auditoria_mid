@@ -4,7 +4,13 @@ import { environment } from 'src/config/configuration';
 import { lastValueFrom } from 'rxjs';
 import * as moment from 'moment';
 import 'moment/locale/es';
-import { PlantillaUtilsService } from '../utils/plantilla.utils';
+import { PlantillaUtilsService } from '../../utils/plantilla.utils';
+
+const {
+  PLAN_AUDITORIA_CRUD_SERVICE,
+  PLANTILLAS,
+  PARAMETROS_SERVICE
+} = environment;
 
 @Injectable()
 export class PlantillaPlanTrabajoService {
@@ -22,18 +28,15 @@ export class PlantillaPlanTrabajoService {
   }
 
   private async obtenerAuditoria(idAuditoria: string) {
-    const apiUrl = `${environment.PLAN_AUDITORIA_CRUD_SERVICE}`;
-    let urlAuditoria = `${apiUrl}auditoria/${idAuditoria}`;
-    let urlActividades = `${apiUrl}actividad?query=auditoria_id:${idAuditoria},activo:true&limit=0`;
+    let urlAuditoria = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria/${idAuditoria}`;
+    let urlActividades = `${PLAN_AUDITORIA_CRUD_SERVICE}actividad?query=auditoria_id:${idAuditoria},activo:true&limit=0`;
     try {
       const respuestaAuditoria = await lastValueFrom(
         this.httpService.get(urlAuditoria),
       );
-
       const respuestaActividades = await lastValueFrom(
         this.httpService.get(urlActividades),
       );
-
       return {
         auditoria: respuestaAuditoria.data.Data,
         actividadesAuditoria: respuestaActividades.data.Data,
@@ -55,7 +58,7 @@ export class PlantillaPlanTrabajoService {
     ]);
     const actividades = this.organizarActividades(data.actividadesAuditoria);
     const infoParaPlantilla = {
-      plantilla_id: '675214b4e11c6cfdd818c336',
+      plantilla_id: PLANTILLAS.PROGRAMA_TRABAJO,
       data: {
         recursosTecnologicos: auditoria.rec_tecnologico,
         recursosHumanos: auditoria.rec_humano,
@@ -87,8 +90,7 @@ export class PlantillaPlanTrabajoService {
   }
 
   private async traerParametros(idParam: string) {
-    const apiUrl = `${environment.PARAMETROS_SERVICE}`;
-    const url = `${apiUrl}/parametro?query=Id:${idParam}&fields=Nombre`;
+    const url = `${PARAMETROS_SERVICE}/parametro?query=Id:${idParam}&fields=Nombre`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data.Data[0];

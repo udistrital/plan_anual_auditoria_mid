@@ -1,25 +1,22 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
 import { environment } from 'src/config/configuration';
 
+const { PLAN_AUDITORIA_CRUD_SERVICE } = environment;
+
 @Injectable()
 export class ActividadService {
-  // private medio: any[] = [];
   private medio: { Id: number; Nombre: string }[] = [
     { Id: 1, Nombre: 'Digital' },
     { Id: 2, Nombre: 'Fisico' },
     { Id: 3, Nombre: 'Otro' },
   ];
-  constructor(
-    private readonly httpService: HttpService,
-    private readonly configService: ConfigService,
-  ) {}
+
+  constructor(private readonly httpService: HttpService) {}
 
   async getAll(queryParams: any) {
     const data = await this.traerDataCrud(null, queryParams);
-
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
     }
@@ -47,25 +44,8 @@ export class ActividadService {
     }
   }
 
-  private async traerParametros(idParam: string) {
-    const apiUrl = `${environment.PARAMETROS_SERVICE}`;
-    const url = `${apiUrl}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre&limit=0`;
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data.Data;
-    } catch (error) {
-      // Maneja los errores si la solicitud falla
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
   private async traerDataCrud(id: string | null, queryParams: any) {
-    const apiUrl = `${environment.PLAN_AUDITORIA_CRUD_SERVICE}`;
-    let url = `${apiUrl}actividad/`;
-
+    let url = `${PLAN_AUDITORIA_CRUD_SERVICE}actividad/`;
     if (id != null && id != undefined) {
       url = url + `${id}`;
     }
@@ -121,7 +101,6 @@ export class ActividadService {
         element[nuevoCampo] = null;
       }
     }
-
     return element;
   }
 }

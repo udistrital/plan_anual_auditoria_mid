@@ -22,7 +22,7 @@ export class PlanEstadoController {
   })
   @ApiResponse({ status: 200, description: 'Lista obtenida con éxito.' })
   @ApiResponse({ status: 404, description: 'No se encontraron estados.' })
-  async getAll(@Res() res, @Query() queryParams) {
+  async getAll(@Res() res: any, @Query() queryParams: any) {
     try {
       const data = await this.planEstadoService.getAll(queryParams);
       res.status(HttpStatus.OK).json(data);

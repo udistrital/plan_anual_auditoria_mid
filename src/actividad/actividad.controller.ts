@@ -11,7 +11,7 @@ import { ActividadService } from './actividad.service';
 @ApiTags('Actividad')
 @Controller('actividad')
 export class ActividadController {
-  constructor(private readonly auditoriaService: ActividadService) {}
+  constructor(private readonly actividadService: ActividadService) {}
 
   @Get()
   @ApiOperation({ summary: 'Obtener todas las actividades' })
@@ -22,9 +22,9 @@ export class ActividadController {
     required: false,
     description: 'Filtros opcionales.',
   })
-  async getAll(@Res() res, @Query() queryParams) {
+  async getAll(@Res() res: any, @Query() queryParams: any) {
     try {
-      const data = await this.auditoriaService.getAll(queryParams);
+      const data = await this.actividadService.getAll(queryParams);
       res.status(HttpStatus.OK).json(data);
     } catch (error) {
       res.status(HttpStatus.NOT_FOUND).json({
@@ -43,6 +43,6 @@ export class ActividadController {
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No encontrada.' })
   @ApiParam({ name: 'id', required: true, description: 'ID de la actividad.' })
   async getById(@Param('id') id: string) {
-    return await this.auditoriaService.getOne(id);
+    return await this.actividadService.getOne(id);
   }
 }

@@ -28,26 +28,23 @@ export class CargueMasivoController {
           description: 'Archivo en formato Base64.',
         },
         complemento: { type: 'object', description: 'Datos complementarios.' },
-        tipoCarga: { type: 'string', description: 'Tipo de carga.' },
       },
-      required: ['base64data', 'complemento', 'tipoCarga'],
+      required: ['base64data', 'complemento'],
     },
   })
   @ApiResponse({ status: 201, description: 'Carga masiva exitosa.' })
   @ApiResponse({ status: 400, description: 'Datos inválidos.' })
   @ApiResponse({ status: 500, description: 'Error interno.' })
   async cargueMasivo(@Body() cargaDatos: any): Promise<any> {
-    try {      
-      const { base64data, complement: complemento, type_upload: tipoCarga } = cargaDatos;
+    try {
+      const { base64data, complement: complemento } = cargaDatos;
       const estructura = await this.cargueMasivoService.crearEstructura(
         base64data,
         complemento,
-        tipoCarga,
       );
-
       const response = await axios.post(this.cargueMasivoUrl, estructura);
       return response.data;
-    } catch (error) {      
+    } catch (error) {
       console.error('Error en el MID:', error);
       if (axios.isAxiosError(error) && error.response) {
         throw new HttpException(
@@ -74,9 +71,8 @@ export class CargueMasivoController {
           description: 'Archivo en formato Base64.',
         },
         complemento: { type: 'object', description: 'Datos complementarios.' },
-        tipoCarga: { type: 'string', description: 'Tipo de carga.' },
       },
-      required: ['base64data', 'complemento', 'tipoCarga'],
+      required: ['base64data', 'complemento'],
     },
   })
   @ApiResponse({ status: 201, description: 'Carga masiva exitosa.' })
@@ -84,12 +80,11 @@ export class CargueMasivoController {
   @ApiResponse({ status: 500, description: 'Error interno.' })
   async cargueMasivoActividades(@Body() cargaDatos: any): Promise<any> {
     try {
-      const { base64data, complemento, tipoCarga } = cargaDatos;
+      const { base64data, complemento } = cargaDatos;
       const estructura =
         await this.cargueMasivoService.crearEstructuraActividad(
           base64data,
           complemento,
-          tipoCarga,
         );
       const response = await axios.post(this.cargueMasivoUrl, estructura);
       return response.data;

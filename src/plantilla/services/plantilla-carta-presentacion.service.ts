@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import * as moment from 'moment';
 import 'moment/locale/es';
-import { PlantillaUtilsService } from '../utils/plantilla.utils';
+import { PlantillaUtilsService } from '../../utils/plantilla.utils';
+import { environment } from 'src/config/configuration';
 
 @Injectable()
 export class PlantillaCartaPresentacionService {
@@ -19,7 +20,7 @@ export class PlantillaCartaPresentacionService {
     const auditoria = data.auditoria;
     const fechaInicio = moment(auditoria.fecha_inicio);
     const infoParaPlantilla = {
-      plantilla_id: '6752188ddddf9a06db2a0b3c',
+      plantilla_id: environment.PLANTILLAS.CARTA_PRESENTACION,
       data: {
         ciudad: 'Bogotá D.C.',
         auditoria: auditoria.titulo,
@@ -29,7 +30,6 @@ export class PlantillaCartaPresentacionService {
         objetivo: auditoria.objetivo,
       },
     };
-
     return infoParaPlantilla;
   }
 }

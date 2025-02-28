@@ -1,11 +1,18 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import * as moment from 'moment';
 import 'moment/locale/es';
-import { PlantillaUtilsService } from '../utils/plantilla.utils';
+import { PlantillaUtilsService } from '../../utils/plantilla.utils';
 import { environment } from 'src/config/configuration';
 import { lastValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { capitalize, unirListaNombres } from 'src/utils/texto.utils';
+
+const {
+  PLAN_AUDITORIA_CRUD_SERVICE,
+  PLANTILLAS,
+  PARAMETROS_SERVICE,
+  TERCEROS_SERVICE,
+} = environment;
 
 @Injectable()
 export class PlantillaSolicitudInformacionService {
@@ -33,7 +40,7 @@ export class PlantillaSolicitudInformacionService {
       ]);
 
     const infoParaPlantilla = {
-      plantilla_id: '67521530e11c6cfdd818c338',
+      plantilla_id: PLANTILLAS.SOLICITUD_INFORMACION,
       data: {
         fecha: moment().locale('es').format('D [de] MMMM [de] YYYY'),
         oci: auditoria.consecutivo_OCI,
@@ -57,8 +64,7 @@ export class PlantillaSolicitudInformacionService {
   }
 
   private async traerParametros(idParam: string) {
-    const apiUrl = `${environment.PARAMETROS_SERVICE}`;
-    const url = `${apiUrl}/parametro?query=Id:${idParam}&fields=Nombre`;
+    const url = `${PARAMETROS_SERVICE}/parametro?query=Id:${idParam}&fields=Nombre`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data.Data[0];
@@ -102,9 +108,7 @@ export class PlantillaSolicitudInformacionService {
   }
 
   private async traerAuditores(auditoriaId: string) {
-    const apiUrl = `${environment.PLAN_AUDITORIA_CRUD_SERVICE}`;
-    const url = `${apiUrl}auditor?query=auditoria_id:${auditoriaId},activo:true&limit=0&fields=auditor_id`;
-
+    const url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditor?query=auditoria_id:${auditoriaId},activo:true&limit=0&fields=auditor_id`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data.Data;
@@ -117,9 +121,7 @@ export class PlantillaSolicitudInformacionService {
   }
 
   private async traerTercero(terceroId: number) {
-    const apiUrl = `${environment.TERCEROS_SERVICE}`;
-    const url = `${apiUrl}/tercero/${terceroId}`;
-
+    const url = `${TERCEROS_SERVICE}/tercero/${terceroId}`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data;

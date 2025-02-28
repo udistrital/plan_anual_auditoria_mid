@@ -14,16 +14,15 @@ export class PlantillaDto {
   diciembre?: string;
 }
 
-
 export class jsonPlantillaDto {
-    plantilla_id: string;
-    data: {
-      codigo: string;
-      proceso: string;
-      objetivo: string;
-      alcance: string;
-      criterios: string;
-      recursos: string;
-      items: PlantillaDto[];
-    };
+  plantilla_id: string;
+  data: {
+    codigo: string;
+    proceso: string;
+    objetivo: string;
+    alcance: string;
+    criterios: string;
+    recursos: string;
+    items: PlantillaDto[];
+  };
 }

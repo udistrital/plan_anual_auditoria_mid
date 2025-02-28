@@ -152,13 +152,9 @@ paths:
                 complemento:
                   type: object
                   description: Datos complementarios.
-                tipoCarga:
-                  type: string
-                  description: Tipo de carga.
               required:
                 - base64data
                 - complemento
-                - tipoCarga
       responses:
         '201':
           description: Carga masiva exitosa.
@@ -187,13 +183,9 @@ paths:
                 complemento:
                   type: object
                   description: Datos complementarios.
-                tipoCarga:
-                  type: string
-                  description: Tipo de carga.
               required:
                 - base64data
                 - complemento
-                - tipoCarga
       responses:
         '201':
           description: Carga masiva exitosa.
