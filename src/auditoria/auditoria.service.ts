@@ -29,33 +29,20 @@ export class AuditoriaService {
   ) {}
 
   async getAll(queryParams: any) {
-    const queryParamsCopia = { ...queryParams };
-    let auditores: any;
-
-    const data = await this.traerDataCrud(null, queryParamsCopia);
+    const data = await this.traerDataCrud(null, queryParams);
     await Promise.all(
       data.Data.map(async (auditoria: any) => {
-        const estado = await this.getEstadoAuditoria(auditoria._id);
-        if (estado && estado.actual) {
+        const [estado, auditores] = await Promise.all([
+          this.getEstadoAuditoria(auditoria._id),
+          this.asociarAuditores(auditoria._id),
+        ]);
+
+        if (estado?.actual) {
           auditoria.estado = estado;
         }
-      })
+        auditoria.auditores = auditores || [];
+      }),
     );
-
-    if ('auditores' in queryParamsCopia) {
-      delete queryParamsCopia.auditores;
-    }
-
-    if ('auditores' in queryParams) {
-      for (const item of data.Data) {
-        auditores = await this.asociarAuditores(item._id);
-        if (auditores) {
-          item.auditores = auditores;
-        } else {
-          item.auditores = [];
-        }
-      }
-    }
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
     }
@@ -158,7 +145,7 @@ export class AuditoriaService {
       }
 
       if ('tipo_id' in firstElement) {
-        let param = await this.traerParametros(TIPO_PARAMETRO.CRONOGRAMA);
+        let param = await this.traerParametros(TIPO_PARAMETRO.TIPO_PROCESO);
         this.tipos.push(...param);
         validacion = true;
       }
@@ -170,13 +157,15 @@ export class AuditoriaService {
       }
 
       if ('lider_id' in firstElement) {
-        let param = await this.traerParametros(TIPO_PARAMETRO.CRONOGRAMA);
+        let param = await this.traerParametros(TIPO_PARAMETRO.CARGO_LIDER);
         this.lideres.push(...param);
         validacion = true;
       }
 
       if ('responsable_id' in firstElement) {
-        let param = await this.traerParametros(TIPO_PARAMETRO.CRONOGRAMA);
+        let param = await this.traerParametros(
+          TIPO_PARAMETRO.CARGO_RESPONSABLE,
+        );
         this.responsables.push(...param);
         validacion = true;
       }
