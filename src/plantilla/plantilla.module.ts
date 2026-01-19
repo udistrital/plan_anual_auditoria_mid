@@ -6,6 +6,7 @@ import { PlantillaPlanTrabajoService } from './services/plantilla-plan-trabajo.s
 import { PlantillaUtilsService } from '../utils/plantilla.utils';
 import { PlantillaSolicitudInformacionService } from './services/plantilla-solicitud-informacion.service';
 import { PlantillaCartaPresentacionService } from './services/plantilla-carta-presentacion.service';
+import { PlantillaProgramaTrabajoService } from './services/plantilla-programa-trabajo.service';
 
 @Module({
   imports: [HttpModule],
@@ -16,6 +17,7 @@ import { PlantillaCartaPresentacionService } from './services/plantilla-carta-pr
     PlantillaSolicitudInformacionService,
     PlantillaPlanTrabajoService,
     PlantillaUtilsService,
+    PlantillaProgramaTrabajoService,
   ],
 })
 export class PlantillaModule {}
