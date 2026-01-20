@@ -39,6 +39,7 @@ export class AuditoriaService {
 
         if (estado?.actual) {
           auditoria.estado = estado;
+          auditoria.estado_id = estado.estado_id;
         }
         auditoria.auditores = auditores || [];
       }),
