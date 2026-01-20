@@ -141,6 +141,8 @@ export class AuditoriaService {
       }
 
       if ('estado_id' in firstElement) {
+        let param = await this.traerParametros(TIPO_PARAMETRO.ESTADOS);
+        this.estados.push(...param);
         validacion = true;
       }
 
