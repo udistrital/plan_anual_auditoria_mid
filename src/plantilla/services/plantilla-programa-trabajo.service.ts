@@ -40,15 +40,11 @@ export class PlantillaProgramaTrabajoService {
             this.obtenerNombresAuditores(auditoria._id)
         ]);
 
+        const actividadesOrganizadas = this.organizarActividades(actividades, grupoAuditor);
         const infoParaPlantilla = {
             plantilla_id: PLANTILLAS.PROGRAMA_TRABAJO,
             data: {
-                items: actividades.map((dataActividad) => ({
-                    actividad: dataActividad.titulo,
-                    auditor: grupoAuditor,
-                    fechaInicial: moment(dataActividad.fecha_inicio).format('YYYY-MM-DD'),
-                    fechaFinal: moment(dataActividad.fecha_fin).format('YYYY-MM-DD')
-                })),
+                actividades: actividadesOrganizadas,
                 recursosTecnologicos: auditoria.rec_tecnologico,
                 recursosHumanos: auditoria.rec_humano,
                 recursosMateriales: auditoria.rec_fisico,
@@ -85,6 +81,15 @@ export class PlantillaProgramaTrabajoService {
                 error,
             );
         }
+    }
+
+    private organizarActividades(actividades: any[], grupoAuditor: string) {
+        return actividades.map((dataActividad) => ({
+            actividad: dataActividad.titulo,
+            auditor: grupoAuditor,
+            fechaInicial: moment(dataActividad.fecha_inicio).format('YYYY-MM-DD'),
+            fechaFinal: moment(dataActividad.fecha_fin).format('YYYY-MM-DD')
+        }))
     }
 
     private async traerParametros(idParam: string) {
