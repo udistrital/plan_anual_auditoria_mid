@@ -39,6 +39,7 @@ export class AuditoriaService {
 
         if (estado?.actual) {
           auditoria.estado = estado;
+          auditoria.estado_id = estado.estado_id;
         }
         auditoria.auditores = auditores || [];
       }),
@@ -141,6 +142,8 @@ export class AuditoriaService {
       }
 
       if ('estado_id' in firstElement) {
+        let param = await this.traerParametros(TIPO_PARAMETRO.ESTADOS);
+        this.estados.push(...param);
         validacion = true;
       }
 
