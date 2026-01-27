@@ -84,11 +84,38 @@ export class AuditoriaService {
       // Ordenar las auditorías activas según el campo "auditorias" del plan
       data.Data = this.ordenarAuditorias(auditoriasActivas, auditoriasOrden);
 
+      // Reemplazar campos ANTES de aplicar ordenamiento personalizado
       if (await this.identificarCampo(data)) {
         this.reemplazarCampos(data);
       }
+
+      // Aplicar ordenamiento adicional si se especifica
+      const { orderBy, orderDirection } = queryParams;
+      if (orderBy) {
+        data.Data = this.aplicarOrdenamiento(data.Data, orderBy, orderDirection);
+      }
     }
     return data;
+  }
+
+  private aplicarOrdenamiento(auditorias: any[], orderBy: string, orderDirection: string = 'ASC') {
+    return auditorias.sort((a, b) => {
+      let valorA, valorB;
+
+      if (orderBy === 'tipo_evaluacion') {
+        valorA = (a.tipo_evaluacion_nombre || '').toLowerCase();
+        valorB = (b.tipo_evaluacion_nombre || '').toLowerCase();
+      } else if (orderBy === 'titulo') {
+        valorA = (a.titulo || '').toLowerCase();
+        valorB = (b.titulo || '').toLowerCase();
+      } else {
+        return 0;
+      }
+
+      if (valorA < valorB) return orderDirection === 'ASC' ? -1 : 1;
+      if (valorA > valorB) return orderDirection === 'ASC' ? 1 : -1;
+      return 0;
+    });
   }
 
   private async obtenerPlanPorId(planId: string) {
