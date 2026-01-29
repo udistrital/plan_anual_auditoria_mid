@@ -33,7 +33,7 @@ export class AuditoriaService {
     await Promise.all(
       data.Data.map(async (auditoria: any) => {
         const [estado, auditores] = await Promise.all([
-          this.getEstadoAuditoria(auditoria._id),
+          this.getEstadoProgramaAuditoria(auditoria._id),
           this.asociarAuditores(auditoria._id),
         ]);
 
@@ -218,8 +218,8 @@ export class AuditoriaService {
     }
   }
 
-  private async getEstadoAuditoria(auditoriaId: string) {
-    const url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria-estado?query=auditoria_id:${auditoriaId},actual:true`;
+  private async getEstadoProgramaAuditoria(auditoriaId: string) {
+    const url = `${PLAN_AUDITORIA_CRUD_SERVICE}programa-estado?query=auditoria_id:${auditoriaId},actual:true`;
     try {
       const { data } = await lastValueFrom(this.httpService.get(url));
       if (data?.Data?.length > 0) {
@@ -228,7 +228,7 @@ export class AuditoriaService {
       return null;
     } catch (error) {
       throw new HttpException(
-        'Error al obtener los datos del estado',
+        'Error al obtener los datos del estado del programa de auditoría',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
