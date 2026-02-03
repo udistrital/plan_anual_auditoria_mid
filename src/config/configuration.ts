@@ -53,4 +53,15 @@ export const environment = {
     APROBADO_SECRETARIO_ID: 6794,
     RECHAZADO: 6806,
   },
+
+  ESTADOS_INFORME_AUDITORIA_PRELIMINAR: [
+    7069,
+    7070,
+    7071,
+    7072,
+    7073,
+    7074,
+    7075,
+    7076
+  ]
 };

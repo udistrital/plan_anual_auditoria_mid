@@ -288,7 +288,8 @@ paths:
           in: path
           description: >-
             Tipo de la plantilla (ej: plan-trabajo, solicitud-informacion,
-            carta-presentacion)
+            carta-presentacion, programa-trabajo, informe-seguimiento,
+            informe-auditoria)
           schema:
             type: string
         - name: idAuditoria
