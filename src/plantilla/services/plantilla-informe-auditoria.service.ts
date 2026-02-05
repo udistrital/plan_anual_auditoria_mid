@@ -10,7 +10,9 @@ const {
     PARAMETROS_SERVICE,
     TERCEROS_SERVICE,
     TIPO_EVALUACION,
-    ESTADOS_INFORME_AUDITORIA_PRELIMINAR
+    ESTADOS_INFORME_AUDITORIA_PRELIMINAR,
+    CORE_AMAZON_CRUD_SERVICE,
+    ID_DEPENDENCIA_OCI
 } = environment;
 
 @Injectable()
@@ -32,10 +34,13 @@ export class PlantillaInformeAuditoriaService {
             const temas = await this.obtenerTemasInforme(informe._id);
             const temasReestructurados = await this.reestructurarTemas(temas);
             const [anio, mes, dia] = informe.fecha_emision.split('T')[0].split('-');
-            const [tituloInforme, lider, responsable] = await Promise.all([
-                this.generarTituloInforme(auditoria._id, auditoria.tipo_evaluacion_id),
+            const [tituloInforme, macroproceso, lider, responsable, jefeOci, auditorResponsable] = await Promise.all([
+                this.generarTituloInforme(auditoria._id, auditoria.tipo_evaluacion_id, auditoria.titulo),
+                this.traerParametros(auditoria.macroproceso),
                 this.traerParametros(auditoria.lider_id),
                 this.traerParametros(auditoria.responsable_id),
+                this.obtenerJefeOci(),
+                this.obtenerAuditorResponsable(auditoria._id)
             ]);
 
             const infoParaPlantilla = {
@@ -47,7 +52,7 @@ export class PlantillaInformeAuditoriaService {
                 },
                 informe: {
                     titulo: tituloInforme,
-                    dependencia: auditoria.macroproceso,
+                    dependencia: macroproceso.Nombre,
                     lider: lider.Nombre,
                     responsable: responsable.Nombre,
                     objetivo: auditoria.objetivo,
@@ -60,9 +65,9 @@ export class PlantillaInformeAuditoriaService {
                 informe_final: informe.informe_final || null,
                 observaciones_conclusiones: informe.observaciones_conclusiones || null,
                 notas: informe.notas || null,
-                
+                jefe_oci: jefeOci || "No se encontró el jefe de la Oficina Asesora de Control Interno",
+                auditor_responsable: auditorResponsable
             }
-            
             
         } catch (error) {
             throw new HttpException(
@@ -103,15 +108,16 @@ export class PlantillaInformeAuditoriaService {
         }
     }
 
-    private async generarTituloInforme(idAuditoria: string, tipo_evaluacion_id: number) {
+    private async generarTituloInforme(idAuditoria: string, tipo_evaluacion_id: number, auditoriaTitulo: string) {
         let titulo = "";
 
         if (tipo_evaluacion_id == TIPO_EVALUACION.AUDITORIA_INTERNA) {
-            titulo += "Auditoria";
+            titulo += "Auditoria Interna: ";
         } else {
-            titulo += "Auditoria de Seguimiento"
+            titulo += "Auditoria de Seguimiento: "
         }
 
+        titulo += auditoriaTitulo;
         const estado_auditoria_id = await this.consultarEstadoAuditoria(idAuditoria);
 
         if (estado_auditoria_id in ESTADOS_INFORME_AUDITORIA_PRELIMINAR) {
@@ -156,6 +162,79 @@ export class PlantillaInformeAuditoriaService {
         } catch (error) {
             throw new HttpException(
                 'Error al obtener los datos del servicio externo',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    private async obtenerAuditorResponsable(auditorId: string): Promise<string> {
+        const auditores = await this.obtenerAuditores(auditorId);
+        switch (auditores.length) {
+            case 0:
+                return 'Sin auditor asignado.';
+            case 1:
+                const tercero = await this.obtenerTercero(auditores[0].auditor_id);
+                return tercero.NombreCompleto;
+            default:
+                const auditorLider = auditores.find(a => a.auditor_lider == true);
+                if (auditorLider) {
+                    const tercero = await this.obtenerTercero(auditorLider.auditor_id);
+                    return tercero.NombreCompleto;
+                } else {
+                    const tercero = await this.obtenerTercero(auditores[0].auditor_id);
+                    return tercero.NombreCompleto;
+                }
+        }
+    }
+
+    private async obtenerAuditores(auditoriaId: string) {
+        const url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditor?query=auditoria_id:${auditoriaId},activo:true&limit=0`;
+        try {
+            const response = await lastValueFrom(this.httpService.get(url));
+            return response.data.Data;
+        } catch (error) {
+            throw new HttpException(
+                'Error al obtener los datos de terceros',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    private async obtenerTercero(terceroId: string) {
+        const url = `${TERCEROS_SERVICE}/tercero/${terceroId}`;
+        try {
+            const response = await lastValueFrom(this.httpService.get(url));
+            return response.data;
+        } catch (error) {
+            throw new HttpException(
+                'Error al obtener los datos de terceros',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    private async obtenerTerceroPorNumeroIdentificacion(numero: string) {
+        const url = `${TERCEROS_SERVICE}datos_identificacion?query=Numero:${numero}`;
+        try {
+            const response = await lastValueFrom(this.httpService.get(url));
+            return response.data;
+        } catch (error) {
+            throw new HttpException(
+                'Error al obtener los datos de terceros',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    private async obtenerJefeOci() {
+        const url = `${CORE_AMAZON_CRUD_SERVICE}jefe_dependencia/?query=DependenciaId:${ID_DEPENDENCIA_OCI}&limit=-1&query=FechaInicio__lte%3A2026-02-04%2CFechaFin__gte%3A2026-02-04&order=desc&sortby=FechaFin`;
+        try {
+            const response = await lastValueFrom(this.httpService.get(url));
+            const jefe = await this.obtenerTerceroPorNumeroIdentificacion(response.data[0].TerceroId);
+            return jefe.NombreCompleto;
+        } catch (error) {
+            throw new HttpException(
+                'Error al obtener los datos de terceros',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
         }
