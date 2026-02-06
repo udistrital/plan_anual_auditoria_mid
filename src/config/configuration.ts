@@ -16,7 +16,7 @@ export const environment = {
   TIPO_PARAMETRO: {
     VIGENCIA: 121,
     TIPO_EVALUACION: 136,
-    ESTADOS: 138,
+    ESTADOS: 159,
     CRONOGRAMA: 139,
     TIPO_PROCESO: 140,
     CARGO_LIDER: 150,
