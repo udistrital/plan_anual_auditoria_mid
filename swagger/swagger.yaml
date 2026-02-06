@@ -67,6 +67,23 @@ paths:
       summary: Obtener auditorías ordenadas
       tags: &ref_1
         - Auditoria
+  /auditoria/auditor/{personaId}:
+    get:
+      operationId: AuditoriaController_getByAuditor
+      parameters:
+        - name: personaId
+          required: true
+          in: path
+          description: ID del auditor.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Auditorías obtenidas.
+        '404':
+          description: Sin resultados.
+      summary: Obtener auditorías por auditor
+      tags: *ref_1
   /auditoria:
     get:
       operationId: AuditoriaController_getAll
