@@ -36,7 +36,7 @@ export class CargueMasivoService {
     return {
       base64data,
       service: PLAN_AUDITORIA_CRUD_SERVICE,
-      endpoint: 'auditoria',
+      endpoint: 'auditoria-gestion',
       complement: complemento,
       structure: {
         titulo: { file_name_column: 'Auditoría', required: true },
