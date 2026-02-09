@@ -52,20 +52,42 @@ export class AuditoriaService {
 
   async getByAuditor(personaId: string, queryParams: any) {
     const data = await this.traerDataCrudByAuditor(personaId, queryParams);
-    await Promise.all(
-      data.Data.map(async (auditoria: any) => {
-        const [estado, auditores] = await Promise.all([
-          this.getEstadoAuditoria(auditoria._id),
-          this.asociarAuditores(auditoria._id),
-        ]);
-
-        if (estado?.actual) {
+    
+    // Filtrar por estado si se proporciona
+    if (queryParams.estado_id) {
+      const estadoId = parseInt(queryParams.estado_id);
+      const auditoriasConEstado = [];
+      
+      for (const auditoria of data.Data) {
+        const estado = await this.getEstadoAuditoria(auditoria._id);
+        if (estado?.estado_id === estadoId) {
           auditoria.estado = estado;
           auditoria.estado_id = estado.estado_id;
+          const auditores = await this.asociarAuditores(auditoria._id);
+          auditoria.auditores = auditores || [];
+          auditoriasConEstado.push(auditoria);
         }
-        auditoria.auditores = auditores || [];
-      }),
-    );
+      }
+      
+      data.Data = auditoriasConEstado;
+      data.MetaData.Count = auditoriasConEstado.length;
+    } else {
+      await Promise.all(
+        data.Data.map(async (auditoria: any) => {
+          const [estado, auditores] = await Promise.all([
+            this.getEstadoAuditoria(auditoria._id),
+            this.asociarAuditores(auditoria._id),
+          ]);
+
+          if (estado?.actual) {
+            auditoria.estado = estado;
+            auditoria.estado_id = estado.estado_id;
+          }
+          auditoria.auditores = auditores || [];
+        }),
+      );
+    }
+    
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
     }
