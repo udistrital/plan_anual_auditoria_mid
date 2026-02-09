@@ -1,10 +1,10 @@
 export const environment = {
-  PARAMETROS_SERVICE: 'http://pruebasapi.intranetoas.udistrital.edu.co:8510/v1/',
-  PLAN_AUDITORIA_MID_PORT: '8081',
-  PLAN_AUDITORIA_CRUD_SERVICE: 'http://localhost:8080/', //'http://pruebasapi.intranetoas.udistrital.edu.co/plan_anual_auditoria_crud/', //'https://flustrated-hamfistedly-leatrice.ngrok-free.dev/', 
-  PLANTILLAS_MID_SERVICE: 'http://pruebasapi.intranetoas.udistrital.edu.co:8570/',
-  CARGUE_MASIVO_SERVERLESS_MID: 'https://x37hi44n25.execute-api.us-east-1.amazonaws.com/Prod/',//http://localhost:3000/',
-  TERCEROS_SERVICE: 'http://pruebasapi.intranetoas.udistrital.edu.co:8121/v1/',
+  PARAMETROS_SERVICE: process.env.PARAMETROS_SERVICE,
+  PLAN_AUDITORIA_MID_PORT: process.env.PLAN_AUDITORIA_MID_PORT,
+  PLAN_AUDITORIA_CRUD_SERVICE: process.env.PLAN_AUDITORIA_CRUD_SERVICE,
+  PLANTILLAS_MID_SERVICE: process.env.PLANTILLAS_MID_SERVICE,
+  CARGUE_MASIVO_SERVERLESS_MID: process.env.CARGUE_MASIVO_SERVERLESS_MID,
+  TERCEROS_SERVICE: process.env.TERCEROS_SERVICE,
 
   PLANTILLAS: {
     CARTA_PRESENTACION: '6752188ddddf9a06db2a0b3c',
