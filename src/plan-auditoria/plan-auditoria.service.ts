@@ -59,7 +59,7 @@ export class PlanAuditoriaService {
       if ('estado' in firstElement && firstElement.estado !== null) {
         const estadoId = firstElement.estado.estado_id;
         if (estadoId) {
-          let paramEstado = await this.traerParametros(TIPO_PARAMETRO.ESTADOS);
+          let paramEstado = await this.traerParametros(TIPO_PARAMETRO.PLAN_ESTADO);
           this.estados.push(...paramEstado);
         }
         validacion = true;
