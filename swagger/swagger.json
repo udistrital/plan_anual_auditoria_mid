@@ -446,7 +446,7 @@
             "name": "tipo",
             "required": true,
             "in": "path",
-            "description": "Tipo de la plantilla (ej: plan-trabajo, solicitud-informacion, carta-presentacion)",
+            "description": "Tipo de la plantilla (ej: plan-trabajo, solicitud-informacion, carta-presentacion, programa-trabajo, informe-seguimiento, informe-auditoria)",
             "schema": {
               "type": "string"
             }
