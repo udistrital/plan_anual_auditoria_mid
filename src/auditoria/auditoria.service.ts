@@ -14,6 +14,8 @@ export class AuditoriaService {
   private cronogramasActividad: any[] = [];
   private tipos: any[] = [];
   private macroprocesos: any[] = [];
+  private procesos: any[] = [];
+  private dependencias: any[] = [];
   private lideres: any[] = [];
   private responsables: any[] = [];
   private vigencias: any[] = [];
@@ -194,6 +196,24 @@ export class AuditoriaService {
         validacion = true;
       }
 
+      if ('macroproceso_id' in firstElement) {
+        let param = await this.traerParametros(TIPO_PARAMETRO.TIPO_PROCESO);
+        this.macroprocesos.push(...param);
+        validacion = true;
+      }
+
+      if ('proceso_id' in firstElement) {
+        let param = await this.traerParametros(TIPO_PARAMETRO.TIPO_PROCESO);
+        this.procesos.push(...param);
+        validacion = true;
+      }
+
+      if ('dependencia_id' in firstElement) {
+        let param = await this.traerParametros(TIPO_PARAMETRO.TIPO_PROCESO);
+        this.dependencias.push(...param);
+        validacion = true;
+      }
+
       if ('lider_id' in firstElement) {
         let param = await this.traerParametros(TIPO_PARAMETRO.CARGO_LIDER);
         this.lideres.push(...param);
@@ -290,6 +310,15 @@ export class AuditoriaService {
         if (element.macroproceso !== undefined) {
           this.reemplazar(this.macroprocesos, element, 'macroproceso');
         }
+        if (element.macroproceso_id !== undefined) {
+          this.reemplazar(this.macroprocesos, element, 'macroproceso_id');
+        }
+        if (element.proceso_id !== undefined) {
+          this.reemplazar(this.procesos, element, 'proceso_id');
+        }
+        if (element.dependencia_id !== undefined) {
+          this.reemplazar(this.dependencias, element, 'dependencia_id');
+        }
         if (element.lider_id !== undefined) {
           this.reemplazar(this.lideres, element, 'lider_id');
         }
@@ -319,6 +348,15 @@ export class AuditoriaService {
       }
       if (data.Data.macroproceso !== undefined) {
         this.reemplazar(this.macroprocesos, data.Data, 'macroproceso');
+      }
+      if (data.Data.macroproceso_id !== undefined) {
+        this.reemplazar(this.macroprocesos, data.Data, 'macroproceso_id');
+      }
+      if (data.Data.proceso_id !== undefined) {
+        this.reemplazar(this.procesos, data.Data, 'proceso_id');
+      }
+      if (data.Data.dependencia_id !== undefined) {
+        this.reemplazar(this.dependencias, data.Data, 'dependencia_id');
       }
       if (data.Data.lider_id !== undefined) {
         this.reemplazar(this.lideres, data.Data, 'lider_id');
