@@ -12,7 +12,8 @@ const {
     TIPO_EVALUACION,
     ESTADOS_INFORME_AUDITORIA_PRELIMINAR,
     CORE_AMAZON_CRUD_SERVICE,
-    ID_DEPENDENCIA_OCI
+    ID_DEPENDENCIA_OCI,
+    ID_CARGO_OCI
 } = environment;
 
 @Injectable()
@@ -229,11 +230,10 @@ export class PlantillaInformeSeguimientoService {
     }
 
     private async obtenerJefeOci() {
-        const url = `${CORE_AMAZON_CRUD_SERVICE}jefe_dependencia/?query=DependenciaId:${ID_DEPENDENCIA_OCI}&limit=-1&query=FechaInicio__lte%3A2026-02-04%2CFechaFin__gte%3A2026-02-04&order=desc&sortby=FechaFin`;
+        const url = `${TERCEROS_SERVICE}vinculacion?query=DependenciaId:${ID_DEPENDENCIA_OCI},CargoId:${ID_CARGO_OCI},Activo:true`;
         try {
             const response = await lastValueFrom(this.httpService.get(url));
-            const jefe = await this.obtenerTerceroPorNumeroIdentificacion(response.data[0].TerceroId);
-            return jefe.NombreCompleto;
+            return response.data[0].TerceroPrincipalId.NombreCompleto;
         } catch (error) {
             throw new HttpException(
                 'Error al obtener los datos de terceros',

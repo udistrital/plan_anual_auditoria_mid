@@ -4,7 +4,7 @@ import { PlantillaService } from './services/plantilla.service';
 import { PlantillaPlanTrabajoService } from './services/plantilla-plan-trabajo.service';
 import { PlantillaSolicitudInformacionService } from './services/plantilla-solicitud-informacion.service';
 import { PlantillaCartaPresentacionService } from './services/plantilla-carta-presentacion.service';
-import { PlantillaProgramaTrabajoService } from './services/plantilla-programa-trabajo.service';
+import { PlantillaProgramaAuditoriaService } from './services/plantilla-programa-auditoria.service';
 import { PlantillaInformeSeguimientoService } from './services/plantilla-informe-seguimiento.service';
 import { PlantillaInformeAuditoriaService } from './services/plantilla-informe-auditoria.service';
 
@@ -16,7 +16,7 @@ export class PlantillaController {
     private readonly plantillaPlanTrabajo: PlantillaPlanTrabajoService,
     private readonly plantillaSolicitudInformacion: PlantillaSolicitudInformacionService,
     private readonly plantillaCartaPresentacion: PlantillaCartaPresentacionService,
-    private readonly plantillaProgramaTrabajo: PlantillaProgramaTrabajoService,
+    private readonly plantillaProgramaAuditoria: PlantillaProgramaAuditoriaService,
     private readonly plantillaInformeSeguimiento: PlantillaInformeSeguimientoService,
     private readonly plantillaInformeAuditoria: PlantillaInformeAuditoriaService,
   ) {}
@@ -52,8 +52,8 @@ export class PlantillaController {
         return this.plantillaSolicitudInformacion.get(id);
       case 'carta-presentacion':
         return this.plantillaCartaPresentacion.get(id);
-      case 'programa-trabajo':
-        return this.plantillaProgramaTrabajo.get(id);
+      case 'programa-auditoria':
+        return this.plantillaProgramaAuditoria.get(id);
       case 'informe-seguimiento':
         return this.plantillaInformeSeguimiento.get(id);
       case 'informe-auditoria':

@@ -5,7 +5,7 @@ import { environment } from 'src/config/configuration';
 import { AuditorService } from '../auditor/auditor.service';
 import { unirListaNombresConComas } from 'src/utils/texto.utils';
 
-const { PLAN_AUDITORIA_CRUD_SERVICE, PARAMETROS_SERVICE, TIPO_PARAMETRO } =
+const { PLAN_AUDITORIA_CRUD_SERVICE, PARAMETROS_SERVICE, TIPO_PARAMETRO, OIKOS_SERVICE } =
   environment;
 
 @Injectable()
@@ -197,19 +197,19 @@ export class AuditoriaService {
       }
 
       if ('macroproceso_id' in firstElement) {
-        let param = await this.traerParametros(TIPO_PARAMETRO.TIPO_PROCESO);
+        let param = await this.traerParametrosDirecto(firstElement.macroproceso_id);
         this.macroprocesos.push(...param);
         validacion = true;
       }
 
       if ('proceso_id' in firstElement) {
-        let param = await this.traerParametros(TIPO_PARAMETRO.TIPO_PROCESO);
+        let param = await this.traerParametrosDirecto(firstElement.proceso_id);
         this.procesos.push(...param);
         validacion = true;
       }
 
       if ('dependencia_id' in firstElement) {
-        let param = await this.traerParametros(TIPO_PARAMETRO.TIPO_PROCESO);
+        let param = await this.obtenerDependencia(firstElement.dependencia_id);
         this.dependencias.push(...param);
         validacion = true;
       }
@@ -252,6 +252,33 @@ export class AuditoriaService {
       );
     }
   }
+
+  private async traerParametrosDirecto(idParam: string) {
+    const url = `${PARAMETROS_SERVICE}/parametro?query=Id:${idParam}&fields=Id,Nombre&limit=0`;
+    try {
+      const response = await lastValueFrom(this.httpService.get(url));
+      return response.data.Data;
+    } catch (error) {
+      throw new HttpException(
+        'Error al obtener los datos del servicio externo',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  private async obtenerDependencia(idDependencia: string) {
+    const url = `${OIKOS_SERVICE}/dependencia?query=Id:${idDependencia}&fields=Id,Nombre`;
+    try {
+      const response = await lastValueFrom(this.httpService.get(url));
+      return response.data;
+    } catch (error) {
+      throw new HttpException(
+        'Error al obtener los datos del servicio externo',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
 
   private async traerDataCrud(id: string | null, queryParams: any) {
     let url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria/`;
