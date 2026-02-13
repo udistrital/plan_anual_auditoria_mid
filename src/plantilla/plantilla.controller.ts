@@ -5,6 +5,8 @@ import { PlantillaPlanTrabajoService } from './services/plantilla-plan-trabajo.s
 import { PlantillaSolicitudInformacionService } from './services/plantilla-solicitud-informacion.service';
 import { PlantillaCartaPresentacionService } from './services/plantilla-carta-presentacion.service';
 import { PlantillaProgramaTrabajoService } from './services/plantilla-programa-trabajo.service';
+import { PlantillaInformeSeguimientoService } from './services/plantilla-informe-seguimiento.service';
+import { PlantillaInformeAuditoriaService } from './services/plantilla-informe-auditoria.service';
 
 @ApiTags('Plantilla')
 @Controller('plantilla')
@@ -15,6 +17,8 @@ export class PlantillaController {
     private readonly plantillaSolicitudInformacion: PlantillaSolicitudInformacionService,
     private readonly plantillaCartaPresentacion: PlantillaCartaPresentacionService,
     private readonly plantillaProgramaTrabajo: PlantillaProgramaTrabajoService,
+    private readonly plantillaInformeSeguimiento: PlantillaInformeSeguimientoService,
+    private readonly plantillaInformeAuditoria: PlantillaInformeAuditoriaService,
   ) {}
 
   @Get(':id')
@@ -32,7 +36,7 @@ export class PlantillaController {
   @ApiParam({
     name: 'tipo',
     description:
-      'Tipo de la plantilla (ej: plan-trabajo, solicitud-informacion, carta-presentacion)',
+      'Tipo de la plantilla (ej: plan-trabajo, solicitud-informacion, carta-presentacion, programa-trabajo, informe-seguimiento, informe-auditoria)',
   })
   @ApiParam({ name: 'idAuditoria', description: 'ID de la auditoría' })
   @ApiResponse({ status: 200, description: 'Plantilla generada exitosamente.' })
@@ -50,6 +54,10 @@ export class PlantillaController {
         return this.plantillaCartaPresentacion.get(id);
       case 'programa-trabajo':
         return this.plantillaProgramaTrabajo.get(id);
+      case 'informe-seguimiento':
+        return this.plantillaInformeSeguimiento.get(id);
+      case 'informe-auditoria':
+        return this.plantillaInformeAuditoria.get(id);
       default:
         throw new NotFoundException(
           `No se encontró el tipo de plantilla: ${tipo}`,

@@ -42,7 +42,7 @@ export class PlanEstadoService {
     try {
       const firstElement = Array.isArray(data.Data) ? data.Data[0] : data.Data;
       if ('estado_id' in firstElement) {
-        let param = await this.traerParametros(TIPO_PARAMETRO.ESTADOS);
+        let param = await this.traerParametros(TIPO_PARAMETRO.PLAN_ESTADO);
         this.estados.push(...param);
         validacion = true;
       }

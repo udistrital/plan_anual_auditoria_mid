@@ -121,6 +121,14 @@ export class AuditoriaService {
         (auditoria) => auditoria.activo === true,
       );
 
+      // Obtener el estado de cada auditoría activa
+      auditoriasActivas.forEach( async (auditoria: any) => {
+        const estado = await this.getEstadoAuditoria(auditoria._id);
+        if (estado?.actual) {
+          auditoria.estado_id = estado.estado_id;
+        }
+      });
+
       // Obtener el campo "auditorias" del plan
       const planData = await this.obtenerPlanPorId(planId);
       const auditoriasOrden = planData?.auditorias || [];
@@ -213,7 +221,7 @@ export class AuditoriaService {
       }
 
       if ('estado_id' in firstElement) {
-        let param = await this.traerParametros(TIPO_PARAMETRO.ESTADOS);
+        let param = await this.traerParametros(TIPO_PARAMETRO.AUDITORIA_ESTADO);
         this.estados.push(...param);
         validacion = true;
       }

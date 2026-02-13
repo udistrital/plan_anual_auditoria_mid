@@ -305,7 +305,8 @@ paths:
           in: path
           description: >-
             Tipo de la plantilla (ej: plan-trabajo, solicitud-informacion,
-            carta-presentacion)
+            carta-presentacion, programa-trabajo, informe-seguimiento,
+            informe-auditoria)
           schema:
             type: string
         - name: idAuditoria
@@ -321,6 +322,72 @@ paths:
           description: Tipo de plantilla no encontrado.
       summary: Obtener plantilla dinámica según el tipo de auditoría
       tags: *ref_6
+  /informe/{id}:
+    get:
+      description: >-
+        Retorna el informe con auditoría, estado actual, historial de estados,
+        hallazgos y temas
+      operationId: InformeController_getById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: ID del informe (MongoDB ObjectId)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Informe obtenido exitosamente con datos complementarios
+        '404':
+          description: Informe no encontrado
+      summary: Obtener informe consolidado para edición
+      tags: &ref_7
+        - Informe
+    put:
+      description: Actualiza los datos de un informe existente
+      operationId: InformeController_update
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: ID del informe
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Informe actualizado exitosamente
+        '400':
+          description: Datos de entrada inválidos
+        '404':
+          description: Informe no encontrado
+      summary: Actualizar un informe
+      tags: *ref_7
+  /informe:
+    get:
+      description: Lista informes con filtros opcionales y datos complementarios básicos
+      operationId: InformeController_getAll
+      parameters: []
+      responses:
+        '200':
+          description: Informes obtenidos exitosamente
+      summary: Obtener todos los informes
+      tags: *ref_7
+  /informe/auditoria/{auditoriaId}:
+    get:
+      description: Lista todos los informes activos de una auditoría específica
+      operationId: InformeController_getByAuditoria
+      parameters:
+        - name: auditoriaId
+          required: true
+          in: path
+          description: ID de la auditoría
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Informes de la auditoría obtenidos
+      summary: Obtener informes por auditoría
+      tags: *ref_7
 info:
   title: Plan Anual Auditoria MID
   description: API MID para la gestion de planes de auditorias, auditorias y actividades
