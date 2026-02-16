@@ -23,6 +23,8 @@ export const environment = {
     AUDITORIA_ESTADO: 159,
     CRONOGRAMA: 139,
     TIPO_PROCESO: 140,
+    MACROPROCESO: 148,
+    PROCESO: 149,
     CARGO_LIDER: 150,
     CARGO_RESPONSABLE: 151,
   },
