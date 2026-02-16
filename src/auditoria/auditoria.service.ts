@@ -413,13 +413,13 @@ export class AuditoriaService {
         if (element.estado_id !== undefined) {
           this.reemplazar(this.estados, element, 'estado_id');
         }
-        if (element.tipo_id !== undefined) {
+        if (element.macroproceso_id !== undefined) {
           this.reemplazar(this.macroprocesos, element, 'macroproceso_id');
         }
         if (element.vigencia_id !== undefined) {
           this.reemplazar(this.vigencias, element, 'vigencia_id');
         }
-        if (element.macroproceso !== undefined) {
+        if (element.proceso_id !== undefined) {
           this.reemplazar(this.procesos, element, 'proceso_id');
         }
         if (element.lider_id !== undefined) {
@@ -446,13 +446,13 @@ export class AuditoriaService {
       if (data.Data.estado_id !== undefined) {
         this.reemplazar(this.estados, data.Data, 'estado_id');
       }
-      if (data.Data.tipo_id !== undefined) {
+      if (data.Data.macroproceso_id !== undefined) {
         this.reemplazar(this.macroprocesos, data.Data, 'macroproceso_id');
       }
       if (data.Data.vigencia_id !== undefined) {
         this.reemplazar(this.vigencias, data.Data, 'vigencia_id');
       }
-      if (data.Data.macroproceso !== undefined) {
+      if (data.Data.proceso_id !== undefined) {
         this.reemplazar(this.procesos, data.Data, 'proceso_id');
       }
       if (data.Data.lider_id !== undefined) {
