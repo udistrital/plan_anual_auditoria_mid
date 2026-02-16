@@ -7,6 +7,7 @@ export const environment = {
   TERCEROS_SERVICE: process.env.TERCEROS_SERVICE,
   CORE_AMAZON_CRUD_SERVICE: process.env.CORE_AMAZON_CRUD_SERVICE,
   ID_DEPENDENCIA_OCI: process.env.ID_DEPENDENCIA_OCI,
+  OIKOS_SERVICE: process.env.OIKOS_SERVICE,
 
   PLANTILLAS: {
     CARTA_PRESENTACION: '6752188ddddf9a06db2a0b3c',
@@ -66,5 +67,10 @@ export const environment = {
     7074,
     7075,
     7076
-  ]
+  ],
+
+  CARGO: {
+    JEFE_DEPENDENCIA_ID: 312,
+    ASISTENTE_DEPENDENCIA_ID: 320
+  }
 };

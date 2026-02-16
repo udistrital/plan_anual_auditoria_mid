@@ -5,8 +5,13 @@ import { environment } from 'src/config/configuration';
 import { AuditorService } from '../auditor/auditor.service';
 import { unirListaNombresConComas } from 'src/utils/texto.utils';
 
-const { PLAN_AUDITORIA_CRUD_SERVICE, PARAMETROS_SERVICE, TIPO_PARAMETRO } =
-  environment;
+const {
+  PLAN_AUDITORIA_CRUD_SERVICE,
+  PARAMETROS_SERVICE,
+  TIPO_PARAMETRO,
+  TERCEROS_SERVICE,
+  OIKOS_SERVICE,
+} = environment;
 
 @Injectable()
 export class AuditoriaService {
@@ -17,6 +22,7 @@ export class AuditoriaService {
   private lideres: any[] = [];
   private responsables: any[] = [];
   private vigencias: any[] = [];
+  private correos: any = {};
   private estados: { Id: number; Nombre: string }[] = [
     { Id: 1, Nombre: 'Activo' },
     { Id: 2, Nombre: 'Inactivo' },
@@ -109,6 +115,52 @@ export class AuditoriaService {
       this.reemplazarCampos(data);
     }
     return data;
+  }
+
+  async getEmails(auditoria: any) {
+    const correo_lider = await this.traerCorreoTerceroVinculado(
+        auditoria?.dependencia_id,
+        environment.CARGO.JEFE_DEPENDENCIA_ID,
+      );
+
+    const correo_responsable = await this.traerCorreoTerceroVinculado(
+        auditoria?.dependencia_id,
+        environment.CARGO.ASISTENTE_DEPENDENCIA_ID,
+      );
+
+    const correo_dependencia = await this.traerCorreoDependencia(auditoria?.dependencia_id);
+    return {correo_lider: correo_lider, correo_responsable: correo_responsable, correo_dependencia: correo_dependencia};
+  }
+
+  async traerCorreoTerceroVinculado(dependenciaId: number, cargoId: number) {
+    const fechaActual = new Date("2024-03-01").toISOString().slice(0, 10);
+    const url = `${TERCEROS_SERVICE}vinculacion?query=DependenciaId:${dependenciaId},CargoId:${cargoId},` +
+    `FechaInicioVinculacion.lt:${fechaActual},FechaFinVinculacion.gt:${fechaActual}`;
+    try {
+      const response = await lastValueFrom(this.httpService.get(url));
+      const vinculacion = response.data[0];
+      return vinculacion?.TerceroPrincipalId?.UsuarioWSO2 || 'Correo no encontrado';
+    } catch (error) {
+      throw new HttpException(
+        'Error al traer el tercero vinculado',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        error
+      );
+    }
+  }
+
+  async traerCorreoDependencia(dependenciaId: number) {
+    const url = `${OIKOS_SERVICE}dependencia/${dependenciaId}`;
+    try {
+      const response = await lastValueFrom(this.httpService.get(url));
+      const dependencia = response.data;
+      return dependencia?.CorreoElectronico || 'Correo no encontrado';
+    } catch (error) {
+      throw new HttpException(
+        'Error al traer el correo de la dependencia',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   async getAuditoriasOrdenadas(queryParams: any) {
@@ -214,8 +266,7 @@ export class AuditoriaService {
 
   private async identificarCampo(data: any) {
     let validacion = false;
-    try {
-      const firstElement = Array.isArray(data.Data) ? data.Data[0] : data.Data;
+    const firstElement = Array.isArray(data.Data) ? data.Data[0] : data.Data;
 
       if (!firstElement) {
         return false;
@@ -271,10 +322,11 @@ export class AuditoriaService {
         validacion = true;
       }
 
+      if ('dependencia_id' in firstElement) {
+        this.correos = await this.getEmails(firstElement);
+        validacion = true;
+      }
       return validacion;
-    } catch (error) {
-      console.error(error);
-    }
   }
 
   private async traerParametros(idParam: number) {
@@ -400,6 +452,9 @@ export class AuditoriaService {
       }
       if (data.Data.responsable_id !== undefined) {
         this.reemplazar(this.responsables, data.Data, 'responsable_id');
+      }
+      if (data.Data.dependencia_id !== undefined) {
+        data.Data = { ...data.Data, ...this.correos };
       }
     }
     return data;
