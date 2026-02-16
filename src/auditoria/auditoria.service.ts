@@ -19,6 +19,8 @@ export class AuditoriaService {
   private cronogramasActividad: any[] = [];
   private tipos: any[] = [];
   private macroprocesos: any[] = [];
+  private procesos: any[] = [];
+  private dependencias: any[] = [];
   private lideres: any[] = [];
   private responsables: any[] = [];
   private vigencias: any[] = [];
@@ -302,6 +304,24 @@ export class AuditoriaService {
         validacion = true;
       }
 
+      if ('macroproceso_id' in firstElement) {
+        let param = await this.traerParametrosDirecto(firstElement.macroproceso_id);
+        this.macroprocesos.push(...param);
+        validacion = true;
+      }
+
+      if ('proceso_id' in firstElement) {
+        let param = await this.traerParametrosDirecto(firstElement.proceso_id);
+        this.procesos.push(...param);
+        validacion = true;
+      }
+
+      if ('dependencia_id' in firstElement) {
+        let param = await this.obtenerDependencia(firstElement.dependencia_id);
+        this.dependencias.push(...param);
+        validacion = true;
+      }
+
       if ('lider_id' in firstElement) {
         let param = await this.traerParametros(TIPO_PARAMETRO.CARGO_LIDER);
         this.lideres.push(...param);
@@ -341,6 +361,33 @@ export class AuditoriaService {
       );
     }
   }
+
+  private async traerParametrosDirecto(idParam: string) {
+    const url = `${PARAMETROS_SERVICE}/parametro?query=Id:${idParam}&fields=Id,Nombre&limit=0`;
+    try {
+      const response = await lastValueFrom(this.httpService.get(url));
+      return response.data.Data;
+    } catch (error) {
+      throw new HttpException(
+        'Error al obtener los datos del servicio externo',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  private async obtenerDependencia(idDependencia: string) {
+    const url = `${OIKOS_SERVICE}/dependencia?query=Id:${idDependencia}&fields=Id,Nombre`;
+    try {
+      const response = await lastValueFrom(this.httpService.get(url));
+      return response.data;
+    } catch (error) {
+      throw new HttpException(
+        'Error al obtener los datos del servicio externo',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
 
   private async traerDataCrud(id: string | null, queryParams: any) {
     let url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria/`;
@@ -417,6 +464,15 @@ export class AuditoriaService {
         if (element.macroproceso !== undefined) {
           this.reemplazar(this.macroprocesos, element, 'macroproceso');
         }
+        if (element.macroproceso_id !== undefined) {
+          this.reemplazar(this.macroprocesos, element, 'macroproceso_id');
+        }
+        if (element.proceso_id !== undefined) {
+          this.reemplazar(this.procesos, element, 'proceso_id');
+        }
+        if (element.dependencia_id !== undefined) {
+          this.reemplazar(this.dependencias, element, 'dependencia_id');
+        }
         if (element.lider_id !== undefined) {
           this.reemplazar(this.lideres, element, 'lider_id');
         }
@@ -446,6 +502,15 @@ export class AuditoriaService {
       }
       if (data.Data.macroproceso !== undefined) {
         this.reemplazar(this.macroprocesos, data.Data, 'macroproceso');
+      }
+      if (data.Data.macroproceso_id !== undefined) {
+        this.reemplazar(this.macroprocesos, data.Data, 'macroproceso_id');
+      }
+      if (data.Data.proceso_id !== undefined) {
+        this.reemplazar(this.procesos, data.Data, 'proceso_id');
+      }
+      if (data.Data.dependencia_id !== undefined) {
+        this.reemplazar(this.dependencias, data.Data, 'dependencia_id');
       }
       if (data.Data.lider_id !== undefined) {
         this.reemplazar(this.lideres, data.Data, 'lider_id');

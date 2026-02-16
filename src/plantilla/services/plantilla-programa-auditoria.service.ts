@@ -13,10 +13,11 @@ const {
     PLANTILLAS,
     PARAMETROS_SERVICE,
     TERCEROS_SERVICE,
+    OIKOS_SERVICE
 } = environment;
 
 @Injectable()
-export class PlantillaProgramaTrabajoService {
+export class PlantillaProgramaAuditoriaService {
     constructor(
         private readonly httpService: HttpService,
         private readonly plantillaUtils: PlantillaUtilsService,
@@ -32,9 +33,11 @@ export class PlantillaProgramaTrabajoService {
     private async organizarData(data: any) {
         try {
             const auditoria = data.auditoria;
-            const [actividades, macroproceso, cargoLider, cargoResponsable, grupoAuditor] = await Promise.all([
+            const [actividades, macroproceso, proceso, dependencia, cargoLider, cargoResponsable, grupoAuditor] = await Promise.all([
             this.obtenerActividades(auditoria._id),
-            this.traerParametros(auditoria.macroproceso),
+            this.traerParametros(auditoria.macroproceso_id),
+            this.traerParametros(auditoria.proceso_id),
+            this.obtenerDependencia(auditoria.dependencia_id),
             this.traerParametros(auditoria.lider_id),
             this.traerParametros(auditoria.responsable_id),
             this.obtenerNombresAuditores(auditoria._id)
@@ -46,16 +49,17 @@ export class PlantillaProgramaTrabajoService {
             data: {
                 actividades: actividadesOrganizadas,
                 recursosTecnologicos: auditoria.rec_tecnologico,
-                recursosHumanos: auditoria.rec_humano,
                 recursosMateriales: auditoria.rec_fisico,
                 macroproceso: macroproceso.Nombre,
+                proceso: proceso.Nombre,
+                dependencia: dependencia.Nombre,
                 lider: cargoLider.Nombre,
                 responsable: cargoResponsable.Nombre,
                 objetivos: auditoria.objetivo,
                 alcance: auditoria.alcance,
                 criterios: auditoria.criterio,
-                grupoAuditor: grupoAuditor,
-                fechaEjecucion: moment(auditoria.fecha_inicio).format('DD/MM/YYYY'),
+                equipoAuditor: grupoAuditor,
+                periodoEjecucion: moment(auditoria.fecha_inicio).format('DD/MM/YYYY') + " - " + moment(auditoria.fecha_fin).format('DD/MM/YYYY'),
             }
         };
 
@@ -69,7 +73,7 @@ export class PlantillaProgramaTrabajoService {
     }
 
     private async obtenerActividades(idAuditoria: string) {
-        let urlActividades = `${PLAN_AUDITORIA_CRUD_SERVICE}actividad?query=auditoria_id:${idAuditoria}&fields=titulo,fecha_inicio,fecha_fin&limit=0`;
+        let urlActividades = `${PLAN_AUDITORIA_CRUD_SERVICE}actividad?query=auditoria_id:${idAuditoria}&fields=titulo,fecha_inicio,fecha_fin,observacion,referencia,descripcion,folio,medio_id,carpeta&limit=0`;
         try {
             const responseActividades = await lastValueFrom(
                 this.httpService.get(urlActividades),
@@ -88,7 +92,13 @@ export class PlantillaProgramaTrabajoService {
             actividad: dataActividad.titulo,
             auditor: grupoAuditor,
             fechaInicial: moment(dataActividad.fecha_inicio).format('YYYY-MM-DD'),
-            fechaFinal: moment(dataActividad.fecha_fin).format('YYYY-MM-DD')
+            fechaFinal: moment(dataActividad.fecha_fin).format('YYYY-MM-DD'),
+            observacion: dataActividad.observacion || 'Sin observaciones',
+            referencia: dataActividad.referencia || 'Sin referencia',
+            descripcion: dataActividad.descripcion || 'Sin descripción',
+            folio: dataActividad.folio || 'No especificado',
+            medio: dataActividad.medio_id || 'No especificado',
+            carpeta: dataActividad.carpeta || 'No especificada',
         }))
     }
 
@@ -158,6 +168,19 @@ export class PlantillaProgramaTrabajoService {
         } catch (error) {
             throw new HttpException(
                 'Error al obtener los datos de terceros',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    private async obtenerDependencia(idDependencia: string) {
+        const url = `${OIKOS_SERVICE}dependencia/${idDependencia}`;
+        try {
+            const response = await lastValueFrom(this.httpService.get(url));
+            return response.data;
+        } catch (error) {
+            throw new HttpException(
+                'Error al obtener los datos de la dependencia',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
         }
