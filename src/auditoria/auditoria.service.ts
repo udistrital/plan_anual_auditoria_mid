@@ -56,6 +56,59 @@ export class AuditoriaService {
     return data;
   }
 
+  async getByAuditor(personaId: string, queryParams: any) {
+    console.log('queryParams recibidos:', queryParams);
+    // Separar estado_id de los demás parámetros
+    const { estado_id, ...crudParams } = queryParams;
+    
+    // Remover estado_id del string query si existe
+    if (crudParams.query) {
+      crudParams.query = crudParams.query
+        .split(',')
+        .filter((param: string) => !param.startsWith('estado_id:'))
+        .join(',');
+    }
+    
+    console.log('estado_id extraido:', estado_id);
+    console.log('crudParams para CRUD:', crudParams);
+    
+    const data = await this.traerDataCrudByAuditor(personaId, crudParams);
+    console.log('Data recibida del CRUD:', data);
+    
+    await Promise.all(
+      data.Data.map(async (auditoria: any) => {
+        const [estado, auditores] = await Promise.all([
+          this.getEstadoAuditoria(auditoria._id),
+          this.asociarAuditores(auditoria._id),
+        ]);
+
+        if (estado?.actual) {
+          auditoria.estado = estado;
+          auditoria.estado_id = estado.estado_id;
+        }
+        auditoria.auditores = auditores || [];
+      }),
+    );
+
+    console.log('Auditorías antes del filtro:', data.Data.map(a => ({ _id: a._id, titulo: a.titulo, estado_id: a.estado_id })));
+    console.log('Total antes del filtro:', data.Data.length);
+
+    // Filtrar por estado_id si se proporciona y no está vacío
+    if (estado_id && estado_id !== '') {
+      const estadoId = parseInt(estado_id);
+      console.log('Filtrando por estado_id:', estadoId);
+      data.Data = data.Data.filter((auditoria: any) => auditoria.estado_id === estadoId);
+      data.MetaData.Count = data.Data.length;
+      console.log('Auditorías después del filtro:', data.Data.map(a => ({ _id: a._id, titulo: a.titulo, estado_id: a.estado_id })));
+      console.log('Total después del filtro:', data.Data.length);
+    }
+    
+    if (await this.identificarCampo(data)) {
+      this.reemplazarCampos(data);
+    }
+    return data;
+  }
+
   async getOne(id: string) {
     const data = await this.traerDataCrud(id, null);
     if (await this.identificarCampo(data)) {
@@ -215,7 +268,10 @@ export class AuditoriaService {
     let validacion = false;
     const firstElement = Array.isArray(data.Data) ? data.Data[0] : data.Data;
 
-    if (firstElement) {
+      if (!firstElement) {
+        return false;
+      }
+
       if ('tipo_evaluacion_id' in firstElement) {
         let param = await this.traerParametros(TIPO_PARAMETRO.TIPO_EVALUACION);
         this.tiposEvaluacion.push(...param);
@@ -270,9 +326,7 @@ export class AuditoriaService {
         this.correos = await this.getEmails(firstElement);
         validacion = true;
       }
-    }
-    return validacion;
-
+      return validacion;
   }
 
   private async traerParametros(idParam: number) {
@@ -297,6 +351,24 @@ export class AuditoriaService {
       const queryString = new URLSearchParams(queryParams).toString();
       url += `?${queryString}`;
     }
+    try {
+      const response = await lastValueFrom(this.httpService.get(url));
+      return response.data;
+    } catch (error) {
+      throw new HttpException(
+        'Error al obtener los datos del servicio externo',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  private async traerDataCrudByAuditor(personaId: string, queryParams: any) {
+    let url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria/auditor/${personaId}`;
+    if (queryParams) {
+      const queryString = new URLSearchParams(queryParams).toString();
+      url += `?${queryString}`;
+    }
+    console.log('URL llamada al CRUD:', url);
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data;

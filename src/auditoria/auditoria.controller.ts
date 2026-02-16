@@ -43,6 +43,29 @@ export class AuditoriaController {
     }
   }
 
+  @Get('auditor/:personaId')
+  @ApiOperation({ summary: 'Obtener auditorías por auditor' })
+  @ApiParam({ name: 'personaId', required: true, description: 'ID del auditor.' })
+  @ApiResponse({ status: 200, description: 'Auditorías obtenidas.' })
+  @ApiResponse({ status: 404, description: 'Sin resultados.' })
+  async getByAuditor(
+    @Res() res: any,
+    @Param('personaId') personaId: string,
+    @Query() queryParams: any,
+  ) {
+    try {
+      const data = await this.auditoriaService.getByAuditor(personaId, queryParams);
+      res.status(HttpStatus.OK).json(data);
+    } catch (error) {
+      res.status(HttpStatus.NOT_FOUND).json({
+        Success: false,
+        Status: HttpStatus.NOT_FOUND,
+        Message: 'Error en servicio GetByAuditor: sin datos o parámetro inválido.',
+        Data: error.message,
+      });
+    }
+  }
+
   @Get()
   @ApiOperation({ summary: 'Obtener todas las auditorías' })
   @ApiQuery({
