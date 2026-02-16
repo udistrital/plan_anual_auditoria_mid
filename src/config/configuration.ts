@@ -68,5 +68,10 @@ export const environment = {
     7074,
     7075,
     7076
-  ]
+  ],
+
+  CARGO: {
+    JEFE_DEPENDENCIA_ID: 312,
+    ASISTENTE_DEPENDENCIA_ID: 320
+  }
 };

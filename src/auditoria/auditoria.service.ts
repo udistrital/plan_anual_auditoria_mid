@@ -5,8 +5,13 @@ import { environment } from 'src/config/configuration';
 import { AuditorService } from '../auditor/auditor.service';
 import { unirListaNombresConComas } from 'src/utils/texto.utils';
 
-const { PLAN_AUDITORIA_CRUD_SERVICE, PARAMETROS_SERVICE, TIPO_PARAMETRO, OIKOS_SERVICE } =
-  environment;
+const {
+  PLAN_AUDITORIA_CRUD_SERVICE,
+  PARAMETROS_SERVICE,
+  TIPO_PARAMETRO,
+  TERCEROS_SERVICE,
+  OIKOS_SERVICE,
+} = environment;
 
 @Injectable()
 export class AuditoriaService {
@@ -19,6 +24,7 @@ export class AuditoriaService {
   private lideres: any[] = [];
   private responsables: any[] = [];
   private vigencias: any[] = [];
+  private correos: any = {};
   private estados: { Id: number; Nombre: string }[] = [
     { Id: 1, Nombre: 'Activo' },
     { Id: 2, Nombre: 'Inactivo' },
@@ -52,12 +58,111 @@ export class AuditoriaService {
     return data;
   }
 
+  async getByAuditor(personaId: string, queryParams: any) {
+    console.log('queryParams recibidos:', queryParams);
+    // Separar estado_id de los demás parámetros
+    const { estado_id, ...crudParams } = queryParams;
+    
+    // Remover estado_id del string query si existe
+    if (crudParams.query) {
+      crudParams.query = crudParams.query
+        .split(',')
+        .filter((param: string) => !param.startsWith('estado_id:'))
+        .join(',');
+    }
+    
+    console.log('estado_id extraido:', estado_id);
+    console.log('crudParams para CRUD:', crudParams);
+    
+    const data = await this.traerDataCrudByAuditor(personaId, crudParams);
+    console.log('Data recibida del CRUD:', data);
+    
+    await Promise.all(
+      data.Data.map(async (auditoria: any) => {
+        const [estado, auditores] = await Promise.all([
+          this.getEstadoAuditoria(auditoria._id),
+          this.asociarAuditores(auditoria._id),
+        ]);
+
+        if (estado?.actual) {
+          auditoria.estado = estado;
+          auditoria.estado_id = estado.estado_id;
+        }
+        auditoria.auditores = auditores || [];
+      }),
+    );
+
+    console.log('Auditorías antes del filtro:', data.Data.map(a => ({ _id: a._id, titulo: a.titulo, estado_id: a.estado_id })));
+    console.log('Total antes del filtro:', data.Data.length);
+
+    // Filtrar por estado_id si se proporciona y no está vacío
+    if (estado_id && estado_id !== '') {
+      const estadoId = parseInt(estado_id);
+      console.log('Filtrando por estado_id:', estadoId);
+      data.Data = data.Data.filter((auditoria: any) => auditoria.estado_id === estadoId);
+      data.MetaData.Count = data.Data.length;
+      console.log('Auditorías después del filtro:', data.Data.map(a => ({ _id: a._id, titulo: a.titulo, estado_id: a.estado_id })));
+      console.log('Total después del filtro:', data.Data.length);
+    }
+    
+    if (await this.identificarCampo(data)) {
+      this.reemplazarCampos(data);
+    }
+    return data;
+  }
+
   async getOne(id: string) {
     const data = await this.traerDataCrud(id, null);
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
     }
     return data;
+  }
+
+  async getEmails(auditoria: any) {
+    const correo_lider = await this.traerCorreoTerceroVinculado(
+        auditoria?.dependencia_id,
+        environment.CARGO.JEFE_DEPENDENCIA_ID,
+      );
+
+    const correo_responsable = await this.traerCorreoTerceroVinculado(
+        auditoria?.dependencia_id,
+        environment.CARGO.ASISTENTE_DEPENDENCIA_ID,
+      );
+
+    const correo_dependencia = await this.traerCorreoDependencia(auditoria?.dependencia_id);
+    return {correo_lider: correo_lider, correo_responsable: correo_responsable, correo_dependencia: correo_dependencia};
+  }
+
+  async traerCorreoTerceroVinculado(dependenciaId: number, cargoId: number) {
+    const fechaActual = new Date("2024-03-01").toISOString().slice(0, 10);
+    const url = `${TERCEROS_SERVICE}vinculacion?query=DependenciaId:${dependenciaId},CargoId:${cargoId},` +
+    `FechaInicioVinculacion.lt:${fechaActual},FechaFinVinculacion.gt:${fechaActual}`;
+    try {
+      const response = await lastValueFrom(this.httpService.get(url));
+      const vinculacion = response.data[0];
+      return vinculacion?.TerceroPrincipalId?.UsuarioWSO2 || 'Correo no encontrado';
+    } catch (error) {
+      throw new HttpException(
+        'Error al traer el tercero vinculado',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        error
+      );
+    }
+  }
+
+  async traerCorreoDependencia(dependenciaId: number) {
+    const url = `${OIKOS_SERVICE}dependencia/${dependenciaId}`;
+    try {
+      const response = await lastValueFrom(this.httpService.get(url));
+      const dependencia = response.data;
+      return dependencia?.CorreoElectronico || 'Correo no encontrado';
+    } catch (error) {
+      throw new HttpException(
+        'Error al traer el correo de la dependencia',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   async getAuditoriasOrdenadas(queryParams: any) {
@@ -163,8 +268,11 @@ export class AuditoriaService {
 
   private async identificarCampo(data: any) {
     let validacion = false;
-    try {
-      const firstElement = Array.isArray(data.Data) ? data.Data[0] : data.Data;
+    const firstElement = Array.isArray(data.Data) ? data.Data[0] : data.Data;
+
+      if (!firstElement) {
+        return false;
+      }
 
       if ('tipo_evaluacion_id' in firstElement) {
         let param = await this.traerParametros(TIPO_PARAMETRO.TIPO_EVALUACION);
@@ -234,10 +342,11 @@ export class AuditoriaService {
         validacion = true;
       }
 
+      if ('dependencia_id' in firstElement) {
+        this.correos = await this.getEmails(firstElement);
+        validacion = true;
+      }
       return validacion;
-    } catch (error) {
-      console.error(error);
-    }
   }
 
   private async traerParametros(idParam: number) {
@@ -289,6 +398,24 @@ export class AuditoriaService {
       const queryString = new URLSearchParams(queryParams).toString();
       url += `?${queryString}`;
     }
+    try {
+      const response = await lastValueFrom(this.httpService.get(url));
+      return response.data;
+    } catch (error) {
+      throw new HttpException(
+        'Error al obtener los datos del servicio externo',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  private async traerDataCrudByAuditor(personaId: string, queryParams: any) {
+    let url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria/auditor/${personaId}`;
+    if (queryParams) {
+      const queryString = new URLSearchParams(queryParams).toString();
+      url += `?${queryString}`;
+    }
+    console.log('URL llamada al CRUD:', url);
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data;
@@ -390,6 +517,9 @@ export class AuditoriaService {
       }
       if (data.Data.responsable_id !== undefined) {
         this.reemplazar(this.responsables, data.Data, 'responsable_id');
+      }
+      if (data.Data.dependencia_id !== undefined) {
+        data.Data = { ...data.Data, ...this.correos };
       }
     }
     return data;

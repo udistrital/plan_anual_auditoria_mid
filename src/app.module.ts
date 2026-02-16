@@ -9,6 +9,7 @@ import { PlantillaModule } from './plantilla/plantilla.module';
 import { CargueMasivoModule } from './cargue-masivo/cargue-masivo.module';
 import { PlanEstadoModule } from './plan-estado/plan-estado.module';
 import { AuditorModule } from './auditor/auditor.module';
+import { InformeModule } from './informe/informe.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AuditorModule } from './auditor/auditor.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    InformeModule,
   ],
   controllers: [AppController],
   providers: [AppService],
