@@ -17,7 +17,6 @@ const {
 export class AuditoriaService {
   private tiposEvaluacion: any[] = [];
   private cronogramasActividad: any[] = [];
-  private tipos: any[] = [];
   private macroprocesos: any[] = [];
   private procesos: any[] = [];
   private dependencias: any[] = [];
@@ -119,25 +118,23 @@ export class AuditoriaService {
     return data;
   }
 
-  async getEmails(auditoria: any) {
+  async getEmails(dependencia_id: number) {
     const correo_lider = await this.traerCorreoTerceroVinculado(
-        auditoria?.dependencia_id,
+        dependencia_id,
         environment.CARGO.JEFE_DEPENDENCIA_ID,
       );
 
     const correo_responsable = await this.traerCorreoTerceroVinculado(
-        auditoria?.dependencia_id,
+        dependencia_id,
         environment.CARGO.ASISTENTE_DEPENDENCIA_ID,
       );
 
-    const correo_dependencia = await this.traerCorreoDependencia(auditoria?.dependencia_id);
+    const correo_dependencia = this.traerCorreoDependencia(dependencia_id);
     return {correo_lider: correo_lider, correo_responsable: correo_responsable, correo_dependencia: correo_dependencia};
   }
 
-  async traerCorreoTerceroVinculado(dependenciaId: number, cargoId: number) {
-    const fechaActual = new Date("2024-03-01").toISOString().slice(0, 10);
-    const url = `${TERCEROS_SERVICE}vinculacion?query=DependenciaId:${dependenciaId},CargoId:${cargoId},` +
-    `FechaInicioVinculacion.lt:${fechaActual},FechaFinVinculacion.gt:${fechaActual}`;
+  async traerCorreoTerceroVinculado(dependenciaId: number, cargoId: number): Promise<String> {
+    const url = `${TERCEROS_SERVICE}vinculacion?query=Activo:true,DependenciaId:${dependenciaId},CargoId:${cargoId}`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       const vinculacion = response.data[0];
@@ -151,18 +148,9 @@ export class AuditoriaService {
     }
   }
 
-  async traerCorreoDependencia(dependenciaId: number) {
-    const url = `${OIKOS_SERVICE}dependencia/${dependenciaId}`;
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      const dependencia = response.data;
-      return dependencia?.CorreoElectronico || 'Correo no encontrado';
-    } catch (error) {
-      throw new HttpException(
-        'Error al traer el correo de la dependencia',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+  traerCorreoDependencia(dependenciaId: number): String {
+    const dependencia = this.dependencias.find(dep => dep.Id === dependenciaId);
+    return dependencia ? dependencia.CorreoElectronico : 'Correo no encontrado';
   }
 
   async getAuditoriasOrdenadas(queryParams: any) {
@@ -275,61 +263,43 @@ export class AuditoriaService {
       }
 
       if ('tipo_evaluacion_id' in firstElement) {
-        let param = await this.traerParametros(TIPO_PARAMETRO.TIPO_EVALUACION);
+        const param = await this.traerParametros(TIPO_PARAMETRO.TIPO_EVALUACION);
         this.tiposEvaluacion.push(...param);
         validacion = true;
       }
 
       if ('cronograma_id' in firstElement) {
-        let param = await this.traerParametros(TIPO_PARAMETRO.CRONOGRAMA);
+        const param = await this.traerParametros(TIPO_PARAMETRO.CRONOGRAMA);
         this.cronogramasActividad.push(...param);
         validacion = true;
       }
 
       if ('estado_id' in firstElement) {
-        let param = await this.traerParametros(TIPO_PARAMETRO.AUDITORIA_ESTADO);
+        const param = await this.traerParametros(TIPO_PARAMETRO.AUDITORIA_ESTADO);
         this.estados.push(...param);
         validacion = true;
       }
 
-      if ('tipo_id' in firstElement) {
-        let param = await this.traerParametros(TIPO_PARAMETRO.TIPO_PROCESO);
-        this.tipos.push(...param);
-        validacion = true;
-      }
-
-      if ('macroproceso' in firstElement) {
-        let param = await this.traerParametros(TIPO_PARAMETRO.CRONOGRAMA);
-        this.macroprocesos.push(...param);
-        validacion = true;
-      }
-
       if ('macroproceso_id' in firstElement) {
-        let param = await this.traerParametrosDirecto(firstElement.macroproceso_id);
+        const param = await this.traerParametros(TIPO_PARAMETRO.MACROPROCESO);
         this.macroprocesos.push(...param);
         validacion = true;
       }
 
       if ('proceso_id' in firstElement) {
-        let param = await this.traerParametrosDirecto(firstElement.proceso_id);
+        const param = await this.traerParametros(TIPO_PARAMETRO.PROCESO);
         this.procesos.push(...param);
         validacion = true;
       }
 
-      if ('dependencia_id' in firstElement) {
-        let param = await this.obtenerDependencia(firstElement.dependencia_id);
-        this.dependencias.push(...param);
-        validacion = true;
-      }
-
       if ('lider_id' in firstElement) {
-        let param = await this.traerParametros(TIPO_PARAMETRO.CARGO_LIDER);
+        const param = await this.traerParametros(TIPO_PARAMETRO.CARGO_LIDER);
         this.lideres.push(...param);
         validacion = true;
       }
 
       if ('responsable_id' in firstElement) {
-        let param = await this.traerParametros(
+        const param = await this.traerParametros(
           TIPO_PARAMETRO.CARGO_RESPONSABLE,
         );
         this.responsables.push(...param);
@@ -337,13 +307,15 @@ export class AuditoriaService {
       }
 
       if ('vigencia_id' in firstElement) {
-        let param = await this.traerParametros(TIPO_PARAMETRO.VIGENCIA);
+        const param = await this.traerParametros(TIPO_PARAMETRO.VIGENCIA);
         this.vigencias.push(...param);
         validacion = true;
       }
 
       if ('dependencia_id' in firstElement) {
-        this.correos = await this.getEmails(firstElement);
+        const param = await this.traerDependencias();
+        this.dependencias.push(...param);
+        this.correos = await this.getEmails(firstElement.dependencia_id);
         validacion = true;
       }
       return validacion;
@@ -362,21 +334,8 @@ export class AuditoriaService {
     }
   }
 
-  private async traerParametrosDirecto(idParam: string) {
-    const url = `${PARAMETROS_SERVICE}/parametro?query=Id:${idParam}&fields=Id,Nombre&limit=0`;
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data.Data;
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  private async obtenerDependencia(idDependencia: string) {
-    const url = `${OIKOS_SERVICE}/dependencia?query=Id:${idDependencia}&fields=Id,Nombre`;
+  private async traerDependencias() {
+    const url = `${OIKOS_SERVICE}dependencia?query=Activo:true&fields=Id,Nombre,CorreoElectronico&limit=0`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data;
@@ -387,7 +346,6 @@ export class AuditoriaService {
       );
     }
   }
-
 
   private async traerDataCrud(id: string | null, queryParams: any) {
     let url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria/`;
@@ -455,29 +413,23 @@ export class AuditoriaService {
         if (element.estado_id !== undefined) {
           this.reemplazar(this.estados, element, 'estado_id');
         }
-        if (element.tipo_id !== undefined) {
-          this.reemplazar(this.tipos, element, 'tipo_id');
+        if (element.macroproceso_id !== undefined) {
+          this.reemplazar(this.macroprocesos, element, 'macroproceso_id');
         }
         if (element.vigencia_id !== undefined) {
           this.reemplazar(this.vigencias, element, 'vigencia_id');
         }
-        if (element.macroproceso !== undefined) {
-          this.reemplazar(this.macroprocesos, element, 'macroproceso');
-        }
-        if (element.macroproceso_id !== undefined) {
-          this.reemplazar(this.macroprocesos, element, 'macroproceso_id');
-        }
         if (element.proceso_id !== undefined) {
           this.reemplazar(this.procesos, element, 'proceso_id');
-        }
-        if (element.dependencia_id !== undefined) {
-          this.reemplazar(this.dependencias, element, 'dependencia_id');
         }
         if (element.lider_id !== undefined) {
           this.reemplazar(this.lideres, element, 'lider_id');
         }
         if (element.responsable_id !== undefined) {
           this.reemplazar(this.responsables, element, 'responsable_id');
+        }
+        if (element.dependencia_id !== undefined) {
+          this.reemplazar(this.dependencias, element, 'dependencia_id');
         }
 
         element.cronograma = this.unirCronogramaNombres(
@@ -494,23 +446,14 @@ export class AuditoriaService {
       if (data.Data.estado_id !== undefined) {
         this.reemplazar(this.estados, data.Data, 'estado_id');
       }
-      if (data.Data.tipo_id !== undefined) {
-        this.reemplazar(this.tipos, data.Data, 'tipo_id');
+      if (data.Data.macroproceso_id !== undefined) {
+        this.reemplazar(this.macroprocesos, data.Data, 'macroproceso_id');
       }
       if (data.Data.vigencia_id !== undefined) {
         this.reemplazar(this.vigencias, data.Data, 'vigencia_id');
       }
-      if (data.Data.macroproceso !== undefined) {
-        this.reemplazar(this.macroprocesos, data.Data, 'macroproceso');
-      }
-      if (data.Data.macroproceso_id !== undefined) {
-        this.reemplazar(this.macroprocesos, data.Data, 'macroproceso_id');
-      }
       if (data.Data.proceso_id !== undefined) {
         this.reemplazar(this.procesos, data.Data, 'proceso_id');
-      }
-      if (data.Data.dependencia_id !== undefined) {
-        this.reemplazar(this.dependencias, data.Data, 'dependencia_id');
       }
       if (data.Data.lider_id !== undefined) {
         this.reemplazar(this.lideres, data.Data, 'lider_id');
@@ -520,6 +463,7 @@ export class AuditoriaService {
       }
       if (data.Data.dependencia_id !== undefined) {
         data.Data = { ...data.Data, ...this.correos };
+        this.reemplazar(this.dependencias, data.Data, 'dependencia_id');
       }
     }
     return data;
