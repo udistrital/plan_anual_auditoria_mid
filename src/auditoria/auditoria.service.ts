@@ -59,23 +59,7 @@ export class AuditoriaService {
   }
 
   async getByAuditor(personaId: string, queryParams: any) {
-    console.log('queryParams recibidos:', queryParams);
-    // Separar estado_id de los demás parámetros
-    const { estado_id, ...crudParams } = queryParams;
-    
-    // Remover estado_id del string query si existe
-    if (crudParams.query) {
-      crudParams.query = crudParams.query
-        .split(',')
-        .filter((param: string) => !param.startsWith('estado_id:'))
-        .join(',');
-    }
-    
-    console.log('estado_id extraido:', estado_id);
-    console.log('crudParams para CRUD:', crudParams);
-    
-    const data = await this.traerDataCrudByAuditor(personaId, crudParams);
-    console.log('Data recibida del CRUD:', data);
+    const data = await this.traerDataCrudByAuditor(personaId, queryParams);
     
     await Promise.all(
       data.Data.map(async (auditoria: any) => {
@@ -91,19 +75,6 @@ export class AuditoriaService {
         auditoria.auditores = auditores || [];
       }),
     );
-
-    console.log('Auditorías antes del filtro:', data.Data.map(a => ({ _id: a._id, titulo: a.titulo, estado_id: a.estado_id })));
-    console.log('Total antes del filtro:', data.Data.length);
-
-    // Filtrar por estado_id si se proporciona y no está vacío
-    if (estado_id && estado_id !== '') {
-      const estadoId = parseInt(estado_id);
-      console.log('Filtrando por estado_id:', estadoId);
-      data.Data = data.Data.filter((auditoria: any) => auditoria.estado_id === estadoId);
-      data.MetaData.Count = data.Data.length;
-      console.log('Auditorías después del filtro:', data.Data.map(a => ({ _id: a._id, titulo: a.titulo, estado_id: a.estado_id })));
-      console.log('Total después del filtro:', data.Data.length);
-    }
     
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
