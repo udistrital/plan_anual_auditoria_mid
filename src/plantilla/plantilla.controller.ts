@@ -27,14 +27,14 @@ export class PlantillaController {
   @ApiQuery({
     name: 'conEspeciales',
     required: false,
-    default: true,
+    default: false,
     type: Boolean,
     description: 'Incluir caracteres especiales en la plantilla',
   })
   @ApiResponse({ status: 200, description: 'Plantilla encontrada.' })
   async getById(@Param('id') id: string, @Query('conEspeciales') conEspeciales?: boolean) {
     if (conEspeciales == null)
-      conEspeciales = true;
+      conEspeciales = false;
 
     return this.plantillaService.getOne(id, conEspeciales);
   }

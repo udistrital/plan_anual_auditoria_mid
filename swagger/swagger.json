@@ -460,7 +460,7 @@
             "in": "query",
             "description": "Incluir caracteres especiales en la plantilla",
             "schema": {
-              "default": true,
+              "default": false,
               "type": "boolean"
             }
           }
