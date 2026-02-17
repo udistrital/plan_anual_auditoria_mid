@@ -453,6 +453,16 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "conEspeciales",
+            "required": false,
+            "in": "query",
+            "description": "Incluir caracteres especiales en la plantilla",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
           }
         ],
         "responses": {

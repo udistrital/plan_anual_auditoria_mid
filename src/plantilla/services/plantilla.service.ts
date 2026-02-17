@@ -14,8 +14,11 @@ const {
 @Injectable()
 export class PlantillaService {
   constructor(private readonly httpService: HttpService) {}
-  async getOne(id: string) {
-    const data = await this.traerDataCrud(id);
+  async getOne(id: string, conEspeciales: boolean) {
+    let data = await this.traerDataCrud(id);
+    if (conEspeciales)
+      data = await this.anadirDataEspeciales(data);
+
     const baseJson = await this.organizarData(data);
     const baseRenderizado = await this.renderizar(baseJson);
     return baseRenderizado;
@@ -43,12 +46,35 @@ export class PlantillaService {
     }
   }
 
+  /**
+   * Recover special audit program (same vigencia bur no PAA) data and add it to the main data object.
+   * @param data The main data object containing the audit plan and audits.
+   * @returns The updated data object with the special audit data included.
+   */
+  private async anadirDataEspeciales(data: any) {
+    const vigenciaId = data.dataPlanAuditoria.Data?.vigencia_id;
+    const urlAuditioria = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria?query=vigencia_id:${vigenciaId},plan_anual_auditoria_id__is_null:true,activo:true&fields=titulo,cronograma_id&limit=0`;
+
+    try {
+      const responseAuditoriaEspecial = await lastValueFrom(
+        this.httpService.get(urlAuditioria),
+      );
+      let dataAuditoriaEspecial = responseAuditoriaEspecial.data;
+
+      return { ...data, dataAuditoriaEspecial };
+    } catch (error) {
+      throw new HttpException(
+        'Error al obtener los datos de auditoría especial del servicio externo ',
+        error,
+      );
+    }
+  }
+
   private async organizarData(data: any) {
     const json = new jsonPlantillaDto();
 
     const auditorias = data.dataAuditoria?.Data || [];
     const auditoriasOrden = data.dataPlanAuditoria?.Data?.auditorias || [];
-
     const auditoriasOrdenadas = this.ordenarAuditorias(
       auditorias,
       auditoriasOrden,
@@ -56,6 +82,19 @@ export class PlantillaService {
 
     const items: PlantillaDto[] = Array.isArray(auditorias)
       ? auditoriasOrdenadas.map((auditoria: any) =>
+          this.organizarItems(auditoria),
+        )
+      : [];
+
+    const auditoriasEspeciales = data.dataAuditoriaEspecial?.Data || [];
+    const auditoriasEspecialesOrden = data.dataPlanAuditoria?.Data?.auditorias_especiales || [];
+    const auditoriasEspecialesOrdenadas = this.ordenarAuditorias(
+      auditoriasEspeciales,
+      auditoriasEspecialesOrden,
+    );
+
+    const especiales: PlantillaDto[] = Array.isArray(auditoriasEspeciales)
+      ? auditoriasEspecialesOrdenadas.map((auditoria: any) =>
           this.organizarItems(auditoria),
         )
       : [];
@@ -69,6 +108,7 @@ export class PlantillaService {
       criterios: data.dataPlanAuditoria.Data?.criterio || '',
       recursos: data.dataPlanAuditoria.Data?.recurso || '',
       items: items,
+      especiales: especiales,
     };
 
     return json;

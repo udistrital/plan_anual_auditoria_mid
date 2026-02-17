@@ -1,5 +1,5 @@
-import { Controller, Get, NotFoundException, Param } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { Controller, Get, NotFoundException, Param, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiParam, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { PlantillaService } from './services/plantilla.service';
 import { PlantillaPlanTrabajoService } from './services/plantilla-plan-trabajo.service';
 import { PlantillaSolicitudInformacionService } from './services/plantilla-solicitud-informacion.service';
@@ -24,9 +24,19 @@ export class PlantillaController {
   @Get(':id')
   @ApiOperation({ summary: 'Obtener plantilla por ID' })
   @ApiParam({ name: 'id', description: 'ID de la plantilla' })
+  @ApiQuery({
+    name: 'conEspeciales',
+    required: false,
+    default: false,
+    type: Boolean,
+    description: 'Incluir caracteres especiales en la plantilla',
+  })
   @ApiResponse({ status: 200, description: 'Plantilla encontrada.' })
-  async getById(@Param('id') id: string) {
-    return this.plantillaService.getOne(id);
+  async getById(@Param('id') id: string, @Query('conEspeciales') conEspeciales?: boolean) {
+    if (conEspeciales == null)
+      conEspeciales = false;
+
+    return this.plantillaService.getOne(id, conEspeciales);
   }
 
   @Get('/:tipo/:idAuditoria')
