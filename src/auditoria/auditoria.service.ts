@@ -513,6 +513,13 @@ export class AuditoriaService {
   }
 
   private unirCronogramaNombres(cronograma_nombre: any[]) {
+    if (Array.isArray(cronograma_nombre) && cronograma_nombre.length === 12) {
+      const mesesCompletos = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+      const tieneLosMeses = mesesCompletos.every(mes => cronograma_nombre.some(nombre => nombre === mes));
+      if (tieneLosMeses) {
+        return 'Todos';
+      }
+    }
     return unirListaNombresConComas(cronograma_nombre);
   }
 }
