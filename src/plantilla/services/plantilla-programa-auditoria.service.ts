@@ -93,12 +93,12 @@ export class PlantillaProgramaAuditoriaService {
             auditor: grupoAuditor,
             fechaInicial: moment(dataActividad.fecha_inicio).format('YYYY-MM-DD'),
             fechaFinal: moment(dataActividad.fecha_fin).format('YYYY-MM-DD'),
-            observacion: dataActividad.observacion || 'Sin observaciones',
-            referencia: dataActividad.referencia || 'Sin referencia',
-            descripcion: dataActividad.descripcion || 'Sin descripción',
-            folio: dataActividad.folio || 'No especificado',
-            medio: dataActividad.medio_id || 'No especificado',
-            carpeta: dataActividad.carpeta || 'No especificada',
+            observacion: dataActividad.observacion || '',
+            referencia: dataActividad.referencia || '',
+            descripcion: dataActividad.descripcion || '',
+            folio: dataActividad.folio || '',
+            medio: dataActividad.medio_id || '',
+            carpeta: dataActividad.carpeta || '',
         }))
     }
 
