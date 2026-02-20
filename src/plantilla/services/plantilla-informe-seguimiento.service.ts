@@ -11,7 +11,6 @@ const {
     TERCEROS_SERVICE,
     TIPO_EVALUACION,
     ESTADOS_INFORME_AUDITORIA_PRELIMINAR,
-    CORE_AMAZON_CRUD_SERVICE,
     ID_DEPENDENCIA_OCI,
     ID_CARGO_OCI
 } = environment;
@@ -26,6 +25,8 @@ export class PlantillaInformeSeguimientoService {
     async get(idAuditoria: string) {
         const auditoria = await this.plantillaUtils.obtenerAuditoria(idAuditoria);
         const inforParaPlantilla = await this.organizarData(auditoria);
+        const baseRenderizado = await this.plantillaUtils.renderizarPlantilla(inforParaPlantilla);
+        return baseRenderizado;
     }
 
     private async organizarData(dataAuditoria: any) {
@@ -45,31 +46,34 @@ export class PlantillaInformeSeguimientoService {
             ]);
 
             const infoParaPlantilla = {
-                consecutivo: auditoria.no_auditoria,
-                fecha_emision: {
-                    dia: dia,
-                    mes: mes,
-                    anio: anio,
-                },
-                informe: {
-                    titulo: tituloInforme,
-                    dependencia: macroproceso.Nombre,
-                    lider: lider.Nombre,
-                    responsable: responsable.Nombre,
-                    objetivo: auditoria.objetivo,
-                    alcance: auditoria.alcance,
-                    criterios: auditoria.criterio,
-                    muestra: informe.muestra,
-                },
-                aspectos_generales: informe.aspectos_generales,
-                temas: temasReestructurados,
-                informe_final: informe.informe_final || "",
-                observaciones_conclusiones: informe.observaciones_conclusiones || "",
-                notas: informe.notas || "",
-                jefe_oci: jefeOci || "No se encontró el jefe de la Oficina Asesora de Control Interno",
-                auditor_responsable: auditorResponsable
+                plantilla_id: PLANTILLAS.INFORME_SEGUIMIENTO,
+                data: {
+                    consecutivo: auditoria.no_auditoria,
+                    fecha_emision: {
+                        dia: dia,
+                        mes: mes,
+                        anio: anio,
+                    },
+                    informe: {
+                        titulo: tituloInforme,
+                        dependencia: macroproceso.Nombre,
+                        lider: lider.Nombre,
+                        responsable: responsable.Nombre,
+                        objetivo: auditoria.objetivo,
+                        alcance: auditoria.alcance,
+                        criterios: auditoria.criterio,
+                        muestra: informe.muestra,
+                    },
+                    aspectos_generales: informe.aspectos_generales,
+                    temas: temasReestructurados,
+                    informe_final: informe.informe_final || "",
+                    observaciones_conclusiones: informe.observaciones_conclusiones || "",
+                    notas: informe.notas || "",
+                    jefe_oci: jefeOci || "No se encontró el jefe de la Oficina Asesora de Control Interno",
+                    auditor_responsable: auditorResponsable
+                }
             }
-            
+            return infoParaPlantilla;
         } catch (error) {
             throw new HttpException(
                 'Error al organizar los datos para la plantilla',
@@ -205,19 +209,6 @@ export class PlantillaInformeSeguimientoService {
 
     private async obtenerTercero(terceroId: string) {
         const url = `${TERCEROS_SERVICE}/tercero/${terceroId}`;
-        try {
-            const response = await lastValueFrom(this.httpService.get(url));
-            return response.data;
-        } catch (error) {
-            throw new HttpException(
-                'Error al obtener los datos de terceros',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
-        }
-    }
-
-    private async obtenerTerceroPorNumeroIdentificacion(numero: string) {
-        const url = `${TERCEROS_SERVICE}datos_identificacion?query=Numero:${numero}`;
         try {
             const response = await lastValueFrom(this.httpService.get(url));
             return response.data;
