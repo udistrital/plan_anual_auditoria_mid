@@ -4,17 +4,41 @@ import {
   Body,
   HttpException,
   HttpStatus,
+  Get,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { CargueMasivoService } from './cargue-masivo.service';
 import axios from 'axios';
 import { environment } from 'src/config/configuration';
+import { NuxeoService } from 'src/utils/axios/nuxeo.service';
 
 @ApiTags('Cargue Masivo')
 @Controller('cargue-masivo')
 export class CargueMasivoController {
-  constructor(private readonly cargueMasivoService: CargueMasivoService) {}
+  constructor(
+    private readonly cargueMasivoService: CargueMasivoService,
+    private readonly nuxeoService: NuxeoService,
+  ) {}
+
   private cargueMasivoUrl = `${environment.CARGUE_MASIVO_SERVERLESS_MID}registro-datos-archivo`;
+
+  @Get('auditorias/plantilla')
+  @ApiOperation({ summary: 'Descargar plantilla de auditorías' })
+  @ApiResponse({ status: 200, description: 'Plantilla descargada exitosamente.' })
+  @ApiResponse({ status: 500, description: 'Error interno.' })
+  async descargarPlantillaAuditorias(): Promise<any> {
+    try {
+      const plantillaBase64 = await this.nuxeoService.obtenerPorUUID(environment.PLANTILLA_CARGUE_MASIVO_AUDITORIAS);
+      const response = await this.cargueMasivoService.agregarValidaciones(plantillaBase64);
+      return response;
+    } catch (error) {
+      console.error('Error al descargar la plantilla:', error);
+      throw new HttpException(
+        'Error al descargar la plantilla',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 
   @Post('auditorias')
   @ApiOperation({ summary: 'Carga masiva de auditorías' })

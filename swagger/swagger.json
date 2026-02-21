@@ -241,6 +241,24 @@
         ]
       }
     },
+    "/cargue-masivo/auditorias/plantilla": {
+      "get": {
+        "operationId": "CargueMasivoController_descargarPlantillaAuditorias",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Plantilla descargada exitosamente."
+          },
+          "500": {
+            "description": "Error interno."
+          }
+        },
+        "summary": "Descargar plantilla de auditorías",
+        "tags": [
+          "Cargue Masivo"
+        ]
+      }
+    },
     "/cargue-masivo/auditorias": {
       "post": {
         "operationId": "CargueMasivoController_cargueMasivo",
