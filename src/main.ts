@@ -16,7 +16,7 @@ async function bootstrap() {
     .setDescription(
       'API MID para la gestion de planes de auditorias, auditorias y actividades',
     )
-    .setVersion('1.0.0')
+    .setVersion('1.1.0')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -33,6 +33,6 @@ async function bootstrap() {
 
   //Enable CORS
   app.enableCors();
-  await app.listen(parseInt(port, 10) || 8081);
+  await app.listen(parseInt(port, 10) || 8080);
 }
 bootstrap();

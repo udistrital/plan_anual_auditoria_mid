@@ -24,5 +24,6 @@ export class jsonPlantillaDto {
     criterios: string;
     recursos: string;
     items: PlantillaDto[];
+    especiales?: PlantillaDto[];
   };
 }
