@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { environment } from "../../config/configuration";
+import { environment } from "src/config/configuration";
 import axios from "axios";
 
 @Injectable()

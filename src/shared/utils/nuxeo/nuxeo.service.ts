@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { GestorDocumentalService } from "./gestor-documental.service";
+import { GestorDocumentalService } from "src/shared/services/gestor-documental/gestor-documental.service";
 
 @Injectable()
 export class NuxeoService {

@@ -10,7 +10,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { CargueMasivoService } from './cargue-masivo.service';
 import axios from 'axios';
 import { environment } from 'src/config/configuration';
-import { NuxeoService } from 'src/utils/axios/nuxeo.service';
+import { NuxeoService } from 'src/shared/utils/nuxeo/nuxeo.service';
 
 @ApiTags('Cargue Masivo')
 @Controller('cargue-masivo')

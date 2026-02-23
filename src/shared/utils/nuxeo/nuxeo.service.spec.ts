@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { NuxeoService } from "./nuxeo.service";
-import { GestorDocumentalService } from "./gestor-documental.service";
+import { GestorDocumentalService } from "../../services/gestor-documental/gestor-documental.service";
 
 describe("NuxeoService", () => {
   let service: NuxeoService;

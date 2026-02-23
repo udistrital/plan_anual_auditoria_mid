@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { environment } from 'src/config/configuration';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
-import { setupValidationDomains } from 'src/utils/auditoriasExcel.utils';
+import { setupValidationDomains } from 'src/shared/utils/auditoriasExcel.utils';
 import {
   base64ToArrayBuffer,
   arrayBufferToBase64,
-} from 'src/utils/base64.utils';
+} from 'src/shared/utils/base64.utils';
 
 const {
   PLAN_AUDITORIA_CRUD_SERVICE,
