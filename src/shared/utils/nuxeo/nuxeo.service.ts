@@ -1,21 +1,53 @@
 import { Injectable } from "@nestjs/common";
+import { map, catchError, Observable, of } from "rxjs";
 import { GestorDocumentalService } from "src/shared/services/gestor-documental/gestor-documental.service";
 
 @Injectable()
 export class NuxeoService {
-  constructor(private gestorDocumentalService: GestorDocumentalService) {}
 
-  async obtenerPorUUID(uuid: string): Promise<string> {
+  constructor(private readonly gestorDocumentalService: GestorDocumentalService) {}
+
+  /**
+   * Retrieves a file URL from the Gestor Documental API based on the provided UUID. If the response does not contain a file or if an error occurs, it returns an empty string.
+   * @param uuid The UUID of the document to retrieve from the Gestor Documental API.
+   * @returns An Observable that emits the file URL as a string if successful, or an empty string if the response is not in the expected format or if an error occurs.
+   * @throws Error with a detailed message if an error occurs during the retrieval process, including the UUID and the original error message.
+   */
+  obtenerPorUUID(uuid: string): Observable<string> {
+    const methodName = 'obtenerPorUUID';
+    const endpoint = `document/${uuid}`;
     try {
-      const response = await this.gestorDocumentalService.get(`document/${uuid}`);
-      if (!response?.file)
-        throw new Error('El campo "file" no se encontró en la respuesta.');
-      
-      return response.file;
+      return this.gestorDocumentalService.get(endpoint).pipe(
+        map(res => {
+          if (!res || !res.file)
+            throw new Error('La respuesta no tiene el formato esperado.');
+
+          return res.file;
+        }),
+        catchError(error => {
+          console.error(this.createError(endpoint, methodName, error));
+          return of("");
+        })
+      );
     } catch (error) {
-      console.error(`NuxeoService : obtenerPorUUID : Error al obtener el documento con UUID ${uuid} :`, error);
-      return ""; // Retorna un string vacío en caso de error
+      console.error(this.createError(endpoint, methodName, error));
+      return of("");
     }
+  }
+
+  /**
+   * Creates a new Error object with a detailed message based on the provided UUID, method, and original error.
+   * @param uuid The UUID that caused the error.
+   * @param method The HTTP method that was being executed when the error occurred.
+   * @param error The original error object that was caught.
+   * @returns A new Error object with a detailed message and the original stack trace.
+   */
+  private createError(uuid: string, method: string, error: any): Error {
+    let errorMessage = `NuxeoService : ${method} : Error con UUID ${uuid}: ${error.message}`;
+
+    const detailedError = new Error(errorMessage);
+    detailedError.stack += `\nCaused by: ${error.stack}`;
+    return detailedError;
   }
 
 }
