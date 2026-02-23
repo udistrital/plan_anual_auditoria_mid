@@ -66,6 +66,35 @@ export class AuditoriaController {
     }
   }
 
+  @Get('auditado/:personaId/:cargoId')
+  @ApiOperation({ summary: 'Obtener auditorías por dependencia del usuario auditado' })
+  @ApiParam({ name: 'personaId', required: true, description: 'ID de la persona (tercero).' })
+  @ApiParam({ name: 'cargoId', required: true, description: 'ID del cargo (312 o 320).' })
+  @ApiResponse({ status: 200, description: 'Auditorías obtenidas.' })
+  @ApiResponse({ status: 404, description: 'Sin resultados.' })
+  async getByDependencia(
+    @Res() res: any,
+    @Param('personaId') personaId: string,
+    @Param('cargoId') cargoId: string,
+    @Query() queryParams: any,
+  ) {
+    try {
+      const data = await this.auditoriaService.getByDependencia(
+        +personaId,
+        +cargoId,
+        queryParams,
+      );
+      res.status(HttpStatus.OK).json(data);
+    } catch (error) {
+      res.status(HttpStatus.NOT_FOUND).json({
+        Success: false,
+        Status: HttpStatus.NOT_FOUND,
+        Message: 'Error en servicio GetByDependencia: sin datos o parámetro inválido.',
+        Data: error.message,
+      });
+    }
+  }
+
   @Get()
   @ApiOperation({ summary: 'Obtener todas las auditorías' })
   @ApiQuery({

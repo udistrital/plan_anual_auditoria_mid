@@ -33,7 +33,7 @@ export class AuditoriaService {
   constructor(
     private readonly httpService: HttpService,
     private readonly auditorService: AuditorService,
-  ) {}
+  ) { }
 
   async getAll(queryParams: any) {
     const data = await this.traerDataCrud(null, queryParams);
@@ -61,7 +61,7 @@ export class AuditoriaService {
     console.log('queryParams recibidos:', queryParams);
     // Separar estado_id de los demás parámetros
     const { estado_id, ...crudParams } = queryParams;
-    
+
     // Remover estado_id del string query si existe
     if (crudParams.query) {
       crudParams.query = crudParams.query
@@ -69,13 +69,13 @@ export class AuditoriaService {
         .filter((param: string) => !param.startsWith('estado_id:'))
         .join(',');
     }
-    
+
     console.log('estado_id extraido:', estado_id);
     console.log('crudParams para CRUD:', crudParams);
-    
+
     const data = await this.traerDataCrudByAuditor(personaId, crudParams);
     console.log('Data recibida del CRUD:', data);
-    
+
     await Promise.all(
       data.Data.map(async (auditoria: any) => {
         const [estado, auditores] = await Promise.all([
@@ -103,11 +103,89 @@ export class AuditoriaService {
       console.log('Auditorías después del filtro:', data.Data.map(a => ({ _id: a._id, titulo: a.titulo, estado_id: a.estado_id })));
       console.log('Total después del filtro:', data.Data.length);
     }
-    
+
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
     }
     return data;
+  }
+
+  async getByDependencia(personaId: number, cargoId: number, queryParams: any) {
+    const dependenciaIds = await this.getDependenciasByPersona(personaId, cargoId);
+
+    if (!dependenciaIds || dependenciaIds.length === 0) {
+      return {
+        Success: true,
+        Status: 200,
+        Message: 'Sin auditorías para las dependencias del usuario',
+        Data: [],
+        MetaData: { Count: 0 },
+      };
+    }
+
+    const dependenciasFilter = dependenciaIds.join('|');
+    const baseQuery = queryParams.query || '';
+
+    const additionalFilters = `dependencia_id__in:${dependenciasFilter}`;
+    queryParams.query = baseQuery ? `${baseQuery},${additionalFilters}` : additionalFilters;
+
+    const data = await this.traerDataCrud(null, queryParams);
+    if (data.Data && Array.isArray(data.Data) && data.Data.length > 0) {
+      const dependenciaNombres = await this.getDependenciaNombres(dependenciaIds);
+
+      await Promise.all(
+        data.Data.map(async (auditoria: any) => {
+          const estado = await this.getEstadoAuditoria(auditoria._id);
+
+          if (estado?.actual) {
+            auditoria.estado = estado;
+            auditoria.estado_id = estado.estado_id;
+          }
+          auditoria.dependencia_nombre = dependenciaNombres.get(auditoria.dependencia_id) || null;
+        }),
+      );
+
+      if (await this.identificarCampo(data)) {
+        this.reemplazarCampos(data);
+      }
+    }
+
+    return data;
+  }
+
+  private async getDependenciasByPersona(personaId: number, cargoId: number): Promise<number[]> {
+    const url = `${TERCEROS_SERVICE}vinculacion?query=TerceroPrincipalId:${personaId},Activo:true,CargoId:${cargoId}&fields=DependenciaId`;
+    try {
+      const response = await lastValueFrom(this.httpService.get(url));
+
+      if (!response.data || response.data.length === 0) {
+        return [];
+      }
+      return response.data.map((v: any) => v.DependenciaId).filter((id: any) => id != null);
+    } catch (error) {
+      throw new HttpException(
+        'Error al obtener las dependencias del usuario',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  private async getDependenciaNombres(dependenciaIds: number[]): Promise<Map<number, string>> {
+    const nombresMap = new Map<number, string>();
+    await Promise.all(
+      dependenciaIds.map(async (id) => {
+        try {
+          const url = `${OIKOS_SERVICE}dependencia/${id}`;
+          const response = await lastValueFrom(this.httpService.get(url));
+          if (response.data?.Nombre) {
+            nombresMap.set(id, response.data.Nombre);
+          }
+        } catch (error) {
+          // Si no se puede obtener el nombre, se omite
+        }
+      }),
+    );
+    return nombresMap;
   }
 
   async getOne(id: string) {
@@ -120,17 +198,17 @@ export class AuditoriaService {
 
   async getEmails(dependencia_id: number) {
     const correo_lider = await this.traerCorreoTerceroVinculado(
-        dependencia_id,
-        environment.CARGO.JEFE_DEPENDENCIA_ID,
-      );
+      dependencia_id,
+      environment.CARGO.JEFE_DEPENDENCIA_ID,
+    );
 
     const correo_responsable = await this.traerCorreoTerceroVinculado(
-        dependencia_id,
-        environment.CARGO.ASISTENTE_DEPENDENCIA_ID,
-      );
+      dependencia_id,
+      environment.CARGO.ASISTENTE_DEPENDENCIA_ID,
+    );
 
     const correo_dependencia = this.traerCorreoDependencia(dependencia_id);
-    return {correo_lider: correo_lider, correo_responsable: correo_responsable, correo_dependencia: correo_dependencia};
+    return { correo_lider: correo_lider, correo_responsable: correo_responsable, correo_dependencia: correo_dependencia };
   }
 
   async traerCorreoTerceroVinculado(dependenciaId: number, cargoId: number): Promise<String> {
@@ -173,7 +251,7 @@ export class AuditoriaService {
       );
 
       // Obtener el estado de cada auditoría activa
-      auditoriasActivas.forEach( async (auditoria: any) => {
+      auditoriasActivas.forEach(async (auditoria: any) => {
         const estado = await this.getEstadoAuditoria(auditoria._id);
         if (estado?.actual) {
           auditoria.estado_id = estado.estado_id;
