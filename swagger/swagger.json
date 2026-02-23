@@ -133,6 +133,43 @@
         ]
       }
     },
+    "/auditoria/auditado/{personaId}/{cargoId}": {
+      "get": {
+        "operationId": "AuditoriaController_getByDependencia",
+        "parameters": [
+          {
+            "name": "personaId",
+            "required": true,
+            "in": "path",
+            "description": "ID de la persona (tercero).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cargoId",
+            "required": true,
+            "in": "path",
+            "description": "ID del cargo (312 o 320).",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Auditorías obtenidas."
+          },
+          "404": {
+            "description": "Sin resultados."
+          }
+        },
+        "summary": "Obtener auditorías por dependencia del usuario auditado",
+        "tags": [
+          "Auditoria"
+        ]
+      }
+    },
     "/auditoria": {
       "get": {
         "operationId": "AuditoriaController_getAll",
