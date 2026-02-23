@@ -1,24 +1,24 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { GestorDocumentalService } from './gestor-documental.service';
+import { OikosService } from './oikos.service';
 import { environment } from 'src/config/configuration';
 import { HttpModule, HttpService } from '@nestjs/axios';
 import AxiosMockAdapter from 'axios-mock-adapter';
 import { catchError, firstValueFrom } from 'rxjs';
 
-describe('GestorDocumentalService', () => {
-  let service: GestorDocumentalService;
+describe('OikosService', () => {
+  let service: OikosService;
   let httpService: HttpService;
   let axiosMock: AxiosMockAdapter;
-  const urlPrefix = environment.GESTOR_DOCUMENTAL_SERVICE + '/';
-  const serviceName = 'GestorDocumentalService';
+  const urlPrefix = environment.OIKOS_SERVICE + '/';
+  const serviceName = 'OikosService';
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [HttpModule],
-      providers: [GestorDocumentalService],
+      providers: [OikosService],
     }).compile();
 
-    service = module.get<GestorDocumentalService>(GestorDocumentalService);
+    service = module.get<OikosService>(OikosService);
     httpService = module.get<HttpService>(HttpService);
     axiosMock = new AxiosMockAdapter(httpService.axiosRef);
   });
