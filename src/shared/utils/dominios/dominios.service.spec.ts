@@ -7,6 +7,7 @@ import { OikosService } from "src/shared/services/oikos/oikos.service";
 import { environment } from "src/config/configuration";
 import { ParametrosModule } from "src/shared/services/parametros/parametros.module";
 import { OikosModule } from "src/shared/services/oikos/oikos.module";
+import { DOMINIOS_CONFIG } from "./dominios.config";
 
 describe("DominiosService", () => {
   let service: DominiosService;
@@ -66,8 +67,9 @@ describe("DominiosService", () => {
     parametrosServiceGet.mockReturnValue(of({ Data: mockParametros }));
 
     const result = await firstValueFrom(service.getParametros(mockTipoParametroId));
-    expect(result.api).toBe("PARAMETROS");
+    expect(result.api).toBe(DOMINIOS_CONFIG.NOMBRES_API.PARAMETROS);
     expect(result.nombre).toBe(mockTipoParametroName);
+    expect(result.tipoParametroId).toBe(mockTipoParametroId);
     expect(result.parametros).toEqual(mockParametros);
     expect(parametrosServiceGet).toHaveBeenCalledWith(`parametro?query=Activo:true,TipoParametroId:${mockTipoParametroId}&fields=Id,Nombre&limit=0`);
   });
@@ -92,8 +94,9 @@ describe("DominiosService", () => {
     oikosServiceGet.mockReturnValue(of({ Data: mockDependencias }));
 
     const result = await firstValueFrom(service.getDependencias());
-    expect(result.api).toBe("OIKOS");
-    expect(result.nombre).toBe("DEPENDENCIA");
+    expect(result.api).toBe(DOMINIOS_CONFIG.NOMBRES_API.OIKOS);
+    expect(result.nombre).toBe(DOMINIOS_CONFIG.NOMBRES_OIKOS.DEPENDENCIAS);
+    expect(result.tipoParametroId).toBeUndefined();
     expect(result.parametros).toEqual(mockDependencias);
     expect(oikosServiceGet).toHaveBeenCalledWith(`dependencia?query=Activo:true&fields=Id,Nombre&limit=0`);
   });

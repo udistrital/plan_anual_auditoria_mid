@@ -4,6 +4,7 @@ import { ParametrosService } from "src/shared/services/parametros/parametros.ser
 import { OikosService } from "src/shared/services/oikos/oikos.service";
 import { environment } from "src/config/configuration";
 import { Parametro, Dominio } from "./dominio.model";
+import { DOMINIOS_CONFIG } from "./dominios.config";
 
 @Injectable()
 export class DominiosService {
@@ -44,8 +45,9 @@ export class DominiosService {
           return response.Data;
         }),
         map((data: Parametro[]) => ({
-          api: "PARAMETROS",
+          api: DOMINIOS_CONFIG.NOMBRES_API.PARAMETROS,
           nombre: this.getNombreTipoParametro(tipoParametroId),
+          tipoParametroId: tipoParametroId,
           parametros: data
         })),
         catchError(error => { throw this.createError("getParametros", error) })
@@ -72,8 +74,8 @@ export class DominiosService {
           return response.Data;
         }),
         map((data: Parametro[]) => ({
-          api: "OIKOS",
-          nombre: "DEPENDENCIA",
+          api: DOMINIOS_CONFIG.NOMBRES_API.OIKOS,
+          nombre: DOMINIOS_CONFIG.NOMBRES_OIKOS.DEPENDENCIAS,
           parametros: data
         })),
         catchError(error => { throw this.createError("getDependencias", error) })
