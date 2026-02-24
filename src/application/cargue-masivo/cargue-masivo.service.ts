@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { environment } from 'src/config/configuration';
-import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
-import { setupValidationDomains } from 'src/shared/utils/auditoriasExcel.utils';
+import { setupValidationDomains, descargarAuditorias, AuditoriaExcel } from 'src/shared/utils/auditoriasExcel.utils';
 import {
   base64ToArrayBuffer,
   arrayBufferToBase64,
@@ -51,7 +50,6 @@ interface Parametro {
 @Injectable()
 export class CargueMasivoService {
   constructor(
-    private readonly httpService: HttpService,
     private readonly dominiosService: DominiosService,
   ) {}
 
@@ -59,6 +57,8 @@ export class CargueMasivoService {
    * Add validation domains and formulaes to the template before downloading it,
    * including 'Tipo de Evaluación', 'Macroproceso', 'Proceso' and 'Dependencia'.
    * @param plantillaBase64 The original template in Base64 format.
+   * @return A promise that resolves with the modified template in Base64 format, including the added validation domains and formulas.
+   * @throws An error if the process of adding validations fails, with a message indicating the failure and the original error stack trace.
    */
   async agregarValidaciones(plantillaBase64: string): Promise<string> {
     try {
@@ -74,6 +74,36 @@ export class CargueMasivoService {
     }
     catch (error) {
       const newError = new Error('Failed to add validations to the template');
+      newError.stack += "\nCaused by: " + error.stack;
+      throw newError;
+    }
+  }
+
+  /**
+   * Exports the given data source to an Excel file using the provided template, and adds validation domains to the resulting file.
+   * @param dataSource An array of AuditoriaExcel objects representing the data to be exported.
+   * @param plantillaBase64 The template to be used for exporting, in Base64 format.
+   * @returns A promise that resolves with the exported Excel file in Base64 format.
+   * @throws An error if the export process fails, with a message indicating the failure and the original error stack trace.
+   */
+  async exportarAuditoriasExcel(
+    dataSource: Array<AuditoriaExcel>,
+    plantillaBase64: string
+  ): Promise<string> {
+    try {
+      const tablaExportadaBuffer = await descargarAuditorias(
+          dataSource,
+          base64ToArrayBuffer(plantillaBase64)
+        );
+      const tablaConValidacionBuffer = await setupValidationDomains(
+        await this.prepararHeadersValidacion(),
+        [ { sheetIndex: 0 , length: dataSource.length + 1 } ],
+        tablaExportadaBuffer,
+      );
+      return arrayBufferToBase64(tablaConValidacionBuffer);
+    }
+    catch (error) {
+      const newError = new Error('Failed to export auditorias to Excel');
       newError.stack += "\nCaused by: " + error.stack;
       throw newError;
     }
