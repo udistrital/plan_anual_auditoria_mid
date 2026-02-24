@@ -13,7 +13,6 @@ import axios from 'axios';
 import { environment } from 'src/config/configuration';
 import { NuxeoService } from 'src/shared/utils/nuxeo/nuxeo.service';
 import { firstValueFrom } from 'rxjs';
-import { catchError } from 'rxjs';
 
 @ApiTags('Cargue Masivo')
 @Controller('cargue-masivo')
@@ -52,7 +51,9 @@ export class CargueMasivoController {
           environment.PLANTILLA_CARGUE_MASIVO_AUDITORIAS
         )
       );
-      return { base64: response };
+      const plantillaConValidaciones =
+          await this.cargueMasivoService.agregarValidaciones(response);
+      return { base64: plantillaConValidaciones };
     } catch (error) {
       console.error('Error al descargar la plantilla:', error);
       throw new HttpException(
