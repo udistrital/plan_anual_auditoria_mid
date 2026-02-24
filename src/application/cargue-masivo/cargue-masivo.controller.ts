@@ -5,12 +5,15 @@ import {
   HttpException,
   HttpStatus,
   Get,
+  Res,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { CargueMasivoService } from './cargue-masivo.service';
 import axios from 'axios';
 import { environment } from 'src/config/configuration';
-import { NuxeoService } from 'src/utils/axios/nuxeo.service';
+import { NuxeoService } from 'src/shared/utils/nuxeo/nuxeo.service';
+import { firstValueFrom } from 'rxjs';
+import { catchError } from 'rxjs';
 
 @ApiTags('Cargue Masivo')
 @Controller('cargue-masivo')
@@ -24,13 +27,32 @@ export class CargueMasivoController {
 
   @Get('auditorias/plantilla')
   @ApiOperation({ summary: 'Descargar plantilla de auditorías' })
-  @ApiResponse({ status: 200, description: 'Plantilla descargada exitosamente.' })
-  @ApiResponse({ status: 500, description: 'Error interno.' })
-  async descargarPlantillaAuditorias(): Promise<any> {
+  @ApiResponse({ status: 500, description: 'Error interno.',  })
+  @ApiResponse({
+    status: 200,
+    description: 'Plantilla descargada exitosamente.',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            base64: {
+              type: 'string',
+              description: 'Archivo de plantilla en formato Base64.',
+            },
+          },
+        },
+      },
+    },
+  })
+  async descargarPlantillaAuditorias(): Promise<{ base64: string }> {
     try {
-      const plantillaBase64 = await this.nuxeoService.obtenerPorUUID(environment.PLANTILLA_CARGUE_MASIVO_AUDITORIAS);
-      const response = await this.cargueMasivoService.agregarValidaciones(plantillaBase64);
-      return response;
+      const response = await firstValueFrom(
+        this.nuxeoService.obtenerPorUUID(
+          environment.PLANTILLA_CARGUE_MASIVO_AUDITORIAS
+        )
+      );
+      return { base64: response };
     } catch (error) {
       console.error('Error al descargar la plantilla:', error);
       throw new HttpException(
