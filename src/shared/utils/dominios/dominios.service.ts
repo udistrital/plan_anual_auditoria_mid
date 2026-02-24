@@ -39,7 +39,10 @@ export class DominiosService {
     try {
       return this.parametrosService.get(endpoint).pipe(
         map((response: any) => {
-          if (!response || !response.Data)
+          if (!response)
+            throw new Error('No response received from Parametros service');
+
+          if (!response.Data)
             throw new Error('Invalid response format: missing Data property');
 
           return response.Data;
@@ -68,10 +71,10 @@ export class DominiosService {
     try {
       return this.oikosService.get(url).pipe(
         map((response: any) => {
-          if (!response || !response.Data)
-            throw new Error('Invalid response format: missing Data property');
+          if (!response)
+            throw new Error('No response received from OIKOS service');
 
-          return response.Data;
+          return response;
         }),
         map((data: Parametro[]) => ({
           api: DOMINIOS_CONFIG.NOMBRES_API.OIKOS,

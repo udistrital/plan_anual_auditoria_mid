@@ -91,7 +91,7 @@ describe("DominiosService", () => {
 
   it("should return the list of dependencies when getDependencias is called", async () => {
     const mockDependencias = [{ id: 1, nombre: "Dep1" }, { id: 2, nombre: "Dep2" }];
-    oikosServiceGet.mockReturnValue(of({ Data: mockDependencias }));
+    oikosServiceGet.mockReturnValue(of(mockDependencias));
 
     const result = await firstValueFrom(service.getDependencias());
     expect(result.api).toBe(DOMINIOS_CONFIG.NOMBRES_API.OIKOS);
