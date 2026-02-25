@@ -57,6 +57,11 @@ paths:
           in: query
           description: Campo de orden.
           schema: {}
+        - name: plan_auditoria_id
+          required: true
+          in: query
+          description: ID del plan de auditoría (obligatorio).
+          schema: {}
       responses:
         '200':
           description: Auditorías obtenidas.

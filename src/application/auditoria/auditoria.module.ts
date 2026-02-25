@@ -9,5 +9,6 @@ import { DominiosModule } from 'src/shared/utils/dominios/dominios.module';
   imports: [HttpModule, AuditorModule, DominiosModule],
   controllers: [AuditoriaController],
   providers: [AuditoriaService],
+  exports: [AuditoriaService],
 })
 export class AuditoriaModule {}
