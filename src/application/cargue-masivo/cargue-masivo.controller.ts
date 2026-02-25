@@ -66,7 +66,7 @@ export class CargueMasivoController {
     }
   }
 
-  @Get('auditorias/:planId')
+  @Get('auditorias/plan/:planId')
   @ApiOperation({ summary: 'Descargar auditorías en formato Excel' })
   @ApiResponse({ status: 500, description: 'Error interno.' })
   @ApiParam({ name: 'planId', required: true, description: 'ID del plan de auditoría.' })

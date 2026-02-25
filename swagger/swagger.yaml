@@ -194,7 +194,7 @@ paths:
       summary: Descargar plantilla de auditorías
       tags: &ref_3
         - Cargue Masivo
-  /cargue-masivo/auditorias/{planId}:
+  /cargue-masivo/auditorias/plan/{planId}:
     get:
       operationId: CargueMasivoController_descargarAuditoriasExcel
       parameters:
