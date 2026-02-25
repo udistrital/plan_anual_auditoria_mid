@@ -5,13 +5,15 @@ import {
   HttpException,
   HttpStatus,
   Get,
-  Res,
+  Param,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { CargueMasivoService } from './cargue-masivo.service';
 import axios from 'axios';
 import { environment } from 'src/config/configuration';
 import { NuxeoService } from 'src/shared/utils/nuxeo/nuxeo.service';
+// TODO: In the future, the auditoriaService dependency should be removed by modularizing the ordenadas method to avoid coupling between modules
+import { AuditoriaService } from 'src/auditoria/auditoria.service';
 import { firstValueFrom } from 'rxjs';
 
 @ApiTags('Cargue Masivo')
@@ -20,6 +22,7 @@ export class CargueMasivoController {
   constructor(
     private readonly cargueMasivoService: CargueMasivoService,
     private readonly nuxeoService: NuxeoService,
+    private readonly auditoriaService: AuditoriaService,
   ) {}
 
   private cargueMasivoUrl = `${environment.CARGUE_MASIVO_SERVERLESS_MID}registro-datos-archivo`;
@@ -58,6 +61,58 @@ export class CargueMasivoController {
       console.error('Error al descargar la plantilla:', error);
       throw new HttpException(
         'Error al descargar la plantilla',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('auditorias/:planId')
+  @ApiOperation({ summary: 'Descargar auditorías en formato Excel' })
+  @ApiResponse({ status: 500, description: 'Error interno.' })
+  @ApiParam({ name: 'planId', required: true, description: 'ID del plan de auditoría.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Archivo de auditorías descargado exitosamente.',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            base64: {
+              type: 'string',
+              description: 'Archivo de auditorías en formato Base64.',
+            },
+          },
+        },
+      },
+    },
+  })
+  async descargarAuditoriasExcel(
+    @Param('planId') planId: string
+  ): Promise<{ base64: string }> {
+    try {
+      // TODO: In the future, the ordenadas method will be modularized to avoid dependency on the auditoriaService
+      const ordenadas = await this.auditoriaService.getAuditoriasOrdenadas({ query: `plan_auditoria_id:${planId}` });
+      const plantillaResponse = await firstValueFrom(
+        this.nuxeoService.obtenerPorUUID(
+          environment.PLANTILLA_CARGUE_MASIVO_AUDITORIAS
+        )
+      );
+      if (!ordenadas || !ordenadas.Data)
+        throw new HttpException(
+          'No se encontraron auditorías para el plan especificado',
+          HttpStatus.NOT_FOUND,
+        );
+
+      const tablaExportada = await this.cargueMasivoService.exportarAuditoriasExcel(
+          ordenadas.Data,
+          plantillaResponse
+        );
+      return { base64: tablaExportada };
+    } catch (error) {
+      console.error('Error al descargar las auditorías en Excel:', error);
+      throw new HttpException(
+        'Error al descargar las auditorías en Excel',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
