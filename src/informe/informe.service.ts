@@ -52,31 +52,11 @@ export class InformeService {
           ),
 
         temas: this.httpService
-          .get(`${PLAN_AUDITORIA_CRUD_SERVICE}informe/${id}/tema`)
+          .get(`${PLAN_AUDITORIA_CRUD_SERVICE}tema?query=informe_id:${id},activo:true`)
           .pipe(
             map(res => res.data.Data),
             catchError((error) => {
               this.logger.warn(`No se pudieron obtener temas: ${error.message}`);
-              return of([]);
-            })
-          ),
-
-        estado_actual: this.httpService
-          .get(`${PLAN_AUDITORIA_CRUD_SERVICE}informe/${id}/estado-actual`)
-          .pipe(
-            map(res => res.data.Data),
-            catchError((error) => {
-              this.logger.warn(`No se pudo obtener estado actual: ${error.message}`);
-              return of(null);
-            })
-          ),
-
-        historial_estados: this.httpService
-          .get(`${PLAN_AUDITORIA_CRUD_SERVICE}informe/${id}/estados`)
-          .pipe(
-            map(res => res.data.Data),
-            catchError((error) => {
-              this.logger.warn(`No se pudo obtener historial de estados: ${error.message}`);
               return of([]);
             })
           )
@@ -129,13 +109,6 @@ export class InformeService {
             const complementos$ = forkJoin({
               auditoria: this.httpService
                 .get(`${PLAN_AUDITORIA_CRUD_SERVICE}auditoria/${informe.auditoria_id}`)
-                .pipe(
-                  map(res => res.data.Data),
-                  catchError(() => of(null))
-                ),
-
-              estado_actual: this.httpService
-                .get(`${PLAN_AUDITORIA_CRUD_SERVICE}informe/${informe._id}/estado-actual`)
                 .pipe(
                   map(res => res.data.Data),
                   catchError(() => of(null))

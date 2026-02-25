@@ -21,7 +21,7 @@ export class InformeController {
   @Get(':id')
   @ApiOperation({ 
     summary: 'Obtener informe consolidado para edición',
-    description: 'Retorna el informe con auditoría, estado actual, historial de estados, hallazgos y temas'
+    description: 'Retorna el informe con auditoría hallazgos y temas'
   })
   @ApiParam({ name: 'id', type: 'string', description: 'ID del informe (MongoDB ObjectId)' })
   @ApiResponse({ status: 200, description: 'Informe obtenido exitosamente con datos complementarios' })
