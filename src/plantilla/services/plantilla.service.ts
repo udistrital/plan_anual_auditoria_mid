@@ -61,7 +61,7 @@ export class PlantillaService {
    */
   private async anadirDataEspeciales(data: any) {
     const vigenciaId = data.dataPlanAuditoria.Data?.vigencia_id;
-    const urlAuditioria = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria?query=vigencia_id:${vigenciaId},plan_anual_auditoria_id__is_null:true,activo:true&fields=titulo,macroproceso_id,proceso_id,dependencia_id,cronograma_id&limit=0`;
+    const urlAuditioria = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria?query=vigencia_id:${vigenciaId},plan_auditoria_id__isnull:true,activo:true&fields=titulo,macroproceso_id,proceso_id,dependencia_id,cronograma_id&limit=0`;
 
     try {
       const responseAuditoriaEspecial = await lastValueFrom(
