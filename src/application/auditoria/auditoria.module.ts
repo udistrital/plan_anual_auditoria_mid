@@ -9,6 +9,7 @@ import { DominiosModule } from 'src/shared/utils/dominios/dominios.module';
   imports: [HttpModule, AuditorModule, DominiosModule],
   controllers: [AuditoriaController],
   providers: [AuditoriaService],
+  // TODO: In the future, the ordenadas method should be modularized to avoid coupling between modules, allowing the removal of the AuditoriaService dependency from the CargueMasivoModule.
   exports: [AuditoriaService],
 })
 export class AuditoriaModule {}

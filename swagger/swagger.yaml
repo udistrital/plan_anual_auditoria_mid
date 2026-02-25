@@ -199,6 +199,31 @@ paths:
       summary: Descargar plantilla de auditorías
       tags: &ref_3
         - Cargue Masivo
+  /cargue-masivo/auditorias/{planId}:
+    get:
+      operationId: CargueMasivoController_descargarAuditoriasExcel
+      parameters:
+        - name: planId
+          required: true
+          in: path
+          description: ID del plan de auditoría.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Archivo de auditorías descargado exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  base64:
+                    type: string
+                    description: Archivo de auditorías en formato Base64.
+        '500':
+          description: Error interno.
+      summary: Descargar auditorías en formato Excel
+      tags: *ref_3
   /cargue-masivo/auditorias:
     post:
       operationId: CargueMasivoController_cargueMasivo

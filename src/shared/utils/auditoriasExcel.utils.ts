@@ -26,6 +26,127 @@ const HEADERS = [
   ...MESES_ARCHIVO
 ];
 
+/** Class representing the structure of an audit to be exported to Excel.  */
+export class AuditoriaExcel {
+  titulo: string;
+  tipo_evaluacion_nombre: string;
+  macroproceso_nombre?: string;
+  proceso_nombre?: string;
+  dependencia_nombre?: string;
+  cronograma_nombre: Array<string>;
+}
+
+/**
+ * Transforms the dataSource into a format suitable for Excel export
+ * @returns An array of objects representing the data in the desired Excel format
+ */
+function dataSourceToExcelData(dataSource: Array<AuditoriaExcel>): Array<object> {
+  // 1. Load basic data from dataSource in the desired format
+  let data: {[key: string]: Array<string>} = {
+    // ID
+    [HEADERS[0]]: Array.from(Array(dataSource.length).keys())
+                    .map(i => (i + 1).toString()),
+    // Auditoria
+    [HEADERS[1]]: dataSource.map(a => a.titulo),
+    // Tipo de Evaluación
+    [HEADERS[2]]: dataSource.map(a => a.tipo_evaluacion_nombre),
+    // Macroproceso
+    [HEADERS[3]]: dataSource.map(a => a.macroproceso_nombre || ''),
+    // Proceso
+    [HEADERS[4]]: dataSource.map(a => a.proceso_nombre || ''),
+    // Dependencia
+    [HEADERS[5]]: dataSource.map(a => a.dependencia_nombre || ''),
+  };
+
+  // 2. Transform cronograma into month columns
+  const cronogramaMatriz = dataSource.map(cronograma =>
+    MESES_ARCHIVO.map(prefijoMes => {
+      const mesIndex = cronograma.cronograma_nombre.findIndex(m =>
+        m.includes(prefijoMes)
+      );
+      return mesIndex !== -1 ? 'x' : '';
+    })
+  );
+  let mesesData: {[key: string]: string[]} = {};
+  MESES_ARCHIVO.forEach((mes, index) => {
+    mesesData[mes] = cronogramaMatriz.map(cronograma => cronograma[index]);
+  });
+
+  data = { ...data, ...mesesData };
+
+  // Create final array of objects maintaining HEADERS order
+  const numRows = dataSource.length;
+  let finalData: Array<object> = [];
+  for (let i = 0; i < numRows; i++) {
+    let row: {[key: string]: string} = {};
+    HEADERS.forEach(header => {
+      row[header] = data[header][i];
+    });
+    finalData.push(row);
+  }
+
+  return finalData;
+}
+
+/**
+ * Creates the Excel file for the given audit data.
+ * @param dataSource The array of audit data to be exported. See {@link AuditoriaExcel} for structure.
+ * @param inputBuffer An ArrayBuffer containing the Excel template file data.
+ * @returns A Promise that resolves to an ArrayBuffer containing the Excel file data.
+ * @throws If any issue occurs during the Excel generation process.
+ */
+export async function descargarAuditorias(
+    dataSource: Array<AuditoriaExcel>,
+    inputBuffer: ArrayBuffer,
+): Promise<ArrayBuffer> {
+  try{
+    // Load the template workbook from the Base64 string and select the first worksheet
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(inputBuffer);
+    const worksheet = workbook.worksheets[0];
+
+    // Prepare to write data starting from row 2, skipping header row
+    const rows = dataSourceToExcelData(dataSource);
+    const maxRowIndex = Math.max(dataSheetOriginalMaxRows, dataSheetStartRowIndex + rows.length - 1);
+
+    // Write data into worksheet by modifying existing rows (keep styles)
+    rows.forEach((rowObj, rowIdx) => {
+      const excelRow = worksheet.getRow(dataSheetStartRowIndex + rowIdx);
+      HEADERS.forEach((hdr, colIdx) => {
+        const cell = excelRow.getCell(colIdx + 1);
+        const value = (rowObj as any)[hdr] ?? '';
+        cell.value = value;
+      });
+      excelRow.commit();
+    });
+
+    // Give new rows the same style and border as the original template rows
+    const sourceRow = worksheet.getRow(dataSheetOriginalMaxRows);
+    for (let r = dataSheetOriginalMaxRows + 1; r <= maxRowIndex; r++) {
+      const targetRow = worksheet.getRow(r);
+      HEADERS.forEach((_, colIdx) => {
+        const sourceCell = sourceRow.getCell(colIdx + 1);
+        const targetCell = targetRow.getCell(colIdx + 1);
+        targetCell.style = sourceCell.style;
+        targetCell.border = sourceCell.border;
+      });
+      targetRow.commit();
+    }
+
+    // Remove example worksheet
+    const exampleSheet = workbook.getWorksheet('ejemplo');
+    if (exampleSheet)
+      workbook.removeWorksheet(exampleSheet.id);
+
+    return await workbook.xlsx.writeBuffer();
+  }
+  catch (error) {
+    const newError = new Error('Error al incrustar los datos en la plantilla de Excel.');
+    newError.stack += "\nCaused by: " + (error instanceof Error ? error.stack : String(error));
+    throw newError;
+  }
+}
+
 /**
  * Configures the validation domains in the Excel template based on the provided valid options for each header. 
  * @param headersValidacion An object mapping header names to arrays of valid values for data validation.
