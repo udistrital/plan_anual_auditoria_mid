@@ -1,9 +1,11 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, firstValueFrom } from 'rxjs';
 import { environment } from 'src/config/configuration';
-import { AuditorService } from '../auditor/auditor.service';
+import { AuditorService } from '../../auditor/auditor.service';
+import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
 import { unirListaNombresConComas } from 'src/utils/texto.utils';
+import { ordenarAuditoriasPorPlan, aplicarOrdenamiento } from 'src/shared/utils/auditoria-ordenamiento.utils';
 
 const {
   PLAN_AUDITORIA_CRUD_SERVICE,
@@ -33,6 +35,7 @@ export class AuditoriaService {
   constructor(
     private readonly httpService: HttpService,
     private readonly auditorService: AuditorService,
+    private readonly dominiosService: DominiosService,
   ) { }
 
   async getAll(queryParams: any) {
@@ -59,10 +62,8 @@ export class AuditoriaService {
 
   async getByAuditor(personaId: string, queryParams: any) {
     console.log('queryParams recibidos:', queryParams);
-    // Separar estado_id de los demás parámetros
     const { estado_id, ...crudParams } = queryParams;
 
-    // Remover estado_id del string query si existe
     if (crudParams.query) {
       crudParams.query = crudParams.query
         .split(',')
@@ -94,7 +95,6 @@ export class AuditoriaService {
     console.log('Auditorías antes del filtro:', data.Data.map(a => ({ _id: a._id, titulo: a.titulo, estado_id: a.estado_id })));
     console.log('Total antes del filtro:', data.Data.length);
 
-    // Filtrar por estado_id si se proporciona y no está vacío
     if (estado_id && estado_id !== '') {
       const estadoId = parseInt(estado_id);
       console.log('Filtrando por estado_id:', estadoId);
@@ -232,17 +232,7 @@ export class AuditoriaService {
   }
 
   async getAuditoriasOrdenadas(queryParams: any) {
-    const match = queryParams.query.match(/plan_auditoria_id:([^,]+)/);
-    const planId = match ? match[1] : null;
-
-    // Validar que el planId se haya encontrado
-    if (!planId) {
-      throw new HttpException(
-        'El parámetro "plan_auditoria_id" es obligatorio.',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
+    const planId = this.extraerPlanId(queryParams);
     const data = await this.traerDataCrud(null, queryParams);
 
     if (data.Data && Array.isArray(data.Data)) {
@@ -250,53 +240,38 @@ export class AuditoriaService {
         (auditoria) => auditoria.activo === true,
       );
 
-      // Obtener el estado de cada auditoría activa
-      auditoriasActivas.forEach(async (auditoria: any) => {
-        const estado = await this.getEstadoAuditoria(auditoria._id);
-        if (estado?.actual) {
-          auditoria.estado_id = estado.estado_id;
-        }
-      });
+      await Promise.all(
+        auditoriasActivas.map(async (auditoria: any) => {
+          const estado = await this.getEstadoAuditoria(auditoria._id);
+          if (estado?.actual) {
+            auditoria.estado_id = estado.estado_id;
+          }
+        })
+      );
 
-      // Obtener el campo "auditorias" del plan
       const planData = await this.obtenerPlanPorId(planId);
-      const auditoriasOrden = planData?.auditorias || [];
+      data.Data = ordenarAuditoriasPorPlan(auditoriasActivas, planData?.auditorias || []);
 
-      // Ordenar las auditorías activas según el campo "auditorias" del plan
-      data.Data = this.ordenarAuditorias(auditoriasActivas, auditoriasOrden);
-
-      // Reemplazar campos ANTES de aplicar ordenamiento personalizado
       if (await this.identificarCampo(data)) {
         this.reemplazarCampos(data);
       }
 
-      // Aplicar ordenamiento adicional si se especifica
-      const { orderBy, orderDirection } = queryParams;
-      if (orderBy) {
-        data.Data = this.aplicarOrdenamiento(data.Data, orderBy, orderDirection);
+      if (queryParams.orderBy) {
+        data.Data = aplicarOrdenamiento(data.Data, queryParams.orderBy, queryParams.orderDirection);
       }
     }
     return data;
   }
 
-  private aplicarOrdenamiento(auditorias: any[], orderBy: string, orderDirection: string = 'ASC') {
-    return auditorias.sort((a, b) => {
-      let valorA, valorB;
-
-      if (orderBy === 'tipo_evaluacion') {
-        valorA = (a.tipo_evaluacion_nombre || '').toLowerCase();
-        valorB = (b.tipo_evaluacion_nombre || '').toLowerCase();
-      } else if (orderBy === 'titulo') {
-        valorA = (a.titulo || '').toLowerCase();
-        valorB = (b.titulo || '').toLowerCase();
-      } else {
-        return 0;
-      }
-
-      if (valorA < valorB) return orderDirection === 'ASC' ? -1 : 1;
-      if (valorA > valorB) return orderDirection === 'ASC' ? 1 : -1;
-      return 0;
-    });
+  private extraerPlanId(queryParams: any): string {
+    const match = queryParams.query.match(/plan_auditoria_id:([^,]+)/);
+    if (!match?.[1]) {
+      throw new HttpException(
+        'El parámetro "plan_auditoria_id" es obligatorio.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return match[1];
   }
 
   private async obtenerPlanPorId(planId: string) {
@@ -313,116 +288,42 @@ export class AuditoriaService {
     }
   }
 
-  private ordenarAuditorias(auditorias: any[], auditoriasOrden: string[]) {
-    const auditoriasMap = new Map(
-      auditorias.map((auditoria) => [auditoria._id, auditoria]),
-    );
-
-    // Ordenar las auditorías según el orden de los IDs en auditoriasOrden
-    const auditoriasOrdenadas = auditoriasOrden
-      .map((id) => auditoriasMap.get(id))
-      .filter((auditoria) => auditoria !== undefined);
-
-    // Agregar al final las auditorías activas no incluidas en auditoriasOrden
-    const restantes = auditorias.filter(
-      (auditoria) => !auditoriasOrden.includes(auditoria._id),
-    );
-
-    const auditoriasTotales = [...auditoriasOrdenadas, ...restantes];
-    return auditoriasTotales;
-  }
-
   private async identificarCampo(data: any) {
-    let validacion = false;
     const firstElement = Array.isArray(data.Data) ? data.Data[0] : data.Data;
 
-      if (!firstElement) {
-        return false;
-      }
-
-      if ('tipo_evaluacion_id' in firstElement) {
-        const param = await this.traerParametros(TIPO_PARAMETRO.TIPO_EVALUACION);
-        this.tiposEvaluacion.push(...param);
-        validacion = true;
-      }
-
-      if ('cronograma_id' in firstElement) {
-        const param = await this.traerParametros(TIPO_PARAMETRO.CRONOGRAMA);
-        this.cronogramasActividad.push(...param);
-        validacion = true;
-      }
-
-      if ('estado_id' in firstElement) {
-        const param = await this.traerParametros(TIPO_PARAMETRO.AUDITORIA_ESTADO);
-        this.estados.push(...param);
-        validacion = true;
-      }
-
-      if ('macroproceso_id' in firstElement) {
-        const param = await this.traerParametros(TIPO_PARAMETRO.MACROPROCESO);
-        this.macroprocesos.push(...param);
-        validacion = true;
-      }
-
-      if ('proceso_id' in firstElement) {
-        const param = await this.traerParametros(TIPO_PARAMETRO.PROCESO);
-        this.procesos.push(...param);
-        validacion = true;
-      }
-
-      if ('lider_id' in firstElement) {
-        const param = await this.traerParametros(TIPO_PARAMETRO.CARGO_LIDER);
-        this.lideres.push(...param);
-        validacion = true;
-      }
-
-      if ('responsable_id' in firstElement) {
-        const param = await this.traerParametros(
-          TIPO_PARAMETRO.CARGO_RESPONSABLE,
-        );
-        this.responsables.push(...param);
-        validacion = true;
-      }
-
-      if ('vigencia_id' in firstElement) {
-        const param = await this.traerParametros(TIPO_PARAMETRO.VIGENCIA);
-        this.vigencias.push(...param);
-        validacion = true;
-      }
-
-      if ('dependencia_id' in firstElement) {
-        const param = await this.traerDependencias();
-        this.dependencias.push(...param);
-        this.correos = await this.getEmails(firstElement.dependencia_id);
-        validacion = true;
-      }
-      return validacion;
-  }
-
-  private async traerParametros(idParam: number) {
-    const url = `${PARAMETROS_SERVICE}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre&limit=0`;
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data.Data;
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+    if (!firstElement) {
+      return false;
     }
-  }
 
-  private async traerDependencias() {
-    const url = `${OIKOS_SERVICE}dependencia?query=Activo:true&fields=Id,Nombre,CorreoElectronico&limit=0`;
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data;
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+    const camposConfig = [
+      { campo: 'tipo_evaluacion_id', tipoParametro: TIPO_PARAMETRO.TIPO_EVALUACION, destino: this.tiposEvaluacion },
+      { campo: 'cronograma_id', tipoParametro: TIPO_PARAMETRO.CRONOGRAMA, destino: this.cronogramasActividad },
+      { campo: 'estado_id', tipoParametro: TIPO_PARAMETRO.AUDITORIA_ESTADO, destino: this.estados },
+      { campo: 'macroproceso_id', tipoParametro: TIPO_PARAMETRO.MACROPROCESO, destino: this.macroprocesos },
+      { campo: 'proceso_id', tipoParametro: TIPO_PARAMETRO.PROCESO, destino: this.procesos },
+      { campo: 'lider_id', tipoParametro: TIPO_PARAMETRO.CARGO_LIDER, destino: this.lideres },
+      { campo: 'responsable_id', tipoParametro: TIPO_PARAMETRO.CARGO_RESPONSABLE, destino: this.responsables },
+      { campo: 'vigencia_id', tipoParametro: TIPO_PARAMETRO.VIGENCIA, destino: this.vigencias },
+    ];
+
+    let validacion = false;
+
+    for (const config of camposConfig) {
+      if (config.campo in firstElement) {
+        const dominio = await firstValueFrom(this.dominiosService.getParametros(config.tipoParametro));
+        config.destino.push(...dominio.parametros);
+        validacion = true;
+      }
     }
+
+    if ('dependencia_id' in firstElement) {
+      const dominio = await firstValueFrom(this.dominiosService.getDependencias());
+      this.dependencias.push(...dominio.parametros);
+      this.correos = await this.getEmails(firstElement.dependencia_id);
+      validacion = true;
+    }
+
+    return validacion;
   }
 
   private async traerDataCrud(id: string | null, queryParams: any) {
@@ -550,7 +451,6 @@ export class AuditoriaService {
   private reemplazar(array: any[], element: any, campo: string) {
     const value = element[campo];
 
-    //se realiza reemplazo de sufijo _id si existe, por _nombre
     const nuevoCampo = campo.endsWith('_id')
       ? campo.replace('_id', '_nombre')
       : `${campo}_nombre`;
