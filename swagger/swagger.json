@@ -309,7 +309,7 @@
         ]
       }
     },
-    "/cargue-masivo/auditorias/{planId}": {
+    "/cargue-masivo/auditorias/plan/{planId}": {
       "get": {
         "operationId": "CargueMasivoController_descargarAuditoriasExcel",
         "parameters": [
