@@ -1,5 +1,8 @@
 export class PlantillaDto {
   actividad: string;
+  macroproceso: string;
+  proceso: string;
+  dependencia: string;
   enero?: string;
   febrero?: string;
   marzo?: string;

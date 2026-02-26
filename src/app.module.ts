@@ -5,7 +5,7 @@ import { PlanAuditoriaModule } from './plan-auditoria/plan-auditoria.module';
 import { AuditoriaModule } from './application/auditoria/auditoria.module';
 import { ActividadModule } from './actividad/actividad.module';
 import { ConfigModule } from '@nestjs/config';
-import { PlantillaModule } from './plantilla/plantilla.module';
+import { PlantillaModule } from './application/plantilla/plantilla.module';
 import { CargueMasivoModule } from './application/cargue-masivo/cargue-masivo.module';
 import { PlanEstadoModule } from './plan-estado/plan-estado.module';
 import { AuditorModule } from './auditor/auditor.module';
