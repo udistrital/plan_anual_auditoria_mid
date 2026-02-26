@@ -11,6 +11,7 @@ import {
 const {
   PLAN_AUDITORIA_CRUD_SERVICE,
   TIPO_EVALUACION,
+  TIPO_PARAMETRO,
   MESES,
 } = environment;
 
@@ -27,12 +28,6 @@ const MESES_MAPPING = {
   Oct: MESES.OCTUBRE,
   Nov: MESES.NOVIEMBRE,
   Dic: MESES.DICIEMBRE,
-};
-
-const TIPO_EVALUACION_MAPPING = {
-  'Auditoria Interna': TIPO_EVALUACION.AUDITORIA_INTERNA,
-  Seguimiento: TIPO_EVALUACION.SEGUIMIENTO,
-  Informe: TIPO_EVALUACION.INFORME,
 };
 
 const MEDIO_MAPPING = {
@@ -132,7 +127,7 @@ export class CargueMasivoService {
     return opciones;
   }
 
-  crearEstructura(base64data: string, complemento: Object): any {
+  async crearEstructura(base64data: string, complemento: Object): Promise<any> {
     return {
       base64data,
       service: PLAN_AUDITORIA_CRUD_SERVICE,
@@ -143,7 +138,22 @@ export class CargueMasivoService {
         tipo_evaluacion_id: {
           file_name_column: 'Tipo de Evaluación',
           required: true,
-          mapping: TIPO_EVALUACION_MAPPING,
+          mapping: await this.getParametrosMapping(TIPO_PARAMETRO.TIPO_EVALUACION),
+        },
+        macroproceso_id: {
+          file_name_column: 'Macroproceso',
+          required: false,
+          mapping: await this.getParametrosMapping(TIPO_PARAMETRO.MACROPROCESO),
+        },
+        proceso_id: {
+          file_name_column: 'Proceso',
+          required: false,
+          mapping: await this.getParametrosMapping(TIPO_PARAMETRO.PROCESO),
+        },
+        dependencia_id: {
+          file_name_column: 'Dependencia',
+          required: false,
+          mapping: await this.getDependenciasMapping(),
         },
         cronograma_id: {
           column_group: Object.keys(MESES_MAPPING),
@@ -151,6 +161,53 @@ export class CargueMasivoService {
         },
       },
     };
+  }
+
+  /**
+   * Obtains a mapping of parameter names to their corresponding IDs for a given parameter type by fetching data from the PARAMETROS_SERVICE.
+   * @param tipoParametroId The ID of the parameter type to fetch.
+   * @returns A promise that resolves to a mapping of parameter names to IDs.
+   * @throws An error if the fetch operation fails or if the response is not in the expected format.
+   */
+  private async getParametrosMapping(tipoParametroId: number): Promise<Record<string, number>> {
+    try {
+      const dominio = await firstValueFrom(this.dominiosService.getParametros(tipoParametroId));
+      const mapping: Record<string, number> = {};
+      dominio.parametros.forEach((parametro: Parametro) => {
+        mapping[parametro.Nombre] = parametro.Id;
+      });
+
+      console.log('Mapping for tipoParametroId:', tipoParametroId, 'is:', mapping);
+      return mapping;
+    }
+    catch (error) {
+      const newError = new Error('Failed to get parametros');
+      newError.stack += "\nCaused by: " + error.stack;
+      throw newError;
+    }
+  }
+
+  /**
+   * Obtains a mapping of dependency names to their corresponding IDs by fetching data from the OIKOS_SERVICE.
+   * @returns A promise that resolves to a mapping of dependency names to IDs.
+   * @throws An error if the fetch operation fails or if the response is not in the expected format.
+   */
+  private async getDependenciasMapping(): Promise<Record<string, number>> {
+    try {
+      const dominio = await firstValueFrom(this.dominiosService.getDependencias());
+      const mapping: Record<string, number> = {};
+      dominio.parametros.forEach((parametro: Parametro) => {
+        mapping[parametro.Nombre] = parametro.Id;
+      });
+
+      console.log('Dependencias mapping is:', mapping);
+      return mapping;
+    }
+    catch (error) {
+      const newError = new Error('Failed to get dependencias');
+      newError.stack += "\nCaused by: " + error.stack;
+      throw newError;
+    }
   }
 
   crearEstructuraActividad(base64data: string, complemento: Object): any {

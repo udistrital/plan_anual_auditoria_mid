@@ -100,7 +100,7 @@ export class PlantillaInformeSeguimientoService {
 
 
     private async obtenerTemasInforme(idInforme: string) {
-        const urlTemas = `${PLAN_AUDITORIA_CRUD_SERVICE}informe/${idInforme}/tema`;
+        const urlTemas = `${PLAN_AUDITORIA_CRUD_SERVICE}tema?query=informe_id:${idInforme},activo:true`;
         try {
             const respuestaTemas = await lastValueFrom(
                 this.httpService.get(urlTemas),
