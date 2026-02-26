@@ -13,7 +13,7 @@ import axios from 'axios';
 import { environment } from 'src/config/configuration';
 import { NuxeoService } from 'src/shared/utils/nuxeo/nuxeo.service';
 // TODO: In the future, the auditoriaService dependency should be removed by modularizing the ordenadas method to avoid coupling between modules
-import { AuditoriaService } from 'src/auditoria/auditoria.service';
+import { AuditoriaService } from '../auditoria/auditoria.service';
 import { firstValueFrom } from 'rxjs';
 
 @ApiTags('Cargue Masivo')
