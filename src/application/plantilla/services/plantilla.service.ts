@@ -226,12 +226,13 @@ export class PlantillaService {
     }
   }
 
-    /**
+  /**
    * Obtains a parametro's name given its id by fetching data from the PARAMETROS_SERVICE.
    * @param parametroId The ID of the parameter fetch.
    * @returns A promise that resolves to the name of the parameter corresponding to the given ID.
    * @throws An error if the fetch operation fails or if the response is not in the expected format.
    */
+  // TODO: Modularize using either DominioService or ParametrosService
   private async getParametroName(parametroId: number): Promise<string> {
     const url = `${PARAMETROS_SERVICE}parametro?query=Activo:true,Id:${parametroId}&fields=Id,Nombre&limit=0`;
     console.debug(`Fetching [${parametroId}] type parameters from URL: ${url}`);
@@ -252,6 +253,7 @@ export class PlantillaService {
    * @returns A promise that resolves to the name of the dependency corresponding to the given ID.
    * @throws An error if the fetch operation fails or if the response is not in the expected format.
    */
+  // TODO: Modularize using either DominioService or ParametrosService
   private async getDependenciaName(dependenciaId: number): Promise<string> {
     const url = `${OIKOS_SERVICE}dependencia?query=Activo:true,Id:${dependenciaId}&fields=Id,Nombre&limit=0`;
     console.debug(`Fetching dependencia name from URL: ${url}`);
@@ -273,6 +275,7 @@ export class PlantillaService {
    * @returns A promise that resolves to a mapping of parameter names to IDs.
    * @throws An error if the fetch operation fails or if the response is not in the expected format (See {@link Parametro}).
    */
+  // TODO: Modularize using either DominioService or ParametrosService
   private async fetchParametroName(url: string): Promise<string> {
     try {
       // Fetch the parameters from the given URL
