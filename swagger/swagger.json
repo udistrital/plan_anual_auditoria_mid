@@ -86,6 +86,13 @@
             "in": "query",
             "description": "Campo de orden.",
             "schema": {}
+          },
+          {
+            "name": "plan_auditoria_id",
+            "required": true,
+            "in": "query",
+            "description": "ID del plan de auditoría (obligatorio).",
+            "schema": {}
           }
         ],
         "responses": {
@@ -275,6 +282,78 @@
         "summary": "Obtener auditor por ID",
         "tags": [
           "Auditor"
+        ]
+      }
+    },
+    "/cargue-masivo/auditorias/plantilla": {
+      "get": {
+        "operationId": "CargueMasivoController_descargarPlantillaAuditorias",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Plantilla descargada exitosamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "base64": {
+                      "type": "string",
+                      "description": "Archivo de plantilla en formato Base64."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno."
+          }
+        },
+        "summary": "Descargar plantilla de auditorías",
+        "tags": [
+          "Cargue Masivo"
+        ]
+      }
+    },
+    "/cargue-masivo/auditorias/plan/{planId}": {
+      "get": {
+        "operationId": "CargueMasivoController_descargarAuditoriasExcel",
+        "parameters": [
+          {
+            "name": "planId",
+            "required": true,
+            "in": "path",
+            "description": "ID del plan de auditoría.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Archivo de auditorías descargado exitosamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "base64": {
+                      "type": "string",
+                      "description": "Archivo de auditorías en formato Base64."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno."
+          }
+        },
+        "summary": "Descargar auditorías en formato Excel",
+        "tags": [
+          "Cargue Masivo"
         ]
       }
     },
