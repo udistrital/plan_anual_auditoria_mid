@@ -403,9 +403,7 @@ paths:
       tags: *ref_6
   /informe/{id}:
     get:
-      description: >-
-        Retorna el informe con auditoría, estado actual, historial de estados,
-        hallazgos y temas
+      description: Retorna el informe con auditoría hallazgos y temas
       operationId: InformeController_getById
       parameters:
         - name: id
