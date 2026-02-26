@@ -6,10 +6,7 @@ import { AuditorService } from '../../auditor/auditor.service';
 import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
 import { Dominio } from 'src/shared/utils/dominios/dominio.model';
 import { unirListaNombresConComas } from 'src/utils/texto.utils';
-import {
-  ordenarAuditoriasPorPlan,
-  aplicarOrdenamiento,
-} from 'src/shared/utils/auditoria-ordenamiento.utils';
+import { AuditoriaOrdenadaService } from 'src/shared/services/auditoria-ordenada/auditoria-ordenada.service';
 
 const {
   PLAN_AUDITORIA_CRUD_SERVICE,
@@ -40,6 +37,7 @@ export class AuditoriaService {
     private readonly httpService: HttpService,
     private readonly auditorService: AuditorService,
     private readonly dominiosService: DominiosService,
+    private readonly auditoriaOrdenadaService: AuditoriaOrdenadaService,
   ) {}
 
   async getAll(queryParams: any) {
@@ -254,47 +252,55 @@ export class AuditoriaService {
   async getAuditoriasOrdenadas(queryParams: any) {
     const planId = this.extraerPlanId(queryParams);
 
-    const crudParams = { ...queryParams };
-    if (!crudParams.query) {
-      crudParams.query = `plan_auditoria_id:${planId}`;
-    } else if (!crudParams.query.includes('plan_auditoria_id')) {
-      crudParams.query += `,plan_auditoria_id:${planId}`;
+    // Extraer filtros adicionales del query string
+    const filtros: any = {};
+    if (queryParams.query) {
+      const queryParts = queryParams.query.split(',');
+      queryParts.forEach((part: string) => {
+        if (part.startsWith('tipo_evaluacion_id:')) {
+          filtros.tipo_evaluacion_id = part.split(':')[1];
+        }
+      });
+    }
+    if (queryParams.tipo_evaluacion_id) {
+      filtros.tipo_evaluacion_id = queryParams.tipo_evaluacion_id;
     }
 
-    const data = await this.traerDataCrud(null, crudParams);
+    // Usar servicio compartido para obtener auditorías ordenadas (sin orderBy aún)
+    const auditoriasOrdenadas = await this.auditoriaOrdenadaService.getAuditoriasOrdenadas(
+      planId,
+      undefined,
+      undefined,
+      filtros,
+    );
 
-    if (data.Data && Array.isArray(data.Data)) {
-      const auditoriasActivas = data.Data.filter(
-        (auditoria) => auditoria.activo === true,
-      );
+    const data = {
+      Data: auditoriasOrdenadas,
+      Success: true,
+      Status: 200,
+    };
 
-      await Promise.all(
-        auditoriasActivas.map(async (auditoria: any) => {
-          const estado = await this.getEstadoAuditoria(auditoria._id);
-          if (estado?.actual) {
-            auditoria.estado_id = estado.estado_id;
-          }
-        }),
-      );
+    // Enriquecer con estados
+    await Promise.all(
+      data.Data.map(async (auditoria: any) => {
+        const estado = await this.getEstadoAuditoria(auditoria._id);
+        if (estado?.actual) {
+          auditoria.estado_id = estado.estado_id;
+        }
+      }),
+    );
 
-      const planData = await this.obtenerPlanPorId(planId);
-      data.Data = ordenarAuditoriasPorPlan(
-        auditoriasActivas,
-        planData?.auditorias || [],
-      );
-
-      if (await this.identificarCampo(data)) {
-        this.reemplazarCampos(data);
-      }
-
-      if (queryParams.orderBy) {
-        data.Data = aplicarOrdenamiento(
-          data.Data,
-          queryParams.orderBy,
-          queryParams.orderDirection,
-        );
-      }
+    // Identificar y reemplazar campos ANTES de ordenar
+    if (await this.identificarCampo(data)) {
+      this.reemplazarCampos(data);
     }
+
+    // Aplicar ordenamiento DESPUÉS de reemplazar campos
+    if (queryParams.orderBy) {
+      const { aplicarOrdenamiento } = await import('src/shared/utils/auditoria-ordenamiento.utils');
+      data.Data = aplicarOrdenamiento(data.Data, queryParams.orderBy, queryParams.orderDirection);
+    }
+
     return data;
   }
 
@@ -316,20 +322,7 @@ export class AuditoriaService {
     );
   }
 
-  private async obtenerPlanPorId(planId: string) {
-    const url = `${PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${planId}`;
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data.Data;
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener el plan',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  private async identificarCampo(data: any) {
+private async identificarCampo(data: any) {
     const firstElement = Array.isArray(data.Data) ? data.Data[0] : data.Data;
 
     if (!firstElement) {
