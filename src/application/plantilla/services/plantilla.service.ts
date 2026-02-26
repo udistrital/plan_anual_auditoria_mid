@@ -93,9 +93,14 @@ export class PlantillaService {
       auditoriasOrden,
     );
 
+    const dominios: { [key: string]: Dominio } = {};
+    dominios.macroproceso = await lastValueFrom(this.dominiosService.getParametros(environment.TIPO_PARAMETRO.MACROPROCESO));
+    dominios.proceso = await lastValueFrom(this.dominiosService.getParametros(environment.TIPO_PARAMETRO.PROCESO));
+    dominios.dependencia = await lastValueFrom(this.dominiosService.getDependencias());
+
     const items: Promise<PlantillaDto[]> = Array.isArray(auditorias)
       ? Promise.all(auditoriasOrdenadas.map((auditoria: any) =>
-          this.organizarItems(auditoria),
+          this.organizarItems(auditoria, dominios),
         ))
       : Promise.resolve([]);
 
@@ -108,7 +113,7 @@ export class PlantillaService {
 
     const especiales: Promise<PlantillaDto[]> = Array.isArray(auditoriasEspeciales)
       ? Promise.all(auditoriasEspecialesOrdenadas.map((auditoria: any) =>
-          this.organizarItems(auditoria),
+          this.organizarItems(auditoria, dominios),
         ))
       : Promise.resolve([]);
 
@@ -128,7 +133,7 @@ export class PlantillaService {
     return json;
   }
 
-  private async organizarItems(data: any): Promise<PlantillaDto> {
+  private async organizarItems(data: any, dominios: { [key: string]: Dominio }): Promise<PlantillaDto> {
     const idMesMap = {
       [MESES.ENERO]: 'enero',
       [MESES.FEBRERO]: 'febrero',
@@ -161,20 +166,17 @@ export class PlantillaService {
       }
     });
 
-    const dominioMacroproceso = (await lastValueFrom(this.dominiosService.getParametros(environment.TIPO_PARAMETRO.MACROPROCESO)));
     const macroproceso = data.macroproceso_id == null
                           ? 'No definido'
-                          : this.getParametroName(data.macroproceso_id, dominioMacroproceso);
+                          : this.getParametroName(data.macroproceso_id, dominios.macroproceso);
 
-    const dominioProceso = (await lastValueFrom(this.dominiosService.getParametros(environment.TIPO_PARAMETRO.PROCESO)));
     const proceso = data.proceso_id == null
                     ? 'No definido'
-                    : this.getParametroName(data.proceso_id, dominioProceso);
+                    : this.getParametroName(data.proceso_id, dominios.proceso);
 
-    const dominioDependencias = await lastValueFrom(this.dominiosService.getDependencias());
     const dependencia = data.dependencia_id == null
                       ? 'No definido'
-                      : this.getParametroName(data.dependencia_id, dominioDependencias);
+                      : this.getParametroName(data.dependencia_id, dominios.dependencia);
 
     return {
       actividad: data.titulo || 'No definido',
