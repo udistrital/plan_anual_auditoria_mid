@@ -16,6 +16,11 @@ export class AuditoriaController {
   @Get('ordenadas')
   @ApiOperation({ summary: 'Obtener auditorías ordenadas' })
   @ApiQuery({
+    name: 'plan_auditoria_id',
+    required: true,
+    description: 'ID del plan de auditoría (obligatorio).',
+  })
+  @ApiQuery({
     name: 'orderBy',
     required: false,
     description: 'Campo de orden.',
@@ -45,7 +50,11 @@ export class AuditoriaController {
 
   @Get('auditor/:personaId')
   @ApiOperation({ summary: 'Obtener auditorías por auditor' })
-  @ApiParam({ name: 'personaId', required: true, description: 'ID del auditor.' })
+  @ApiParam({
+    name: 'personaId',
+    required: true,
+    description: 'ID del auditor.',
+  })
   @ApiResponse({ status: 200, description: 'Auditorías obtenidas.' })
   @ApiResponse({ status: 404, description: 'Sin resultados.' })
   async getByAuditor(
@@ -54,13 +63,57 @@ export class AuditoriaController {
     @Query() queryParams: any,
   ) {
     try {
-      const data = await this.auditoriaService.getByAuditor(personaId, queryParams);
+      const data = await this.auditoriaService.getByAuditor(
+        personaId,
+        queryParams,
+      );
       res.status(HttpStatus.OK).json(data);
     } catch (error) {
       res.status(HttpStatus.NOT_FOUND).json({
         Success: false,
         Status: HttpStatus.NOT_FOUND,
-        Message: 'Error en servicio GetByAuditor: sin datos o parámetro inválido.',
+        Message:
+          'Error en servicio GetByAuditor: sin datos o parámetro inválido.',
+        Data: error.message,
+      });
+    }
+  }
+
+  @Get('auditado/:personaId/:cargoId')
+  @ApiOperation({
+    summary: 'Obtener auditorías por dependencia del usuario auditado',
+  })
+  @ApiParam({
+    name: 'personaId',
+    required: true,
+    description: 'ID de la persona (tercero).',
+  })
+  @ApiParam({
+    name: 'cargoId',
+    required: true,
+    description: 'ID del cargo (312 o 320).',
+  })
+  @ApiResponse({ status: 200, description: 'Auditorías obtenidas.' })
+  @ApiResponse({ status: 404, description: 'Sin resultados.' })
+  async getByDependencia(
+    @Res() res: any,
+    @Param('personaId') personaId: string,
+    @Param('cargoId') cargoId: string,
+    @Query() queryParams: any,
+  ) {
+    try {
+      const data = await this.auditoriaService.getByDependencia(
+        +personaId,
+        +cargoId,
+        queryParams,
+      );
+      res.status(HttpStatus.OK).json(data);
+    } catch (error) {
+      res.status(HttpStatus.NOT_FOUND).json({
+        Success: false,
+        Status: HttpStatus.NOT_FOUND,
+        Message:
+          'Error en servicio GetByDependencia: sin datos o parámetro inválido.',
         Data: error.message,
       });
     }

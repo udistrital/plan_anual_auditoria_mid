@@ -1,0 +1,9 @@
+export const DOMINIOS_CONFIG = {
+  NOMBRES_API: {
+    PARAMETROS: 'PARAMETROS',
+    OIKOS: 'OIKOS',
+  },
+  NOMBRES_OIKOS: {
+    DEPENDENCIAS: 'DEPENDENCIAS',
+  }
+}
