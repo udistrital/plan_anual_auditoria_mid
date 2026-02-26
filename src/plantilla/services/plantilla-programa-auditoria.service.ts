@@ -13,7 +13,9 @@ const {
     PLANTILLAS,
     PARAMETROS_SERVICE,
     TERCEROS_SERVICE,
-    OIKOS_SERVICE
+    OIKOS_SERVICE,
+    logoUDistrital,
+    logoSIGUD
 } = environment;
 
 @Injectable()
@@ -60,6 +62,8 @@ export class PlantillaProgramaAuditoriaService {
                 criterios: auditoria.criterio,
                 equipoAuditor: grupoAuditor,
                 periodoEjecucion: moment(auditoria.fecha_inicio).format('DD/MM/YYYY') + " - " + moment(auditoria.fecha_fin).format('DD/MM/YYYY'),
+                logoUDistrital: logoUDistrital,
+                logoSIGUD: logoSIGUD
             }
         };
 
