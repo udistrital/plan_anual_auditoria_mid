@@ -3,6 +3,8 @@ import { HttpService } from '@nestjs/axios';
 import { environment } from 'src/config/configuration';
 import { lastValueFrom } from 'rxjs';
 import { jsonPlantillaDto, PlantillaDto } from '../dto/plantilla.dto';
+import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
+import { Dominio } from 'src/shared/utils/dominios/dominio.model';
 
 const {
   PLAN_AUDITORIA_CRUD_SERVICE,
@@ -21,7 +23,10 @@ interface Parametro {
 
 @Injectable()
 export class PlantillaService {
-  constructor(private readonly httpService: HttpService) {}
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly dominiosService: DominiosService,
+  ) {}
   async getOne(id: string, conEspeciales: boolean) {
     let data = await this.traerDataCrud(id);
     if (conEspeciales)
@@ -156,35 +161,20 @@ export class PlantillaService {
       }
     });
 
+    const dominioMacroproceso = (await lastValueFrom(this.dominiosService.getParametros(environment.TIPO_PARAMETRO.MACROPROCESO)));
     const macroproceso = data.macroproceso_id == null
                           ? 'No definido'
-                          : await this.getParametroName(data.macroproceso_id)
-                              .catch(error => {
-                                console.error(
-                                  `Error fetching macroproceso name for ID ${data.macroproceso_id}:`, error
-                                );
-                                return '?error';
-                              });
+                          : this.getParametroName(data.macroproceso_id, dominioMacroproceso);
 
+    const dominioProceso = (await lastValueFrom(this.dominiosService.getParametros(environment.TIPO_PARAMETRO.PROCESO)));
     const proceso = data.proceso_id == null
                     ? 'No definido'
-                    : await this.getParametroName(data.proceso_id)
-                        .catch(error => {
-                          console.error(
-                            `Error fetching proceso name for ID ${data.proceso_id}:`, error
-                          );
-                          return '?error';
-                        });
+                    : this.getParametroName(data.proceso_id, dominioProceso);
 
+    const dominioDependencias = await lastValueFrom(this.dominiosService.getDependencias());
     const dependencia = data.dependencia_id == null
                       ? 'No definido'
-                      : await this.getDependenciaName(data.dependencia_id)
-                          .catch(error => {
-                            console.error(
-                              `Error fetching dependencia name for ID ${data.dependencia_id}:`, error
-                            );
-                            return '?error';
-                          });
+                      : this.getParametroName(data.dependencia_id, dominioDependencias);
 
     return {
       actividad: data.titulo || 'No definido',
@@ -227,82 +217,30 @@ export class PlantillaService {
   }
 
   /**
-   * Obtains a parametro's name given its id by fetching data from the PARAMETROS_SERVICE.
-   * @param parametroId The ID of the parameter fetch.
-   * @returns A promise that resolves to the name of the parameter corresponding to the given ID.
-   * @throws An error if the fetch operation fails or if the response is not in the expected format.
+   * Obtains the name of a parameter given its ID by searching through the provided Dominio object.
+   * @param parametroId The ID of the parameter to find.
+   * @param dominio The Dominio object containing the list of parameters to search through.
+   * @returns The name of the parameter corresponding to the provided ID if found.
+   * @returns "?error" if the parameter with the given ID is not found in the Dominio.
+   * @throws An error if there is an issue during the search process.
    */
-  // TODO: Modularize using either DominioService or ParametrosService
-  private async getParametroName(parametroId: number): Promise<string> {
-    const url = `${PARAMETROS_SERVICE}parametro?query=Activo:true,Id:${parametroId}&fields=Id,Nombre&limit=0`;
-    console.debug(`Fetching [${parametroId}] type parameters from URL: ${url}`);
-    try {
-      const name = await this.fetchParametroName(url);
-      console.debug(`Fetched parameter name: ${name}`);
-      return name;
-    }
-    catch (error) {
-      const newError = new Error('Failed to get parametro');
-      newError.stack += "\nCaused by: " + error.stack;
-      throw newError;
-    }
-  }
+  private getParametroName(parametroId: number, dominio: Dominio): string {
+    const parametros = dominio.parametros;
 
-  /**
-   * Obtains a dependency's name given its id by fetching data from the OIKOS_SERVICE.
-   * @returns A promise that resolves to the name of the dependency corresponding to the given ID.
-   * @throws An error if the fetch operation fails or if the response is not in the expected format.
-   */
-  // TODO: Modularize using either DominioService or ParametrosService
-  private async getDependenciaName(dependenciaId: number): Promise<string> {
-    const url = `${OIKOS_SERVICE}dependencia?query=Activo:true,Id:${dependenciaId}&fields=Id,Nombre&limit=0`;
-    console.debug(`Fetching dependencia name from URL: ${url}`);
     try {
-      const name = await this.fetchParametroName(url);
-      console.debug(`Fetched dependencia name: ${name}`);
-      return name;
-    }
-    catch (error) {
-      const newError = new Error('Failed to get dependencias');
-      newError.stack += "\nCaused by: " + error.stack;
-      throw newError;
-    }
-  }
-
-  /**
-   * Fetches parameters from a given URL and returns a mapping of parameter names to their corresponding IDs.
-   * @param url The URL to fetch the parameters from.
-   * @returns A promise that resolves to a mapping of parameter names to IDs.
-   * @throws An error if the fetch operation fails or if the response is not in the expected format (See {@link Parametro}).
-   */
-  // TODO: Modularize using either DominioService or ParametrosService
-  private async fetchParametroName(url: string): Promise<string> {
-    try {
-      // Fetch the parameters from the given URL
-      console.debug(`Fetching parameters from URL: ${url}`);
-      const response = await lastValueFrom(this.httpService.get(url));
-      const axiosData = response.data;
-      const data: Parametro[] = axiosData.Data || axiosData;
-
-      // Validate the response format
-      if (!Array.isArray(data))
-        throw new Error('Invalid response format: expected an array');
+      const parametro = parametros.find((p) => p.Id === parametroId);
+      if (!parametro) {
+        console.error(`Parametro with ID ${parametroId} not found in dominio ${dominio.nombre}`);
+        return "?error";
+      }
       
-      if (!data.every(item => 'Id' in item && 'Nombre' in item))
-        throw new Error('Invalid response format: expected objects with Id and Nombre properties');
-
-      // Validate that we have at least one parameter in the response
-      if (data.length === 0)
-        throw new Error('No parameters found in the response');
-
-      // Assume the first parameter in the response is the one we want (since we query by ID, there should be at most one)
-      const parametroName = data[0].Nombre;
-      return parametroName;
+      return parametro.Nombre;
     }
     catch (error) {
-      const newError = new Error(`Failed to fetch parameters from ${url}`);
+      const newError = new Error("Failed to get parametro's name");
       newError.stack += "\nCaused by: " + error.stack;
       throw newError;
     }
   }
+
 }
