@@ -593,4 +593,47 @@ private async identificarCampo(data: any) {
     }
     return unirListaNombresConComas(cronograma_nombre);
   }
+
+  async deleteAuditoria(auditoriaId: string, planAuditoriaId: string) {
+    if (!planAuditoriaId) {
+      throw new HttpException(
+        'El parámetro "plan_auditoria_id" es obligatorio.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    try {
+      // 1. Eliminar lógicamente la auditoría
+      const deleteUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria/${auditoriaId}`;
+      await lastValueFrom(this.httpService.delete(deleteUrl));
+
+      // 2. Obtener el plan de auditoría actual
+      const getPlanUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${planAuditoriaId}`;
+      const planResponse = await lastValueFrom(this.httpService.get(getPlanUrl));
+      const plan = planResponse.data.Data;
+
+      // 3. Filtrar las auditorías para eliminar la auditoría borrada
+      const auditoriasActualizadas = plan.auditorias.filter(
+        (id: string) => id !== auditoriaId,
+      );
+
+      // 4. Actualizar el plan de auditoría
+      const putPlanUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${planAuditoriaId}`;
+      await lastValueFrom(
+        this.httpService.put(putPlanUrl, { auditorias: auditoriasActualizadas }),
+      );
+
+      return {
+        Success: true,
+        Status: 200,
+        Message: 'Auditoría eliminada exitosamente',
+        Data: null,
+      };
+    } catch (error) {
+      throw new HttpException(
+        error.response?.data?.message || 'Error al eliminar la auditoría',
+        error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

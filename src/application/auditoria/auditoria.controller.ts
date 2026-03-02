@@ -1,4 +1,4 @@
-import { Controller, Get, Param, HttpStatus, Res, Query } from '@nestjs/common';
+import { Controller, Get, Delete, Param, HttpStatus, Res, Query } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -137,6 +137,27 @@ export class AuditoriaController {
         Success: false,
         Status: HttpStatus.NOT_FOUND,
         Message: 'Error en servicio GetAll: sin datos o parámetro inválido.',
+        Data: error.message,
+      });
+    }
+  }
+
+  @Delete(':id/:planId')
+  @ApiOperation({ summary: 'Eliminar auditoría lógicamente' })
+  @ApiParam({ name: 'id', required: true, description: 'ID de auditoría.' })
+  @ApiParam({ name: 'planId', required: true, description: 'ID del plan de auditoría.' })
+  @ApiResponse({ status: 200, description: 'Auditoría eliminada.' })
+  @ApiResponse({ status: 400, description: 'Parámetros inválidos.' })
+  @ApiResponse({ status: 500, description: 'Error interno.' })
+  async delete(@Res() res: any, @Param('id') id: string, @Param('planId') planId: string) {
+    try {
+      const data = await this.auditoriaService.deleteAuditoria(id, planId);
+      res.status(HttpStatus.OK).json(data);
+    } catch (error) {
+      res.status(error.status || HttpStatus.INTERNAL_SERVER_ERROR).json({
+        Success: false,
+        Status: error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+        Message: 'Error al eliminar la auditoría.',
         Data: error.message,
       });
     }
