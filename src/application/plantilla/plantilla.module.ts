@@ -9,9 +9,10 @@ import { PlantillaCartaPresentacionService } from './services/plantilla-carta-pr
 import { PlantillaProgramaAuditoriaService } from './services/plantilla-programa-auditoria.service';
 import { PlantillaInformeSeguimientoService } from './services/plantilla-informe-seguimiento.service';
 import { PlantillaInformeAuditoriaService } from './services/plantilla-informe-auditoria.service';
+import { DominiosModule } from 'src/shared/utils/dominios/dominios.module';
 
 @Module({
-  imports: [HttpModule],
+  imports: [HttpModule, DominiosModule],
   controllers: [PlantillaController],
   providers: [
     PlantillaCartaPresentacionService,
