@@ -23,15 +23,9 @@ export class AuditoriaService {
   private macroprocesos: any[] = [];
   private procesos: any[] = [];
   private dependencias: any[] = [];
-  private lideres: any[] = [];
-  private responsables: any[] = [];
   private vigencias: any[] = [];
-  private correos: any = {};
-  private estados: { Id: number; Nombre: string }[] = [
-    { Id: 1, Nombre: 'Activo' },
-    { Id: 2, Nombre: 'Inactivo' },
-    { Id: 3, Nombre: 'Otro' },
-  ];
+  private datosTerceros: any = {};
+  private estados: { Id: number; Nombre: string }[] = [];
 
   constructor(
     private readonly httpService: HttpService,
@@ -203,36 +197,34 @@ export class AuditoriaService {
     return data;
   }
 
-  async getEmails(dependencia_id: number) {
-    const correo_lider = await this.traerCorreoTerceroVinculado(
+  async getDatosTerceros(dependencia_id: number) {
+    const jefe_dependencia = await this.traerTerceroVinculado(
       dependencia_id,
       environment.CARGO.JEFE_DEPENDENCIA_ID,
     );
 
-    const correo_responsable = await this.traerCorreoTerceroVinculado(
+    const asistente_dependencia = await this.traerTerceroVinculado(
       dependencia_id,
       environment.CARGO.ASISTENTE_DEPENDENCIA_ID,
     );
 
-    const correo_dependencia = this.traerCorreoDependencia(dependencia_id);
     return {
-      correo_lider: correo_lider,
-      correo_responsable: correo_responsable,
-      correo_dependencia: correo_dependencia,
+      jefe_nombre: jefe_dependencia?.NombreCompleto,
+      jefe_correo: jefe_dependencia?.UsuarioWSO2,
+      asistente_nombre: asistente_dependencia?.NombreCompleto,
+      asistente_correo: asistente_dependencia?.usuarioWSO2,
     };
   }
 
-  async traerCorreoTerceroVinculado(
+  async traerTerceroVinculado(
     dependenciaId: number,
     cargoId: number,
-  ): Promise<string> {
-    const url = `${TERCEROS_SERVICE}vinculacion?query=Activo:true,DependenciaId:${dependenciaId},CargoId:${cargoId}`;
+  ): Promise<any> {
+    const url = `${TERCEROS_SERVICE}vinculacion?order=desc&sortby=Id&fields=TerceroPrincipalId&`
+      +`query=Activo:true,DependenciaId:${dependenciaId},CargoId:${cargoId}`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
-      const vinculacion = response.data[0];
-      return (
-        vinculacion?.TerceroPrincipalId?.UsuarioWSO2 || 'Correo no encontrado'
-      );
+      return response.data[0]?.TerceroPrincipalId;
     } catch (error) {
       throw new HttpException(
         'Error al traer el tercero vinculado',
@@ -244,7 +236,7 @@ export class AuditoriaService {
 
   traerCorreoDependencia(dependenciaId: number): string {
     const dependencia = this.dependencias.find(
-      (dep) => dep.Id === dependenciaId,
+      (dep) => dep.Id === dependenciaId
     );
     return dependencia ? dependencia.CorreoElectronico : 'Correo no encontrado';
   }
@@ -356,16 +348,6 @@ private async identificarCampo(data: any) {
         destino: this.procesos,
       },
       {
-        campo: 'lider_id',
-        tipoParametro: TIPO_PARAMETRO.CARGO_LIDER,
-        destino: this.lideres,
-      },
-      {
-        campo: 'responsable_id',
-        tipoParametro: TIPO_PARAMETRO.CARGO_RESPONSABLE,
-        destino: this.responsables,
-      },
-      {
         campo: 'vigencia_id',
         tipoParametro: TIPO_PARAMETRO.VIGENCIA,
         destino: this.vigencias,
@@ -404,7 +386,10 @@ private async identificarCampo(data: any) {
 
     if (resultados['dependencia_id']) {
       this.dependencias.push(...resultados['dependencia_id'].parametros);
-      this.correos = await this.getEmails(firstElement.dependencia_id);
+    }
+
+    if (!Array.isArray(data.Data)) {
+      this.datosTerceros = await this.getDatosTerceros(firstElement.dependencia_id);
     }
 
     return true;
@@ -484,12 +469,6 @@ private async identificarCampo(data: any) {
         if (element.proceso_id !== undefined) {
           this.reemplazar(this.procesos, element, 'proceso_id');
         }
-        if (element.lider_id !== undefined) {
-          this.reemplazar(this.lideres, element, 'lider_id');
-        }
-        if (element.responsable_id !== undefined) {
-          this.reemplazar(this.responsables, element, 'responsable_id');
-        }
         if (element.dependencia_id !== undefined) {
           this.reemplazar(this.dependencias, element, 'dependencia_id');
         }
@@ -517,14 +496,12 @@ private async identificarCampo(data: any) {
       if (data.Data.proceso_id !== undefined) {
         this.reemplazar(this.procesos, data.Data, 'proceso_id');
       }
-      if (data.Data.lider_id !== undefined) {
-        this.reemplazar(this.lideres, data.Data, 'lider_id');
-      }
-      if (data.Data.responsable_id !== undefined) {
-        this.reemplazar(this.responsables, data.Data, 'responsable_id');
-      }
       if (data.Data.dependencia_id !== undefined) {
-        data.Data = { ...data.Data, ...this.correos };
+        data.Data = {
+          ...data.Data,
+          ...this.datosTerceros,
+          ...{correo_dependencia: this.traerCorreoDependencia(data.Data.dependencia_id)}
+        };
         this.reemplazar(this.dependencias, data.Data, 'dependencia_id');
       }
     }
