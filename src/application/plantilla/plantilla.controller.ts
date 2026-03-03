@@ -32,11 +32,11 @@ export class PlantillaController {
     description: 'Incluir caracteres especiales en la plantilla',
   })
   @ApiResponse({ status: 200, description: 'Plantilla encontrada.' })
-  async getById(@Param('id') id: string, @Query('conEspeciales') conEspeciales?: boolean) {
+  async getById(@Param('id') id: string, @Query('conEspeciales') conEspeciales?: string) {
     if (conEspeciales == null)
-      conEspeciales = false;
+      conEspeciales = 'false';
 
-    return this.plantillaService.getOne(id, conEspeciales);
+    return this.plantillaService.getOne(id, conEspeciales === 'true');
   }
 
   @Get('/:tipo/:idAuditoria')
