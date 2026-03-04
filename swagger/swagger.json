@@ -69,6 +69,60 @@
         ]
       }
     },
+    "/auditoria-estado": {
+      "get": {
+        "operationId": "AuditoriaEstadoController_getAll",
+        "parameters": [
+          {
+            "name": "filter",
+            "required": false,
+            "in": "query",
+            "description": "Filtro opcional.",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista obtenida con éxito."
+          },
+          "404": {
+            "description": "No se encontraron estados."
+          }
+        },
+        "summary": "Obtiene todos los estados de auditorías.",
+        "tags": [
+          "Auditoria Estado"
+        ]
+      }
+    },
+    "/auditoria-estado/{id}": {
+      "get": {
+        "operationId": "AuditoriaEstadoController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID del estado de la auditoría.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado obtenido con éxito."
+          },
+          "404": {
+            "description": "No se encontró el estado."
+          }
+        },
+        "summary": "Obtiene un estado de auditoría por ID.",
+        "tags": [
+          "Auditoria Estado"
+        ]
+      }
+    },
     "/auditoria/ordenadas": {
       "get": {
         "operationId": "AuditoriaController_getAuditoriasOrdenadas",
