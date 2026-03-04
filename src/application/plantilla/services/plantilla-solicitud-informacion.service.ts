@@ -6,6 +6,7 @@ import { environment } from 'src/config/configuration';
 import { lastValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { capitalize, unirListaNombres } from 'src/utils/texto.utils';
+import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
 
 const {
   PLAN_AUDITORIA_CRUD_SERVICE,
@@ -19,6 +20,7 @@ export class PlantillaSolicitudInformacionService {
   constructor(
     private readonly httpService: HttpService,
     private readonly plantillaUtils: PlantillaUtilsService,
+    private readonly auditoriaService: AuditoriaService
   ) {}
 
   async get(idAuditoria: string) {
@@ -31,9 +33,9 @@ export class PlantillaSolicitudInformacionService {
 
   private async organizarData(data: any) {
     const auditoria = data.auditoria;
-    const [cargoLider, vigencia, auditoriaOSeguimiento, auditores] =
+    const [Lider, vigencia, auditoriaOSeguimiento, auditores] =
       await Promise.all([
-        this.traerParametros(auditoria.lider_id),
+        this.obtenerTerceroVinculado(environment.CARGO.JEFE_DEPENDENCIA_ID, auditoria.dependencia_id,),
         this.traerParametros(auditoria.tipo_evaluacion_id),
         this.traerParametros(auditoria.tipo_evaluacion_id),
         this.obtenerNombresAuditores(auditoria._id),
@@ -45,7 +47,7 @@ export class PlantillaSolicitudInformacionService {
         fecha: moment().locale('es').format('D [de] MMMM [de] YYYY'),
         oci: auditoria.consecutivo_OCI,
         ie: auditoria.consecutivo_IE,
-        nombreIngeniero: cargoLider.Nombre,
+        nombreIngeniero: Lider?.NombreCompleto || '',
         ciudad: 'Bogotá D.C.',
         referencia: auditoria.titulo,
         anoAuditoria: vigencia.Nombre,
@@ -132,4 +134,16 @@ export class PlantillaSolicitudInformacionService {
       );
     }
   }
+
+  private async obtenerTerceroVinculado(idCargo: number, idDependencia: number) {
+        try {
+            const datosPersona = await this.auditoriaService.traerTerceroVinculado(idDependencia, idCargo);
+            return datosPersona;
+        } catch (error) {
+            throw new HttpException(
+                'Error al obtener los datos del tercero vinculado',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
 }
