@@ -13,7 +13,7 @@ const {
 } = environment;
 
 @Injectable()
-export class PlanEstadoService {
+export class AuditoriaEstadoService {
   private estados: any[] = [];
 
   constructor(private readonly httpService: HttpService) {}
@@ -29,7 +29,7 @@ export class PlanEstadoService {
   async getOne(id: string) {
     const data = await this.traerDataCrud(id, null);
     if (await this.identificarCampo(data)) {
-      this.reemplazarCampos(data);
+      await this.reemplazarCampos(data);
     }
     return data;
   }
@@ -39,7 +39,7 @@ export class PlanEstadoService {
     try {
       const firstElement = Array.isArray(data.Data) ? data.Data[0] : data.Data;
       if ('estado_id' in firstElement) {
-        let param = await this.traerParametros(TIPO_PARAMETRO.PLAN_ESTADO);
+        const param = await this.traerParametros(TIPO_PARAMETRO.AUDITORIA_ESTADO);
         this.estados.push(...param);
         validacion = true;
       }
@@ -92,7 +92,7 @@ export class PlanEstadoService {
   }
 
   private async traerDataCrud(id: string | null, queryParams: any) {
-    let url = `${PLAN_AUDITORIA_CRUD_SERVICE}estado/`;
+    let url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria-estado/`;
     if (id != null && id != undefined) {
       url = url + `${id}`;
     }
