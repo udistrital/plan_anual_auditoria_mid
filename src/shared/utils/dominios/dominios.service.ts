@@ -67,7 +67,7 @@ export class DominiosService {
    * @throws An error if the fetch operation fails or if the response is not in the expected format (See {@link Parametro}).
    */
   getDependencias(): Observable<Dominio> {
-    const url = `dependencia?query=Activo:true&fields=Id,Nombre&limit=0`;
+    const url = `dependencia?query=Activo:true&fields=Id,Nombre,CorreoElectronico&limit=0`;
     try {
       return this.oikosService.get(url).pipe(
         map((response: any) => {
