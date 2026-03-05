@@ -56,7 +56,7 @@ export class AuditoriaOrdenadaService {
   }
 
   private async obtenerAuditoriasDeCrud(planId: string): Promise<any[]> {
-    const url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria?query=plan_auditoria_id:${planId}&limit=1000`;
+    const url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria?query=plan_auditoria_id:${planId}&limit=0`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data?.Data || [];
