@@ -289,7 +289,7 @@ export class AuditoriaService {
 
     // Aplicar ordenamiento DESPUÉS de reemplazar campos
     if (queryParams.orderBy) {
-      const { aplicarOrdenamiento } = await import('src/shared/utils/auditoria-ordenamiento.utils');
+      const { aplicarOrdenamiento } = await import('../../shared/utils/auditoria-ordenamiento.utils');
       data.Data = aplicarOrdenamiento(data.Data, queryParams.orderBy, queryParams.orderDirection);
     }
 
