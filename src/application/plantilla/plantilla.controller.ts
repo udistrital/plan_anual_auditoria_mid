@@ -31,12 +31,22 @@ export class PlantillaController {
     type: Boolean,
     description: 'Incluir caracteres especiales en la plantilla',
   })
+  @ApiQuery({
+    name: 'auditoria-padre',
+    required: false,
+    default: false,
+    type: Boolean,
+    description: 'Usar la auditoría padre en la plantilla en lugar de la colección de auditorías original',
+  })
   @ApiResponse({ status: 200, description: 'Plantilla encontrada.' })
-  async getById(@Param('id') id: string, @Query('conEspeciales') conEspeciales?: string) {
+  async getById(@Param('id') id: string, @Query('conEspeciales') conEspeciales?: string, @Query('auditoria-padre') auditoriaPadre?: string) {
     if (conEspeciales == null)
       conEspeciales = 'false';
 
-    return this.plantillaService.getOne(id, conEspeciales === 'true');
+    if (auditoriaPadre == null)
+      auditoriaPadre = 'false';
+
+    return this.plantillaService.getOne(id, conEspeciales === 'true', auditoriaPadre === 'true');
   }
 
   @Get('/:tipo/:idAuditoria')

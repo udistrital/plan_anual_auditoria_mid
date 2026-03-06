@@ -428,6 +428,15 @@ paths:
           schema:
             default: false
             type: boolean
+        - name: auditoria-padre
+          required: false
+          in: query
+          description: >-
+            Usar la auditoría padre en la plantilla en lugar de la colección de
+            auditorías original
+          schema:
+            default: false
+            type: boolean
       responses:
         '200':
           description: Plantilla encontrada.

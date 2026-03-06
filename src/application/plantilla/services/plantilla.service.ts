@@ -25,19 +25,20 @@ export class PlantillaService {
     private readonly httpService: HttpService,
     private readonly dominiosService: DominiosService,
   ) {}
-  async getOne(id: string, conEspeciales: boolean) {
-    let data = await this.traerDataCrud(id);
+  async getOne(id: string, conEspeciales: boolean, auditoriaPadre: boolean) {
+    let data = await this.traerDataCrud(id, auditoriaPadre);
     if (conEspeciales)
-      data = await this.anadirDataEspeciales(data);
+      data = await this.anadirDataEspeciales(data, auditoriaPadre);
 
     const baseJson = await this.organizarData(data);
     const baseRenderizado = await this.renderizar(baseJson);
     return baseRenderizado;
   }
 
-  private async traerDataCrud(id: string) {
+  private async traerDataCrud(id: string, auditoriaPadre: boolean) {
     let urlPlanAuditoria = `${PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${id}`;
-    let urlAuditioria = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria-padre?query=plan_auditoria_id:${id},activo:true&fields=titulo,macroproceso_id,proceso_id,dependencia_id,cronograma_id&limit=0`;
+    let endpointAuditoria = auditoriaPadre ? 'auditoria-padre' : 'auditoria';
+    let urlAuditioria = `${PLAN_AUDITORIA_CRUD_SERVICE}${endpointAuditoria}?query=plan_auditoria_id:${id},activo:true&fields=titulo,macroproceso_id,proceso_id,dependencia_id,cronograma_id&limit=0`;
     try {
       const responsePlanAuditoria = await lastValueFrom(
         this.httpService.get(urlPlanAuditoria),
@@ -60,11 +61,13 @@ export class PlantillaService {
   /**
    * Recover special audit program (same vigencia bur no PAA) data and add it to the main data object.
    * @param data The main data object containing the audit plan and audits.
+   * @param auditoriaPadre A boolean indicating whether to use the parent audit or the original collection of audits.
    * @returns The updated data object with the special audit data included.
    */
-  private async anadirDataEspeciales(data: any) {
+  private async anadirDataEspeciales(data: any, auditoriaPadre: boolean) {
     const vigenciaId = data.dataPlanAuditoria.Data?.vigencia_id;
-    const urlAuditioria = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria-padre?query=vigencia_id:${vigenciaId},plan_auditoria_id__isnull:true,activo:true&fields=titulo,macroproceso_id,proceso_id,dependencia_id,cronograma_id&limit=0`;
+    let endpointAuditoria = auditoriaPadre ? 'auditoria-padre' : 'auditoria';
+    const urlAuditioria = `${PLAN_AUDITORIA_CRUD_SERVICE}${endpointAuditoria}?query=vigencia_id:${vigenciaId},plan_auditoria_id__isnull:true,activo:true&fields=titulo,macroproceso_id,proceso_id,dependencia_id,cronograma_id&limit=0`;
 
     try {
       const responseAuditoriaEspecial = await lastValueFrom(
