@@ -39,7 +39,7 @@ export class PlantillaService {
 
   private async traerDataCrud(id: string) {
     let urlPlanAuditoria = `${PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${id}`;
-    let urlAuditioria = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria?query=plan_auditoria_id:${id},activo:true&fields=titulo,macroproceso_id,proceso_id,dependencia_id,cronograma_id&limit=0`;
+    let urlAuditioria = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria-padre?query=plan_auditoria_id:${id},activo:true&fields=titulo,macroproceso_id,proceso_id,dependencia_id,cronograma_id&limit=0`;
     try {
       const responsePlanAuditoria = await lastValueFrom(
         this.httpService.get(urlPlanAuditoria),
@@ -66,7 +66,7 @@ export class PlantillaService {
    */
   private async anadirDataEspeciales(data: any) {
     const vigenciaId = data.dataPlanAuditoria.Data?.vigencia_id;
-    const urlAuditioria = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria?query=vigencia_id:${vigenciaId},plan_auditoria_id__isnull:true,activo:true&fields=titulo,macroproceso_id,proceso_id,dependencia_id,cronograma_id&limit=0`;
+    const urlAuditioria = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria-padre?query=vigencia_id:${vigenciaId},plan_auditoria_id__isnull:true,activo:true&fields=titulo,macroproceso_id,proceso_id,dependencia_id,cronograma_id&limit=0`;
 
     try {
       const responseAuditoriaEspecial = await lastValueFrom(
