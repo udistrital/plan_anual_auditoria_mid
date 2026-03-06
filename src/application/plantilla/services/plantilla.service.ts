@@ -11,8 +11,6 @@ const {
   PLANTILLAS,
   MESES,
   PLANTILLAS_MID_SERVICE,
-  PARAMETROS_SERVICE,
-  OIKOS_SERVICE,
 } = environment;
 
 /** Interface representing a parameter with an ID and a name. */
