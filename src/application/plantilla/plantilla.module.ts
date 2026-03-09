@@ -10,9 +10,10 @@ import { PlantillaProgramaAuditoriaService } from './services/plantilla-programa
 import { PlantillaInformeSeguimientoService } from './services/plantilla-informe-seguimiento.service';
 import { PlantillaInformeAuditoriaService } from './services/plantilla-informe-auditoria.service';
 import { DominiosModule } from 'src/shared/utils/dominios/dominios.module';
+import { AuditoriaModule } from '../auditoria/auditoria.module';
 
 @Module({
-  imports: [HttpModule, DominiosModule],
+  imports: [HttpModule, DominiosModule, AuditoriaModule],
   controllers: [PlantillaController],
   providers: [
     PlantillaCartaPresentacionService,

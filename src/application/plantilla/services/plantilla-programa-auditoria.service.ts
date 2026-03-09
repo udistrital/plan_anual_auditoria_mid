@@ -6,6 +6,7 @@ import { environment } from 'src/config/configuration';
 import { lastValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { capitalize, unirListaNombres } from 'src/utils/texto.utils';
+import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
 
 
 const {
@@ -23,6 +24,7 @@ export class PlantillaProgramaAuditoriaService {
     constructor(
         private readonly httpService: HttpService,
         private readonly plantillaUtils: PlantillaUtilsService,
+        private readonly auditoriaService: AuditoriaService
     ) {}
 
     async get(idAuditoria: string) {
@@ -35,13 +37,13 @@ export class PlantillaProgramaAuditoriaService {
     private async organizarData(data: any) {
         try {
             const auditoria = data.auditoria;
-            const [actividades, macroproceso, proceso, dependencia, cargoLider, cargoResponsable, grupoAuditor] = await Promise.all([
+            const [actividades, macroproceso, proceso, dependencia, Lider, Responsable, grupoAuditor] = await Promise.all([
             this.obtenerActividades(auditoria._id),
             this.traerParametros(auditoria.macroproceso_id),
             this.traerParametros(auditoria.proceso_id),
             this.obtenerDependencia(auditoria.dependencia_id),
-            this.traerParametros(auditoria.lider_id),
-            this.traerParametros(auditoria.responsable_id),
+            this.obtenerTerceroVinculado(environment.CARGO.JEFE_DEPENDENCIA_ID, auditoria.dependencia_id,),
+            this.obtenerTerceroVinculado(environment.CARGO.ASISTENTE_DEPENDENCIA_ID, auditoria.responsable_id,),
             this.obtenerNombresAuditores(auditoria._id)
         ]);
 
@@ -55,8 +57,8 @@ export class PlantillaProgramaAuditoriaService {
                 macroproceso: macroproceso.Nombre,
                 proceso: proceso.Nombre,
                 dependencia: dependencia.Nombre,
-                lider: cargoLider.Nombre,
-                responsable: cargoResponsable.Nombre,
+                lider: Lider?.NombreCompleto || '',
+                responsable: Responsable?.NombreCompleto || '',
                 objetivos: auditoria.objetivo,
                 alcance: auditoria.alcance,
                 criterios: auditoria.criterio,
@@ -77,7 +79,7 @@ export class PlantillaProgramaAuditoriaService {
     }
 
     private async obtenerActividades(idAuditoria: string) {
-        let urlActividades = `${PLAN_AUDITORIA_CRUD_SERVICE}actividad?query=auditoria_id:${idAuditoria}&fields=titulo,fecha_inicio,fecha_fin,observacion,referencia,descripcion,folio,medio_id,carpeta&limit=0`;
+        let urlActividades = `${PLAN_AUDITORIA_CRUD_SERVICE}actividad?query=auditoria_id:${idAuditoria},activo:true&fields=titulo,fecha_inicio,fecha_fin,observacion,referencia,descripcion,folio,medio_id,carpeta&limit=0`;
         try {
             const responseActividades = await lastValueFrom(
                 this.httpService.get(urlActividades),
@@ -141,7 +143,6 @@ export class PlantillaProgramaAuditoriaService {
             }),
         );
         
-
         const todosValidos = nombres.every((nombre) => nombre !== null);
 
         if (!todosValidos) {
@@ -185,6 +186,18 @@ export class PlantillaProgramaAuditoriaService {
         } catch (error) {
             throw new HttpException(
                 'Error al obtener los datos de la dependencia',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    private async obtenerTerceroVinculado(idCargo: number, idDependencia: number) {
+        try {
+            const datosPersona = await this.auditoriaService.traerTerceroVinculado(idDependencia, idCargo);
+            return datosPersona;
+        } catch (error) {
+            throw new HttpException(
+                'Error al obtener los datos del tercero vinculado',
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
         }
