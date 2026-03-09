@@ -7,6 +7,7 @@ import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
 import { Dominio } from 'src/shared/utils/dominios/dominio.model';
 import { unirListaNombresConComas } from 'src/utils/texto.utils';
 import { AuditoriaOrdenadaService } from 'src/shared/services/auditoria-ordenada/auditoria-ordenada.service';
+import { aplicarOrdenamiento } from '../../shared/utils/auditoria-ordenamiento.utils';
 
 const {
   PLAN_AUDITORIA_CRUD_SERVICE,
@@ -36,20 +37,7 @@ export class AuditoriaService {
 
   async getAll(queryParams: any) {
     const data = await this.traerDataCrud(null, queryParams);
-    await Promise.all(
-      data.Data.map(async (auditoria: any) => {
-        const [estado, auditores] = await Promise.all([
-          this.getEstadoAuditoria(auditoria._id),
-          this.asociarAuditores(auditoria._id),
-        ]);
-
-        if (estado?.actual) {
-          auditoria.estado = estado;
-          auditoria.estado_id = estado.estado_id;
-        }
-        auditoria.auditores = auditores || [];
-      }),
-    );
+    await this.enriquecerAuditorias(data.Data);
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
     }
@@ -67,21 +55,7 @@ export class AuditoriaService {
     }
 
     const data = await this.traerDataCrudByAuditor(personaId, crudParams);
-
-    await Promise.all(
-      data.Data.map(async (auditoria: any) => {
-        const [estado, auditores] = await Promise.all([
-          this.getEstadoAuditoria(auditoria._id),
-          this.asociarAuditores(auditoria._id),
-        ]);
-
-        if (estado?.actual) {
-          auditoria.estado = estado;
-          auditoria.estado_id = estado.estado_id;
-        }
-        auditoria.auditores = auditores || [];
-      }),
-    );
+    await this.enriquecerAuditorias(data.Data);
 
     if (estado_id && estado_id !== '') {
       const estadoId = parseInt(estado_id);
@@ -126,18 +100,12 @@ export class AuditoriaService {
       const dependenciaNombres =
         await this.getDependenciaNombres(dependenciaIds);
 
-      await Promise.all(
-        data.Data.map(async (auditoria: any) => {
-          const estado = await this.getEstadoAuditoria(auditoria._id);
+      await this.enriquecerAuditorias(data.Data, false);
 
-          if (estado?.actual) {
-            auditoria.estado = estado;
-            auditoria.estado_id = estado.estado_id;
-          }
-          auditoria.dependencia_nombre =
-            dependenciaNombres.get(auditoria.dependencia_id) || null;
-        }),
-      );
+      data.Data.forEach((auditoria: any) => {
+        auditoria.dependencia_nombre =
+          dependenciaNombres.get(auditoria.dependencia_id) || null;
+      });
 
       if (await this.identificarCampo(data)) {
         this.reemplazarCampos(data);
@@ -172,20 +140,18 @@ export class AuditoriaService {
   private async getDependenciaNombres(
     dependenciaIds: number[],
   ): Promise<Map<number, string>> {
-    const nombresMap = new Map<number, string>();
-    await Promise.all(
-      dependenciaIds.map(async (id) => {
-        try {
-          const url = `${OIKOS_SERVICE}dependencia/${id}`;
-          const response = await lastValueFrom(this.httpService.get(url));
-          if (response.data?.Nombre) {
-            nombresMap.set(id, response.data.Nombre);
-          }
-        } catch (error) {
-          // Si no se puede obtener el nombre, se omite
-        }
-      }),
+    const dependencias = await lastValueFrom(
+      this.dominiosService.getDependencias()
     );
+
+    const nombresMap = new Map<number, string>();
+    dependenciaIds.forEach(id => {
+      const dep = dependencias.parametros.find(d => d.Id === id);
+      if (dep?.Nombre) {
+        nombresMap.set(id, dep.Nombre);
+      }
+    });
+
     return nombresMap;
   }
 
@@ -232,6 +198,23 @@ export class AuditoriaService {
         error,
       );
     }
+  }
+
+  private async enriquecerAuditorias(auditorias: any[], incluirAuditores = true) {
+    await Promise.all(
+      auditorias.map(async (auditoria) => {
+        const promises = [this.getEstadoAuditoria(auditoria._id)];
+        if (incluirAuditores) promises.push(this.asociarAuditores(auditoria._id));
+
+        const [estado, auditores] = await Promise.all(promises);
+
+        if (estado?.actual) {
+          auditoria.estado = estado;
+          auditoria.estado_id = estado.estado_id;
+        }
+        if (incluirAuditores) auditoria.auditores = auditores || [];
+      })
+    );
   }
 
   traerCorreoDependencia(dependenciaId: number): string {
@@ -289,7 +272,6 @@ export class AuditoriaService {
 
     // Aplicar ordenamiento DESPUÉS de reemplazar campos
     if (queryParams.orderBy) {
-      const { aplicarOrdenamiento } = await import('../../shared/utils/auditoria-ordenamiento.utils');
       data.Data = aplicarOrdenamiento(data.Data, queryParams.orderBy, queryParams.orderDirection);
     }
 
