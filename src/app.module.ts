@@ -3,6 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PlanAuditoriaModule } from './plan-auditoria/plan-auditoria.module';
 import { AuditoriaModule } from './application/auditoria/auditoria.module';
+import { AuditoriaPadreModule } from './application/auditoria-padre/auditoria-padre.module';
 import { ActividadModule } from './actividad/actividad.module';
 import { ConfigModule } from '@nestjs/config';
 import { PlantillaModule } from './application/plantilla/plantilla.module';
@@ -17,6 +18,7 @@ import { AuditoriaEstadoModule } from './auditoria-estado/auditoria-estado.modul
     ActividadModule,
     AuditoriaEstadoModule,
     AuditoriaModule,
+    AuditoriaPadreModule,
     AuditorModule,
     CargueMasivoModule,
     PlanAuditoriaModule,
@@ -24,6 +26,7 @@ import { AuditoriaEstadoModule } from './auditoria-estado/auditoria-estado.modul
     PlantillaModule,
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: '.env',
     }),
     InformeModule,
   ],

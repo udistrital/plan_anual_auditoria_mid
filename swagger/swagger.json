@@ -379,6 +379,143 @@
         ]
       }
     },
+    "/auditoria-padre/ordenadas": {
+      "get": {
+        "operationId": "AuditoriaPadreController_getAuditoriasOrdenadas",
+        "parameters": [
+          {
+            "name": "orderDirection",
+            "required": false,
+            "in": "query",
+            "description": "Dirección (ASC o DESC).",
+            "schema": {}
+          },
+          {
+            "name": "orderBy",
+            "required": false,
+            "in": "query",
+            "description": "Campo de orden.",
+            "schema": {}
+          },
+          {
+            "name": "plan_auditoria_id",
+            "required": true,
+            "in": "query",
+            "description": "ID del plan de auditoría (obligatorio).",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Auditorías padre obtenidas."
+          },
+          "400": {
+            "description": "Parámetros inválidos."
+          },
+          "500": {
+            "description": "Error interno."
+          }
+        },
+        "summary": "Obtener auditorías padre ordenadas",
+        "tags": [
+          "Auditoria Padre"
+        ]
+      }
+    },
+    "/auditoria-padre": {
+      "get": {
+        "operationId": "AuditoriaPadreController_getAll",
+        "parameters": [
+          {
+            "name": "filter",
+            "required": false,
+            "in": "query",
+            "description": "Filtro opcional.",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Auditorías padre obtenidas."
+          },
+          "404": {
+            "description": "Sin resultados."
+          }
+        },
+        "summary": "Obtener todas las auditorías padre",
+        "tags": [
+          "Auditoria Padre"
+        ]
+      }
+    },
+    "/auditoria-padre/{id}": {
+      "get": {
+        "operationId": "AuditoriaPadreController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID de auditoría padre.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Auditoría padre obtenida."
+          },
+          "404": {
+            "description": "Auditoría padre no encontrada."
+          }
+        },
+        "summary": "Obtener auditoría padre por ID",
+        "tags": [
+          "Auditoria Padre"
+        ]
+      }
+    },
+    "/auditoria-padre/{id}/{planId}": {
+      "delete": {
+        "operationId": "AuditoriaPadreController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID de auditoría padre.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "planId",
+            "required": true,
+            "in": "path",
+            "description": "ID del plan de auditoría.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Auditoría padre eliminada."
+          },
+          "400": {
+            "description": "Parámetros inválidos."
+          },
+          "500": {
+            "description": "Error interno."
+          }
+        },
+        "summary": "Eliminar auditoría padre lógicamente",
+        "tags": [
+          "Auditoria Padre"
+        ]
+      }
+    },
     "/cargue-masivo/auditorias/plantilla": {
       "get": {
         "operationId": "CargueMasivoController_descargarPlantillaAuditorias",
