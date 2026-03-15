@@ -8,13 +8,12 @@ import { Dominio } from 'src/shared/utils/dominios/dominio.model';
 import { unirListaNombresConComas } from 'src/utils/texto.utils';
 import { AuditoriaOrdenadaService } from 'src/shared/services/auditoria-ordenada/auditoria-ordenada.service';
 import { aplicarOrdenamiento } from '../../shared/utils/auditoria-ordenamiento.utils';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
 
 const {
   PLAN_AUDITORIA_CRUD_SERVICE,
-  PARAMETROS_SERVICE,
   TIPO_PARAMETRO,
   TERCEROS_SERVICE,
-  OIKOS_SERVICE,
 } = environment;
 
 @Injectable()
@@ -31,12 +30,31 @@ export class AuditoriaService {
   constructor(
     private readonly httpService: HttpService,
     private readonly auditorService: AuditorService,
+    private readonly auditoriaCrudService: AuditoriaCrudService,
     private readonly dominiosService: DominiosService,
     private readonly auditoriaOrdenadaService: AuditoriaOrdenadaService,
   ) {}
 
   async getAll(queryParams: any) {
-    const data = await this.traerDataCrud(null, queryParams);
+    const data1 = await this.auditoriaCrudService.traerDataCrud('auditoria', null, queryParams);
+    const auditorias: any[] = data1.Data;
+    
+    const padres_ids: string[] = auditorias.map(auditoria => auditoria?.auditoria_padre_id);
+    const queryParams2 = { query: `_id__in:${padres_ids.join("|")}`}
+    
+    const data2 = await this.auditoriaCrudService.traerDataCrud('auditoria-padre', null, queryParams2);
+    const auditorias_padre: any[] = data2.Data;
+    
+    const padresMap = Object.fromEntries(auditorias_padre.map(p => [p?._id, p]));
+    const auditorias_unidas: any[] = auditorias.map(a => {
+      return {
+        ...(padresMap[a?.auditoria_padre_id] || {}),
+        ...a,
+      };
+    });
+    
+    const data = { ...data1, Data : auditorias_unidas }
+
     await this.enriquecerAuditorias(data.Data);
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
@@ -54,7 +72,7 @@ export class AuditoriaService {
         .join(',');
     }
 
-    const data = await this.traerDataCrudByAuditor(personaId, crudParams);
+    const data = await this.auditoriaCrudService.traerDataCrud('auditoria/auditor', personaId, crudParams);
     await this.enriquecerAuditorias(data.Data);
 
     if (estado_id && estado_id !== '') {
@@ -95,7 +113,7 @@ export class AuditoriaService {
       ? `${baseQuery},${additionalFilters}`
       : additionalFilters;
 
-    const data = await this.traerDataCrud(null, queryParams);
+    const data = await this.auditoriaCrudService.traerDataCrud('auditoria', null, queryParams);
     if (data.Data && Array.isArray(data.Data) && data.Data.length > 0) {
       const dependenciaNombres =
         await this.getDependenciaNombres(dependenciaIds);
@@ -156,7 +174,9 @@ export class AuditoriaService {
   }
 
   async getOne(id: string) {
-    const data = await this.traerDataCrud(id, null);
+    const auditoria = await this.auditoriaCrudService.traerDataCrud('auditoria', id, null);
+    const auditoria_padre = await this.auditoriaCrudService.traerDataCrud('auditoria-padre', auditoria.auditoria_padre_id, null);
+    const data = { ...auditoria, Data: {...auditoria_padre.Data, ...auditoria.Data}};
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
     }
@@ -203,21 +223,22 @@ export class AuditoriaService {
   private async enriquecerAuditorias(auditorias: any[], incluirAuditores = true) {
     await Promise.all(
       auditorias.map(async (auditoria) => {
-        const promises = [this.getEstadoAuditoria(auditoria._id)];
+        const queryParams = { query: `auditoria_id:${auditoria._id},actual:true`}
+        const promises = [this. auditoriaCrudService.traerDataCrud('auditoria-estado', null, queryParams)];
         if (incluirAuditores) promises.push(this.asociarAuditores(auditoria._id));
 
         const [estado, auditores] = await Promise.all(promises);
 
-        if (estado?.actual) {
-          auditoria.estado = estado;
-          auditoria.estado_id = estado.estado_id;
+        if (estado[0]?.actual) {
+          auditoria.estado = estado[0];
+          auditoria.estado_id = estado[0]?.estado_id;
         }
         if (incluirAuditores) auditoria.auditores = auditores || [];
       })
     );
   }
 
-  traerCorreoDependencia(dependenciaId: number): string {
+  private traerCorreoDependencia(dependenciaId: number): string {
     const dependencia = this.dependencias.find(
       (dep) => dep.Id === dependenciaId
     );
@@ -258,9 +279,10 @@ export class AuditoriaService {
     // Enriquecer con estados
     await Promise.all(
       data.Data.map(async (auditoria: any) => {
-        const estado = await this.getEstadoAuditoria(auditoria._id);
-        if (estado?.actual) {
-          auditoria.estado_id = estado.estado_id;
+        const queryParams = { query: `auditoria_id:${auditoria._id},actual:true`}
+        const estado = await this.auditoriaCrudService.traerDataCrud('auditoria-estado', null, queryParams);
+        if (estado[0]?.actual) {
+          auditoria.estado_id = estado[0].estado_id;
         }
       }),
     );
@@ -349,6 +371,9 @@ private async identificarCampo(data: any) {
 
     if ('dependencia_id' in firstElement) {
       observables['dependencia_id'] = this.dominiosService.getDependencias();
+      if (!Array.isArray(data.Data)) {
+        this.datosTerceros = await this.getDatosTerceros(firstElement.dependencia_id);
+      }
     }
 
     if (Object.keys(observables).length === 0) {
@@ -370,64 +395,7 @@ private async identificarCampo(data: any) {
       this.dependencias.push(...resultados['dependencia_id'].parametros);
     }
 
-    if (!Array.isArray(data.Data)) {
-      this.datosTerceros = await this.getDatosTerceros(firstElement.dependencia_id);
-    }
-
     return true;
-  }
-
-  private async traerDataCrud(id: string | null, queryParams: any) {
-    let url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria/`;
-    if (id != null && id != undefined) {
-      url = url + `${id}`;
-    }
-    if (queryParams) {
-      const queryString = new URLSearchParams(queryParams).toString();
-      url += `?${queryString}`;
-    }
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data;
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  private async traerDataCrudByAuditor(personaId: string, queryParams: any) {
-    let url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria/auditor/${personaId}`;
-    if (queryParams) {
-      const queryString = new URLSearchParams(queryParams).toString();
-      url += `?${queryString}`;
-    }
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data;
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  private async getEstadoAuditoria(auditoriaId: string) {
-    const url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria-estado?query=auditoria_id:${auditoriaId},actual:true`;
-    try {
-      const { data } = await lastValueFrom(this.httpService.get(url));
-      if (data?.Data?.length > 0) {
-        return data.Data[0];
-      }
-      return null;
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos del estado',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
   }
 
   private reemplazarCampos(data: any) {

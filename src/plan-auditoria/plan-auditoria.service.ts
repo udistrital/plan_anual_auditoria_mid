@@ -2,6 +2,7 @@ import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
 import { environment } from 'src/config/configuration';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
 
 const {
   TERCEROS_SERVICE,
@@ -16,10 +17,14 @@ export class PlanAuditoriaService {
   private vigencias: any[] = [];
   private estados: any[] = [];
 
-  constructor(private readonly httpService: HttpService) {}
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly auditoriaCrudService: AuditoriaCrudService 
+  ) {}
 
   async getAll(queryParams: any) {
-    const data = await this.traerDataCrud(null, queryParams);
+    const data = await this.auditoriaCrudService.traerDataCrud('plan-auditoria', null, queryParams);
+    await this.enriquecerPlan(data.Data)
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
     }
@@ -27,7 +32,7 @@ export class PlanAuditoriaService {
   }
 
   async getOne(id: string) {
-    const data = await this.traerDataCrud(id, null);
+    const data = await this.auditoriaCrudService.traerDataCrud('plan-auditoria', id, null);
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
     }
@@ -83,43 +88,26 @@ export class PlanAuditoriaService {
     }
   }
 
-  private async traerDataCrud(id: string | null, queryParams: any) {
-    let url = `${PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/`;
-    if (id != null && id != undefined) {
-      url += `${id}`;
-    }
-    if (queryParams) {
-      const queryString = new URLSearchParams(queryParams).toString();
-      url += `?${queryString}`;
-    }
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      if (Array.isArray(response.data.Data)) {
-        await Promise.all(
-          response.data.Data.map(async (plan: any) => {
-            const [estado, tieneRechazos, tercero] = await Promise.all([
-              this.traerEstadoPorPlan(plan._id),
-              this.traerMotivosRechazo(plan._id, PLAN_ESTADO.RECHAZADO),
-              plan.creado_por_id ? this.traerTercero(plan.creado_por_id) : null,
-            ]);
-  
-            if (estado?.actual) plan.estado = estado;
-            plan.tiene_rechazos = tieneRechazos;
-            if (tercero) plan.creado_por_nombre = tercero.NombreCompleto ?? null;
-          }),
-        );
-      } else if (response.data.Data && response.data.Data._id) {
-        const estado = await this.traerEstadoPorPlan(response.data.Data._id);
-        if (estado && estado.actual) {
-          response.data.Data.estado = estado;
-        }
-      }
-      return response.data;
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+  private async enriquecerPlan(Data: any) {
+    if (Array.isArray(Data)) {
+      await Promise.all(
+        Data.map(async (plan: any) => {
+          const [estado, tieneRechazos, tercero] = await Promise.all([
+            this.traerEstadoPorPlan(plan._id),
+            this.traerMotivosRechazo(plan._id, PLAN_ESTADO.RECHAZADO),
+            plan.creado_por_id ? this.traerTercero(plan.creado_por_id) : null,
+          ]);
+
+          if (estado?.actual) plan.estado = estado;
+          plan.tiene_rechazos = tieneRechazos;
+          if (tercero) plan.creado_por_nombre = tercero.NombreCompleto ?? null;
+        }),
       );
+    } else if (Data && Data._id) {
+      const estado = await this.traerEstadoPorPlan(Data._id);
+      if (estado && estado.actual) {
+        Data.estado = estado;
+      }
     }
   }
 

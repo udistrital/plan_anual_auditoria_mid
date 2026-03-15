@@ -2,47 +2,31 @@ import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
 import { environment } from 'src/config/configuration';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
 
-const { TERCEROS_SERVICE, PLAN_AUDITORIA_CRUD_SERVICE } = environment;
+const { TERCEROS_SERVICE } = environment;
 
 @Injectable()
 export class AuditorService {
-  constructor(private readonly httpService: HttpService) {}
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly auditoriaCrudService: AuditoriaCrudService
+  ) {}
 
   async getAll(queryParams: any) {
-    let data = await this.traerDataCrud(null, queryParams);
+    let data = await this.auditoriaCrudService.traerDataCrud('auditor', null, queryParams);
     await this.reemplazarCampos(data);
     return data;
   }
 
   async getOne(id: string) {
-    const data = await this.traerDataCrud(id, null);
+    const data = await this.auditoriaCrudService.traerDataCrud('auditor', id, null);
     await this.reemplazarCampos(data);
     return data;
   }
 
   private async traerTercero(documento: string) {
     const url = `${TERCEROS_SERVICE}/tercero/${documento}`;
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data;
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  private async traerDataCrud(id: string | null, queryParams: any) {
-    let url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditor/`;
-    if (id != null && id != undefined) {
-      url = url + `${id}`;
-    }
-    if (queryParams) {
-      const queryString = new URLSearchParams(queryParams).toString();
-      url += `?${queryString}`;
-    }
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data;
