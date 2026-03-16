@@ -42,8 +42,8 @@ export class PlantillaProgramaAuditoriaService {
             this.traerParametros(auditoria.macroproceso_id),
             this.traerParametros(auditoria.proceso_id),
             this.obtenerDependencia(auditoria.dependencia_id),
-            this.obtenerTerceroVinculado(environment.CARGO.JEFE_DEPENDENCIA_ID, auditoria.dependencia_id,),
-            this.obtenerTerceroVinculado(environment.CARGO.ASISTENTE_DEPENDENCIA_ID, auditoria.responsable_id,),
+            this.obtenerTerceroVinculado(environment.CARGO.JEFE_DEPENDENCIA_ID, auditoria.dependencia_id),
+            this.obtenerTerceroVinculado(environment.CARGO.ASISTENTE_DEPENDENCIA_ID, auditoria.dependencia_id),
             this.obtenerNombresAuditores(auditoria._id)
         ]);
 
