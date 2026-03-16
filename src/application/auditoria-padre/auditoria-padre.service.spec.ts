@@ -15,6 +15,7 @@ describe('AuditoriaPadreService', () => {
   const mockHttpService = {
     get: jest.fn(),
     delete: jest.fn(),
+    put: jest.fn(),
   };
 
   const mockDominiosService = {
@@ -94,7 +95,7 @@ describe('AuditoriaPadreService', () => {
       const mockPlan = {
         data: {
           Data: {
-            auditorias_padre: ['123', '456', '789'],
+            auditorias: ['123', '456', '789'],
           },
         },
       };
@@ -110,7 +111,7 @@ describe('AuditoriaPadreService', () => {
       expect(httpService.get).toHaveBeenCalled();
       expect(httpService.put).toHaveBeenCalledWith(
         expect.any(String),
-        { auditorias_padre: ['456', '789'] },
+        { auditorias: ['456', '789'] },
       );
     });
 
