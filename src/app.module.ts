@@ -26,7 +26,6 @@ import { AuditoriaEstadoModule } from './auditoria-estado/auditoria-estado.modul
     PlantillaModule,
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
     }),
     InformeModule,
   ],

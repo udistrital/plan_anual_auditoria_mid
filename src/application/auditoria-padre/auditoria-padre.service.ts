@@ -180,7 +180,7 @@ export class AuditoriaPadreService {
       },
       {
         campo: 'estado_id',
-        tipoParametro: TIPO_PARAMETRO.AUDITORIA_ESTADO,
+        tipoParametro: TIPO_PARAMETRO.AUDITORIA_PADRE_ESTADO,
         destino: this.estados,
       },
       {
