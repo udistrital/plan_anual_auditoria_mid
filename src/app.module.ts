@@ -11,6 +11,7 @@ import { PlanEstadoModule } from './plan-estado/plan-estado.module';
 import { AuditorModule } from './auditor/auditor.module';
 import { InformeModule } from './informe/informe.module';
 import { AuditoriaEstadoModule } from './auditoria-estado/auditoria-estado.module';
+import { AuditoriaCrudModule } from './shared/services/auditoria-crud/auditoria-crud.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AuditoriaEstadoModule } from './auditoria-estado/auditoria-estado.modul
     PlanAuditoriaModule,
     PlanEstadoModule,
     PlantillaModule,
+    AuditoriaCrudModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
