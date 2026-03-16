@@ -238,6 +238,93 @@ paths:
           description: No encontrado.
       summary: Obtener auditor por ID
       tags: *ref_3
+  /auditoria-padre/ordenadas:
+    get:
+      operationId: AuditoriaPadreController_getAuditoriasOrdenadas
+      parameters:
+        - name: orderDirection
+          required: false
+          in: query
+          description: Dirección (ASC o DESC).
+          schema: {}
+        - name: orderBy
+          required: false
+          in: query
+          description: Campo de orden.
+          schema: {}
+        - name: plan_auditoria_id
+          required: true
+          in: query
+          description: ID del plan de auditoría (obligatorio).
+          schema: {}
+      responses:
+        '200':
+          description: Auditorías padre obtenidas.
+        '400':
+          description: Parámetros inválidos.
+        '500':
+          description: Error interno.
+      summary: Obtener auditorías padre ordenadas
+      tags: &ref_4
+        - Auditoria Padre
+  /auditoria-padre:
+    get:
+      operationId: AuditoriaPadreController_getAll
+      parameters:
+        - name: filter
+          required: false
+          in: query
+          description: Filtro opcional.
+          schema: {}
+      responses:
+        '200':
+          description: Auditorías padre obtenidas.
+        '404':
+          description: Sin resultados.
+      summary: Obtener todas las auditorías padre
+      tags: *ref_4
+  /auditoria-padre/{id}:
+    get:
+      operationId: AuditoriaPadreController_getById
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: ID de auditoría padre.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Auditoría padre obtenida.
+        '404':
+          description: Auditoría padre no encontrada.
+      summary: Obtener auditoría padre por ID
+      tags: *ref_4
+  /auditoria-padre/{id}/{planId}:
+    delete:
+      operationId: AuditoriaPadreController_delete
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: ID de auditoría padre.
+          schema:
+            type: string
+        - name: planId
+          required: true
+          in: path
+          description: ID del plan de auditoría.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Auditoría padre eliminada.
+        '400':
+          description: Parámetros inválidos.
+        '500':
+          description: Error interno.
+      summary: Eliminar auditoría padre lógicamente
+      tags: *ref_4
   /cargue-masivo/auditorias/plantilla:
     get:
       operationId: CargueMasivoController_descargarPlantillaAuditorias
@@ -256,7 +343,7 @@ paths:
         '500':
           description: Error interno.
       summary: Descargar plantilla de auditorías
-      tags: &ref_4
+      tags: &ref_5
         - Cargue Masivo
   /cargue-masivo/auditorias/plan/{planId}:
     get:
@@ -282,7 +369,7 @@ paths:
         '500':
           description: Error interno.
       summary: Descargar auditorías en formato Excel
-      tags: *ref_4
+      tags: *ref_5
   /cargue-masivo/auditorias:
     post:
       operationId: CargueMasivoController_cargueMasivo
@@ -312,7 +399,7 @@ paths:
         '500':
           description: Error interno.
       summary: Carga masiva de auditorías
-      tags: *ref_4
+      tags: *ref_5
   /cargue-masivo/actividades:
     post:
       operationId: CargueMasivoController_cargueMasivoActividades
@@ -342,7 +429,7 @@ paths:
         '500':
           description: Error interno.
       summary: Carga masiva de actividades
-      tags: *ref_4
+      tags: *ref_5
   /plan-auditoria:
     get:
       operationId: PlanAuditoriaController_getAll
@@ -358,7 +445,7 @@ paths:
         '404':
           description: No se encontraron planes.
       summary: Obtiene todos los planes de auditoría.
-      tags: &ref_5
+      tags: &ref_6
         - Plan Auditoría
   /plan-auditoria/{id}:
     get:
@@ -376,7 +463,7 @@ paths:
         '404':
           description: No se encontró el plan.
       summary: Obtiene un plan por ID.
-      tags: *ref_5
+      tags: *ref_6
   /plan-estado:
     get:
       operationId: PlanEstadoController_getAll
@@ -392,7 +479,7 @@ paths:
         '404':
           description: No se encontraron estados.
       summary: Obtiene todos los estados de planes.
-      tags: &ref_6
+      tags: &ref_7
         - Plan Estado
   /plan-estado/{id}:
     get:
@@ -410,7 +497,7 @@ paths:
         '404':
           description: No se encontró el estado.
       summary: Obtiene un estado de plan por ID.
-      tags: *ref_6
+      tags: *ref_7
   /plantilla/{id}:
     get:
       operationId: PlantillaController_getById
@@ -441,7 +528,7 @@ paths:
         '200':
           description: Plantilla encontrada.
       summary: Obtener plantilla por ID
-      tags: &ref_7
+      tags: &ref_8
         - Plantilla
   /plantilla/{tipo}/{idAuditoria}:
     get:
@@ -468,7 +555,7 @@ paths:
         '404':
           description: Tipo de plantilla no encontrado.
       summary: Obtener plantilla dinámica según el tipo de auditoría
-      tags: *ref_7
+      tags: *ref_8
   /informe/{id}:
     get:
       description: Retorna el informe con auditoría hallazgos y temas
@@ -486,7 +573,7 @@ paths:
         '404':
           description: Informe no encontrado
       summary: Obtener informe consolidado para edición
-      tags: &ref_8
+      tags: &ref_9
         - Informe
     put:
       description: Actualiza los datos de un informe existente
@@ -506,7 +593,7 @@ paths:
         '404':
           description: Informe no encontrado
       summary: Actualizar un informe
-      tags: *ref_8
+      tags: *ref_9
   /informe:
     get:
       description: Lista informes con filtros opcionales y datos complementarios básicos
@@ -516,7 +603,7 @@ paths:
         '200':
           description: Informes obtenidos exitosamente
       summary: Obtener todos los informes
-      tags: *ref_8
+      tags: *ref_9
   /informe/auditoria/{auditoriaId}:
     get:
       description: Lista todos los informes activos de una auditoría específica
@@ -532,7 +619,7 @@ paths:
         '200':
           description: Informes de la auditoría obtenidos
       summary: Obtener informes por auditoría
-      tags: *ref_8
+      tags: *ref_9
 info:
   title: Plan Anual Auditoria MID
   description: API MID para la gestion de planes de auditorias, auditorias y actividades

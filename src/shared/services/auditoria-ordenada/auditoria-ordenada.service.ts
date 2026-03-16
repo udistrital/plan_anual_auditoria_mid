@@ -23,6 +23,7 @@ export class AuditoriaOrdenadaService {
    * @param orderBy - Campo opcional para ordenamiento adicional
    * @param orderDirection - Dirección del ordenamiento (ASC/DESC)
    * @param filtros - Filtros adicionales (ej: tipo_evaluacion_id)
+   * @param tipo - Tipo de auditoría ('auditoria' o 'auditoria-padre')
    * @returns Auditorías ordenadas
    */
   async getAuditoriasOrdenadas(
@@ -30,11 +31,11 @@ export class AuditoriaOrdenadaService {
     orderBy?: string,
     orderDirection?: string,
     filtros?: any,
+    tipo: 'auditoria' | 'auditoria-padre' = 'auditoria',
   ): Promise<any[]> {
-    const auditorias = await this.obtenerAuditoriasDeCrud(planAuditoriaId);
+    const auditorias = await this.obtenerAuditoriasDeCrud(planAuditoriaId, tipo);
     let auditoriasActivas = auditorias.filter((a) => a.activo === true);
 
-    // Aplicar filtro de tipo_evaluacion_id si existe
     if (filtros?.tipo_evaluacion_id) {
       auditoriasActivas = auditoriasActivas.filter(
         (a) => a.tipo_evaluacion_id === parseInt(filtros.tipo_evaluacion_id)
@@ -42,10 +43,11 @@ export class AuditoriaOrdenadaService {
     }
 
     const plan = await this.obtenerPlan(planAuditoriaId);
+    const campoOrden = 'auditorias';
 
     let resultado = ordenarAuditoriasPorPlan(
       auditoriasActivas,
-      plan?.auditorias || [],
+      plan?.[campoOrden] || [],
     );
 
     if (orderBy) {
@@ -55,8 +57,8 @@ export class AuditoriaOrdenadaService {
     return resultado;
   }
 
-  private async obtenerAuditoriasDeCrud(planId: string): Promise<any[]> {
-    const url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria?query=plan_auditoria_id:${planId},activo:true&limit=0`;
+  private async obtenerAuditoriasDeCrud(planId: string, tipo: string = 'auditoria'): Promise<any[]> {
+    const url = `${PLAN_AUDITORIA_CRUD_SERVICE}${tipo}?query=plan_auditoria_id:${planId},activo:true&limit=0`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data?.Data || [];
