@@ -33,27 +33,28 @@ export class AuditoriaService {
   ) {}
 
   async getAll(queryParams: any) {
-    const data1 = await this.auditoriaCrudService.traerDataCrud('auditoria', null, queryParams);
-    const auditorias: any[] = data1.Data;
-    
-    const padres_ids: string[] = auditorias.map(auditoria => auditoria?.auditoria_padre_id);
-    const queryParams2 = {
-      ...queryParams,
-      query: `${queryParams.query},_id__in:${padres_ids.join("|")}`
+    const data = await this.auditoriaCrudService.traerDataCrud('auditoria-padre', null, queryParams);
+    const auditoriasPadre: any[] = data.Data;
+    if (auditoriasPadre.length > 0) {
+      const padresIds: string[] = auditoriasPadre.map(auditoria => auditoria?._id);
+      const hijasFilter = { query: `auditoria_padre_id__in:${padresIds.join('|')}`}
+  
+      const data2 = await this.auditoriaCrudService.traerDataCrud('auditoria', null, hijasFilter);
+      const auditorias: any[] = data2.Data;
+      
+      const padresMap = Object.fromEntries(auditoriasPadre.map(p => [p?._id, p]));
+      const auditorias_unidas: any[] = auditorias.map(a => {
+        if (a?.auditoria_padre_id in padresMap) {
+          return {
+            ...(padresMap[a?.auditoria_padre_id] || {}),
+            ...a,
+          };
+        }
+      });
+      
+      data.Data = auditorias_unidas;
     }
-
-    const data2 = await this.auditoriaCrudService.traerDataCrud('auditoria-padre', null, queryParams2);
-    const auditorias_padre: any[] = data2.Data;
     
-    const padresMap = Object.fromEntries(auditorias_padre.map(p => [p?._id, p]));
-    const auditorias_unidas: any[] = auditorias.map(a => {
-      return {
-        ...(padresMap[a?.auditoria_padre_id] || {}),
-        ...a,
-      };
-    });
-    
-    const data = { ...data1, Data : auditorias_unidas }
 
     await this.enriquecerAuditorias(data.Data);
     if (await this.identificarCampo(data)) {
@@ -73,6 +74,32 @@ export class AuditoriaService {
     }
 
     const data = await this.auditoriaCrudService.traerDataCrud('auditoria/auditor', personaId, crudParams);
+    const auditorias: any[] = data.Data;
+
+    if (auditorias.length > 0) {
+      const padres_ids: string[] = auditorias.map(a => a?.auditoria_padre_id);
+      if (crudParams?.query) {
+        crudParams.query += `,_id__in:${padres_ids.join("|")}`
+      } else {
+        crudParams.query = `_id__in:${padres_ids.join("|")}`
+      }
+  
+      const data2 = await this.auditoriaCrudService.traerDataCrud('auditoria-padre', null, queryParams);
+      const auditorias_padre: any[] = data2.Data;
+      
+      const padresMap = Object.fromEntries(auditorias_padre.map(p => [p?._id, p]));
+      const auditorias_unidas: any[] = auditorias.map(a => {
+        if (a?.auditoria_padre_id in padresMap) {
+          return {
+            ...(padresMap[a?.auditoria_padre_id] || {}),
+            ...a,
+          };
+        }
+      });
+  
+      data.Data = auditorias_unidas;
+    }
+    
     await this.enriquecerAuditorias(data.Data);
 
     if (estado_id && estado_id !== '') {
@@ -113,7 +140,29 @@ export class AuditoriaService {
       ? `${baseQuery},${additionalFilters}`
       : additionalFilters;
 
-    const data = await this.auditoriaCrudService.traerDataCrud('auditoria', null, queryParams);
+    const data = await this.auditoriaCrudService.traerDataCrud('auditoria-padre', null, queryParams);
+    const auditorias: any[] = data.Data;
+
+    if (auditorias.length > 0) {
+      const ids: string[] = auditorias.map(a => a?._id);
+      const padresFilter = { query: `auditoria_padre_id__in:${ids.join('|')}`}
+      const data2 = await this.auditoriaCrudService.traerDataCrud('auditoria', null, padresFilter);
+      const auditorias_hijas: any[] = data2.Data;
+  
+      const padresMap = Object.fromEntries(auditorias.map(p => [p?._id, p]));
+      const auditorias_unidas: any[] = auditorias_hijas.map(a => {
+        if (a?.auditoria_padre_id in padresMap) {
+          return {
+            ...(padresMap[a?.auditoria_padre_id] || {}),
+            ...a,
+          };
+        }
+      });
+  
+      data.Data = auditorias_unidas;
+    }
+    
+
     if (data.Data && Array.isArray(data.Data) && data.Data.length > 0) {
       const dependenciaNombres =
         await this.getDependenciaNombres(dependenciaIds);
