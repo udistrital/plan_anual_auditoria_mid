@@ -36,30 +36,52 @@ export class AuditoriaService {
   ) {}
 
   async getAll(queryParams: any) {
-    const data1 = await this.auditoriaCrudService.traerDataCrud('auditoria', null, queryParams);
-    const auditorias: any[] = data1.Data;
-    
-    const padres_ids: string[] = auditorias.map(auditoria => auditoria?.auditoria_padre_id);
-    const queryParams2 = { query: `_id__in:${padres_ids.join("|")}`}
-    
-    const data2 = await this.auditoriaCrudService.traerDataCrud('auditoria-padre', null, queryParams2);
-    const auditorias_padre: any[] = data2.Data;
-    
-    const padresMap = Object.fromEntries(auditorias_padre.map(p => [p?._id, p]));
-    const auditorias_unidas: any[] = auditorias.map(a => {
-      return {
-        ...(padresMap[a?.auditoria_padre_id] || {}),
-        ...a,
-      };
-    });
-    
-    const data = { ...data1, Data : auditorias_unidas }
-
-    await this.enriquecerAuditorias(data.Data);
-    if (await this.identificarCampo(data)) {
-      this.reemplazarCampos(data);
+    // Extraer tipo_evaluacion_id para aplicarlo después del merge con auditoria-padre
+    // (ese campo vive en auditoria-padre, no en auditoria)
+    let tipoEvaluacionFiltro: string | null = null;
+    const cleanedParams = { ...queryParams };
+    if (cleanedParams.query) {
+      const parts = cleanedParams.query.split(',');
+      const remaining = parts.filter((p: string) => {
+        if (p.startsWith('tipo_evaluacion_id:')) {
+          tipoEvaluacionFiltro = p.split(':')[1];
+          return false;
+        }
+        return true;
+      });
+      cleanedParams.query = remaining.join(',') || undefined;
+      if (!cleanedParams.query) delete cleanedParams.query;
     }
-    return data;
+
+    const respuestaAuditorias = await this.auditoriaCrudService.traerDataCrud('auditoria', null, cleanedParams);
+    const auditorias: any[] = respuestaAuditorias.Data;
+
+    const padresIds: string[] = auditorias.map(auditoria => auditoria?.auditoria_padre_id);
+    const queryParamsPadres = { query: `_id__in:${padresIds.join("|")}` };
+
+    const respuestaAuditoriasPadre = await this.auditoriaCrudService.traerDataCrud('auditoria-padre', null, queryParamsPadres);
+    const auditoriasPadre: any[] = respuestaAuditoriasPadre.Data;
+
+    const padresMap = Object.fromEntries(auditoriasPadre.map(padre => [padre?._id, padre]));
+    const auditoriasConDatosPadre: any[] = auditorias.map(auditoria => ({
+      ...(padresMap[auditoria?.auditoria_padre_id] || {}),
+      ...auditoria,
+    }));
+
+    const resultado = { ...respuestaAuditorias, Data: auditoriasConDatosPadre };
+
+    // Aplicar filtro de tipo_evaluacion_id sobre datos ya mergeados
+    if (tipoEvaluacionFiltro) {
+      const id = parseInt(tipoEvaluacionFiltro);
+      resultado.Data = resultado.Data.filter((a: any) => a.tipo_evaluacion_id === id);
+      if (resultado.MetaData) resultado.MetaData.Count = resultado.Data.length;
+    }
+
+    await this.enriquecerAuditorias(resultado.Data);
+    if (await this.identificarCampo(resultado)) {
+      this.reemplazarCampos(resultado);
+    }
+    return resultado;
   }
 
   async getByAuditor(personaId: string, queryParams: any) {
@@ -229,9 +251,10 @@ export class AuditoriaService {
 
         const [estado, auditores] = await Promise.all(promises);
 
-        if (estado[0]?.actual) {
-          auditoria.estado = estado[0];
-          auditoria.estado_id = estado[0]?.estado_id;
+        const estadoActual = estado?.Data?.[0];
+        if (estadoActual?.actual) {
+          auditoria.estado = estadoActual;
+          auditoria.estado_id = estadoActual.estado_id;
         }
         if (incluirAuditores) auditoria.auditores = auditores || [];
       })
@@ -281,8 +304,9 @@ export class AuditoriaService {
       data.Data.map(async (auditoria: any) => {
         const queryParams = { query: `auditoria_id:${auditoria._id},actual:true`}
         const estado = await this.auditoriaCrudService.traerDataCrud('auditoria-estado', null, queryParams);
-        if (estado[0]?.actual) {
-          auditoria.estado_id = estado[0].estado_id;
+        const estadoActual = estado?.Data?.[0];
+        if (estadoActual?.actual) {
+          auditoria.estado_id = estadoActual.estado_id;
         }
       }),
     );
