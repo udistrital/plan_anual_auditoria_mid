@@ -33,13 +33,36 @@ export class AuditoriaService {
   ) {}
 
   async getAll(queryParams: any) {
-    const data = await this.auditoriaCrudService.traerDataCrud('auditoria-padre', null, queryParams);
+    const queryEstado = queryParams.query
+        .split(',')
+        .filter((param: string) => param.startsWith('estado_id:'))[0]
+    
+    if (queryParams.query) {
+      queryParams.query = queryParams.query
+        .split(',')
+        .filter((param: string) => !param.startsWith('estado_id:'))
+        .join(',');
+    }
+
+    const queryPadre = {
+      query: queryParams.query,
+      limit: 0,
+      fields: '_id,titulo,tipo_evaluacion_id,macroproceso_id,proceso_id,dependencia_id'
+    }
+
+    const data = await this.auditoriaCrudService.traerDataCrud('auditoria-padre', null, queryPadre);
     const auditoriasPadre: any[] = data.Data;
     if (auditoriasPadre.length > 0) {
       const padresIds: string[] = auditoriasPadre.map(auditoria => auditoria?._id);
-      const hijasFilter = { query: `auditoria_padre_id__in:${padresIds.join('|')}`}
-  
-      const data2 = await this.auditoriaCrudService.traerDataCrud('auditoria', null, hijasFilter);
+      
+      const nuevaQuery = queryEstado ? 
+        `${queryEstado},activo:true,auditoria_padre_id__in:${padresIds.join('|')}` :
+        `activo:true,auditoria_padre_id__in:${padresIds.join('|')}`;
+
+      const queryHijas = { ...queryParams, query: nuevaQuery }
+      console.log(queryHijas)
+      
+      const data2 = await this.auditoriaCrudService.traerDataCrud('auditoria', null, queryHijas);
       const auditorias: any[] = data2.Data;
       
       const padresMap = Object.fromEntries(auditoriasPadre.map(p => [p?._id, p]));
@@ -53,6 +76,7 @@ export class AuditoriaService {
       });
       
       data.Data = auditorias_unidas;
+      data.MetaData.Count = auditorias_unidas.length;
     }
     
 
@@ -98,6 +122,7 @@ export class AuditoriaService {
       });
   
       data.Data = auditorias_unidas;
+      data.MetaData.Count = auditorias_unidas.length;
     }
     
     await this.enriquecerAuditorias(data.Data);
@@ -160,6 +185,7 @@ export class AuditoriaService {
       });
   
       data.Data = auditorias_unidas;
+      data.MetaData.Count = auditorias_unidas.length;
     }
     
 
