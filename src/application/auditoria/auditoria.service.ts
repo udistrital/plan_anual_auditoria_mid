@@ -6,14 +6,12 @@ import { AuditorService } from '../../auditor/auditor.service';
 import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
 import { Dominio } from 'src/shared/utils/dominios/dominio.model';
 import { unirListaNombresConComas } from 'src/utils/texto.utils';
-import { AuditoriaOrdenadaService } from 'src/shared/services/auditoria-ordenada/auditoria-ordenada.service';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
 
 const {
   PLAN_AUDITORIA_CRUD_SERVICE,
-  PARAMETROS_SERVICE,
   TIPO_PARAMETRO,
   TERCEROS_SERVICE,
-  OIKOS_SERVICE,
 } = environment;
 
 @Injectable()
@@ -30,26 +28,59 @@ export class AuditoriaService {
   constructor(
     private readonly httpService: HttpService,
     private readonly auditorService: AuditorService,
+    private readonly auditoriaCrudService: AuditoriaCrudService,
     private readonly dominiosService: DominiosService,
-    private readonly auditoriaOrdenadaService: AuditoriaOrdenadaService,
   ) {}
 
   async getAll(queryParams: any) {
-    const data = await this.traerDataCrud(null, queryParams);
-    await Promise.all(
-      data.Data.map(async (auditoria: any) => {
-        const [estado, auditores] = await Promise.all([
-          this.getEstadoAuditoria(auditoria._id),
-          this.asociarAuditores(auditoria._id),
-        ]);
+    const queryEstado = queryParams.query
+        .split(',')
+        .filter((param: string) => param.startsWith('estado_id:'))[0]
+    
+    if (queryParams.query) {
+      queryParams.query = queryParams.query
+        .split(',')
+        .filter((param: string) => !param.startsWith('estado_id:'))
+        .join(',');
+    }
 
-        if (estado?.actual) {
-          auditoria.estado = estado;
-          auditoria.estado_id = estado.estado_id;
+    const queryPadre = {
+      query: queryParams.query,
+      limit: 0,
+      fields: '_id,titulo,tipo_evaluacion_id,macroproceso_id,proceso_id,dependencia_id'
+    }
+
+    const data = await this.auditoriaCrudService.traerDataCrud('auditoria-padre', null, queryPadre);
+    const auditoriasPadre: any[] = data.Data;
+    if (auditoriasPadre.length > 0) {
+      const padresIds: string[] = auditoriasPadre.map(auditoria => auditoria?._id);
+      
+      const nuevaQuery = queryEstado ? 
+        `${queryEstado},activo:true,auditoria_padre_id__in:${padresIds.join('|')}` :
+        `activo:true,auditoria_padre_id__in:${padresIds.join('|')}`;
+
+      const queryHijas = { ...queryParams, query: nuevaQuery }
+      console.log(queryHijas)
+      
+      const data2 = await this.auditoriaCrudService.traerDataCrud('auditoria', null, queryHijas);
+      const auditorias: any[] = data2.Data;
+      
+      const padresMap = Object.fromEntries(auditoriasPadre.map(p => [p?._id, p]));
+      const auditorias_unidas: any[] = auditorias.map(a => {
+        if (a?.auditoria_padre_id in padresMap) {
+          return {
+            ...(padresMap[a?.auditoria_padre_id] || {}),
+            ...a,
+          };
         }
-        auditoria.auditores = auditores || [];
-      }),
-    );
+      });
+      
+      data.Data = auditorias_unidas;
+      data.MetaData.Count = auditorias_unidas.length;
+    }
+    
+
+    await this.enriquecerAuditorias(data.Data);
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
     }
@@ -66,22 +97,35 @@ export class AuditoriaService {
         .join(',');
     }
 
-    const data = await this.traerDataCrudByAuditor(personaId, crudParams);
+    const data = await this.auditoriaCrudService.traerDataCrud('auditoria/auditor', personaId, crudParams);
+    const auditorias: any[] = data.Data;
 
-    await Promise.all(
-      data.Data.map(async (auditoria: any) => {
-        const [estado, auditores] = await Promise.all([
-          this.getEstadoAuditoria(auditoria._id),
-          this.asociarAuditores(auditoria._id),
-        ]);
-
-        if (estado?.actual) {
-          auditoria.estado = estado;
-          auditoria.estado_id = estado.estado_id;
+    if (auditorias.length > 0) {
+      const padres_ids: string[] = auditorias.map(a => a?.auditoria_padre_id);
+      if (crudParams?.query) {
+        crudParams.query += `,_id__in:${padres_ids.join("|")}`
+      } else {
+        crudParams.query = `_id__in:${padres_ids.join("|")}`
+      }
+  
+      const data2 = await this.auditoriaCrudService.traerDataCrud('auditoria-padre', null, queryParams);
+      const auditorias_padre: any[] = data2.Data;
+      
+      const padresMap = Object.fromEntries(auditorias_padre.map(p => [p?._id, p]));
+      const auditorias_unidas: any[] = auditorias.map(a => {
+        if (a?.auditoria_padre_id in padresMap) {
+          return {
+            ...(padresMap[a?.auditoria_padre_id] || {}),
+            ...a,
+          };
         }
-        auditoria.auditores = auditores || [];
-      }),
-    );
+      });
+  
+      data.Data = auditorias_unidas;
+      data.MetaData.Count = auditorias_unidas.length;
+    }
+    
+    await this.enriquecerAuditorias(data.Data);
 
     if (estado_id && estado_id !== '') {
       const estadoId = parseInt(estado_id);
@@ -121,23 +165,40 @@ export class AuditoriaService {
       ? `${baseQuery},${additionalFilters}`
       : additionalFilters;
 
-    const data = await this.traerDataCrud(null, queryParams);
+    const data = await this.auditoriaCrudService.traerDataCrud('auditoria-padre', null, queryParams);
+    const auditorias: any[] = data.Data;
+
+    if (auditorias.length > 0) {
+      const ids: string[] = auditorias.map(a => a?._id);
+      const padresFilter = { query: `auditoria_padre_id__in:${ids.join('|')}`}
+      const data2 = await this.auditoriaCrudService.traerDataCrud('auditoria', null, padresFilter);
+      const auditorias_hijas: any[] = data2.Data;
+  
+      const padresMap = Object.fromEntries(auditorias.map(p => [p?._id, p]));
+      const auditorias_unidas: any[] = auditorias_hijas.map(a => {
+        if (a?.auditoria_padre_id in padresMap) {
+          return {
+            ...(padresMap[a?.auditoria_padre_id] || {}),
+            ...a,
+          };
+        }
+      });
+  
+      data.Data = auditorias_unidas;
+      data.MetaData.Count = auditorias_unidas.length;
+    }
+    
+
     if (data.Data && Array.isArray(data.Data) && data.Data.length > 0) {
       const dependenciaNombres =
         await this.getDependenciaNombres(dependenciaIds);
 
-      await Promise.all(
-        data.Data.map(async (auditoria: any) => {
-          const estado = await this.getEstadoAuditoria(auditoria._id);
+      await this.enriquecerAuditorias(data.Data, false);
 
-          if (estado?.actual) {
-            auditoria.estado = estado;
-            auditoria.estado_id = estado.estado_id;
-          }
-          auditoria.dependencia_nombre =
-            dependenciaNombres.get(auditoria.dependencia_id) || null;
-        }),
-      );
+      data.Data.forEach((auditoria: any) => {
+        auditoria.dependencia_nombre =
+          dependenciaNombres.get(auditoria.dependencia_id) || null;
+      });
 
       if (await this.identificarCampo(data)) {
         this.reemplazarCampos(data);
@@ -172,25 +233,25 @@ export class AuditoriaService {
   private async getDependenciaNombres(
     dependenciaIds: number[],
   ): Promise<Map<number, string>> {
-    const nombresMap = new Map<number, string>();
-    await Promise.all(
-      dependenciaIds.map(async (id) => {
-        try {
-          const url = `${OIKOS_SERVICE}dependencia/${id}`;
-          const response = await lastValueFrom(this.httpService.get(url));
-          if (response.data?.Nombre) {
-            nombresMap.set(id, response.data.Nombre);
-          }
-        } catch (error) {
-          // Si no se puede obtener el nombre, se omite
-        }
-      }),
+    const dependencias = await lastValueFrom(
+      this.dominiosService.getDependencias()
     );
+
+    const nombresMap = new Map<number, string>();
+    dependenciaIds.forEach(id => {
+      const dep = dependencias.parametros.find(d => d.Id === id);
+      if (dep?.Nombre) {
+        nombresMap.set(id, dep.Nombre);
+      }
+    });
+
     return nombresMap;
   }
 
   async getOne(id: string) {
-    const data = await this.traerDataCrud(id, null);
+    const auditoria = await this.auditoriaCrudService.traerDataCrud('auditoria', id, null);
+    const auditoria_padre = await this.auditoriaCrudService.traerDataCrud('auditoria-padre', auditoria.Data.auditoria_padre_id, null);
+    const data = { ...auditoria, Data: {...auditoria_padre.Data, ...auditoria.Data}};
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
     }
@@ -234,84 +295,29 @@ export class AuditoriaService {
     }
   }
 
-  traerCorreoDependencia(dependenciaId: number): string {
+  private async enriquecerAuditorias(auditorias: any[], incluirAuditores = true) {
+    await Promise.all(
+      auditorias.map(async (auditoria) => {
+        const queryParams = { query: `auditoria_id:${auditoria._id},actual:true`}
+        const promises = [this. auditoriaCrudService.traerDataCrud('auditoria-estado', null, queryParams)];
+        if (incluirAuditores) promises.push(this.asociarAuditores(auditoria._id));
+
+        const [estado, auditores] = await Promise.all(promises);
+
+        if (estado.Data[0]?.actual) {
+          auditoria.estado = estado.Data[0];
+          auditoria.estado_id = estado.Data[0]?.estado_id;
+        }
+        if (incluirAuditores) auditoria.auditores = auditores || [];
+      })
+    );
+  }
+
+  private traerCorreoDependencia(dependenciaId: number): string {
     const dependencia = this.dependencias.find(
       (dep) => dep.Id === dependenciaId
     );
     return dependencia ? dependencia.CorreoElectronico : 'Correo no encontrado';
-  }
-
-  async getAuditoriasOrdenadas(queryParams: any) {
-    const planId = this.extraerPlanId(queryParams);
-
-    // Extraer filtros adicionales del query string
-    const filtros: any = {};
-    if (queryParams.query) {
-      const queryParts = queryParams.query.split(',');
-      queryParts.forEach((part: string) => {
-        if (part.startsWith('tipo_evaluacion_id:')) {
-          filtros.tipo_evaluacion_id = part.split(':')[1];
-        }
-      });
-    }
-    if (queryParams.tipo_evaluacion_id) {
-      filtros.tipo_evaluacion_id = queryParams.tipo_evaluacion_id;
-    }
-
-    // Usar servicio compartido para obtener auditorías ordenadas (sin orderBy aún)
-    const auditoriasOrdenadas = await this.auditoriaOrdenadaService.getAuditoriasOrdenadas(
-      planId,
-      undefined,
-      undefined,
-      filtros,
-    );
-
-    const data = {
-      Data: auditoriasOrdenadas,
-      Success: true,
-      Status: 200,
-    };
-
-    // Enriquecer con estados
-    await Promise.all(
-      data.Data.map(async (auditoria: any) => {
-        const estado = await this.getEstadoAuditoria(auditoria._id);
-        if (estado?.actual) {
-          auditoria.estado_id = estado.estado_id;
-        }
-      }),
-    );
-
-    // Identificar y reemplazar campos ANTES de ordenar
-    if (await this.identificarCampo(data)) {
-      this.reemplazarCampos(data);
-    }
-
-    // Aplicar ordenamiento DESPUÉS de reemplazar campos
-    if (queryParams.orderBy) {
-      const { aplicarOrdenamiento } = await import('../../shared/utils/auditoria-ordenamiento.utils');
-      data.Data = aplicarOrdenamiento(data.Data, queryParams.orderBy, queryParams.orderDirection);
-    }
-
-    return data;
-  }
-
-  private extraerPlanId(queryParams: any): string {
-    if (queryParams.plan_auditoria_id) {
-      return queryParams.plan_auditoria_id;
-    }
-
-    if (queryParams.query) {
-      const match = queryParams.query.match(/plan_auditoria_id:([^,]+)/);
-      if (match?.[1]) {
-        return match[1];
-      }
-    }
-
-    throw new HttpException(
-      'El parámetro "plan_auditoria_id" es obligatorio.',
-      HttpStatus.BAD_REQUEST,
-    );
   }
 
 private async identificarCampo(data: any) {
@@ -367,6 +373,9 @@ private async identificarCampo(data: any) {
 
     if ('dependencia_id' in firstElement) {
       observables['dependencia_id'] = this.dominiosService.getDependencias();
+      if (!Array.isArray(data.Data)) {
+        this.datosTerceros = await this.getDatosTerceros(firstElement.dependencia_id);
+      }
     }
 
     if (Object.keys(observables).length === 0) {
@@ -388,64 +397,7 @@ private async identificarCampo(data: any) {
       this.dependencias.push(...resultados['dependencia_id'].parametros);
     }
 
-    if (!Array.isArray(data.Data)) {
-      this.datosTerceros = await this.getDatosTerceros(firstElement.dependencia_id);
-    }
-
     return true;
-  }
-
-  private async traerDataCrud(id: string | null, queryParams: any) {
-    let url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria/`;
-    if (id != null && id != undefined) {
-      url = url + `${id}`;
-    }
-    if (queryParams) {
-      const queryString = new URLSearchParams(queryParams).toString();
-      url += `?${queryString}`;
-    }
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data;
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  private async traerDataCrudByAuditor(personaId: string, queryParams: any) {
-    let url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria/auditor/${personaId}`;
-    if (queryParams) {
-      const queryString = new URLSearchParams(queryParams).toString();
-      url += `?${queryString}`;
-    }
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data;
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  private async getEstadoAuditoria(auditoriaId: string) {
-    const url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria-estado?query=auditoria_id:${auditoriaId},actual:true`;
-    try {
-      const { data } = await lastValueFrom(this.httpService.get(url));
-      if (data?.Data?.length > 0) {
-        return data.Data[0];
-      }
-      return null;
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos del estado',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
   }
 
   private reemplazarCampos(data: any) {

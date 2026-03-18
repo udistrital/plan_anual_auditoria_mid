@@ -35,7 +35,7 @@ export class PlantillaSolicitudInformacionService {
     const auditoria = data.auditoria;
     const [Lider, vigencia, auditoriaOSeguimiento, auditores] =
       await Promise.all([
-        this.obtenerTerceroVinculado(environment.CARGO.JEFE_DEPENDENCIA_ID, auditoria.dependencia_id),
+        this.obtenerTerceroVinculado(environment.CARGO.JEFE_DEPENDENCIA_ID, auditoria.dependencia_id,),
         this.traerParametros(auditoria.tipo_evaluacion_id),
         this.traerParametros(auditoria.tipo_evaluacion_id),
         this.obtenerNombresAuditores(auditoria._id),

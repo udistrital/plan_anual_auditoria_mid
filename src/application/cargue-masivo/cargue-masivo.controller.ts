@@ -12,8 +12,7 @@ import { CargueMasivoService } from './cargue-masivo.service';
 import axios from 'axios';
 import { environment } from 'src/config/configuration';
 import { NuxeoService } from 'src/shared/utils/nuxeo/nuxeo.service';
-// TODO: In the future, the auditoriaService dependency should be removed by modularizing the ordenadas method to avoid coupling between modules
-import { AuditoriaService } from '../auditoria/auditoria.service';
+import { AuditoriaPadreService } from '../auditoria-padre/auditoria-padre.service';
 import { firstValueFrom } from 'rxjs';
 
 @ApiTags('Cargue Masivo')
@@ -22,7 +21,7 @@ export class CargueMasivoController {
   constructor(
     private readonly cargueMasivoService: CargueMasivoService,
     private readonly nuxeoService: NuxeoService,
-    private readonly auditoriaService: AuditoriaService,
+    private readonly auditoriaPadreService: AuditoriaPadreService,
   ) {}
 
   private cargueMasivoUrl = `${environment.CARGUE_MASIVO_SERVERLESS_MID}registro-datos-archivo`;
@@ -92,7 +91,7 @@ export class CargueMasivoController {
   ): Promise<{ base64: string }> {
     try {
       // TODO: In the future, the ordenadas method will be modularized to avoid dependency on the auditoriaService
-      const ordenadas = await this.auditoriaService.getAuditoriasOrdenadas({ query: `plan_auditoria_id:${planId}` });
+      const ordenadas = await this.auditoriaPadreService.getAuditoriasOrdenadas({ query: `plan_auditoria_id:${planId}` });
       const plantillaResponse = await firstValueFrom(
         this.nuxeoService.obtenerPorUUID(
           environment.PLANTILLA_CARGUE_MASIVO_AUDITORIAS

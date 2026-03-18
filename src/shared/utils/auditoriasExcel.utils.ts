@@ -138,6 +138,7 @@ export async function descargarAuditorias(
     if (exampleSheet)
       workbook.removeWorksheet(exampleSheet.id);
 
+    workbook.clearThemes(); // Clear themes to avoid issues with styles when modifying the workbook
     return await workbook.xlsx.writeBuffer();
   }
   catch (error) {
@@ -247,6 +248,7 @@ export async function setupValidationDomains(
       });
     });
 
+    workbook.clearThemes(); // Clear themes to avoid issues with styles when modifying the workbook
     return await workbook.xlsx.writeBuffer();
   }
   catch (error) {

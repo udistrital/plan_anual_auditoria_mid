@@ -3,10 +3,10 @@ import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
 import { environment } from 'src/config/configuration';
 import { reemplazar, reemplazarCampoRol } from 'src/utils/campo.utils';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
 
 const {
   PARAMETROS_SERVICE,
-  PLAN_AUDITORIA_CRUD_SERVICE,
   TERCEROS_SERVICE,
   TIPO_PARAMETRO,
   ETIQUETAS_ROL,
@@ -16,10 +16,13 @@ const {
 export class PlanEstadoService {
   private estados: any[] = [];
 
-  constructor(private readonly httpService: HttpService) {}
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly auditoriaCrudService: AuditoriaCrudService
+  ) {}
 
   async getAll(queryParams: any) {
-    const data = await this.traerDataCrud(null, queryParams);
+    const data = await this.auditoriaCrudService.traerDataCrud('estado', null, queryParams);
     if (await this.identificarCampo(data)) {
       await this.reemplazarCampos(data);
     }
@@ -27,7 +30,7 @@ export class PlanEstadoService {
   }
 
   async getOne(id: string) {
-    const data = await this.traerDataCrud(id, null);
+    const data = await this.auditoriaCrudService.traerDataCrud('estado', id, null);
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
     }
@@ -89,26 +92,6 @@ export class PlanEstadoService {
       }
     }
     return data;
-  }
-
-  private async traerDataCrud(id: string | null, queryParams: any) {
-    let url = `${PLAN_AUDITORIA_CRUD_SERVICE}estado/`;
-    if (id != null && id != undefined) {
-      url = url + `${id}`;
-    }
-    if (queryParams) {
-      const queryString = new URLSearchParams(queryParams).toString();
-      url += `?${queryString}`;
-    }
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data;
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
   }
 
   private async reemplazarCampoUsuario(element: any) {

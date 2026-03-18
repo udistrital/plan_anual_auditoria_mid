@@ -13,41 +13,6 @@ import { AuditoriaService } from './auditoria.service';
 export class AuditoriaController {
   constructor(private readonly auditoriaService: AuditoriaService) {}
 
-  @Get('ordenadas')
-  @ApiOperation({ summary: 'Obtener auditorías ordenadas' })
-  @ApiQuery({
-    name: 'plan_auditoria_id',
-    required: true,
-    description: 'ID del plan de auditoría (obligatorio).',
-  })
-  @ApiQuery({
-    name: 'orderBy',
-    required: false,
-    description: 'Campo de orden.',
-  })
-  @ApiQuery({
-    name: 'orderDirection',
-    required: false,
-    description: 'Dirección (ASC o DESC).',
-  })
-  @ApiResponse({ status: 200, description: 'Auditorías obtenidas.' })
-  @ApiResponse({ status: 400, description: 'Parámetros inválidos.' })
-  @ApiResponse({ status: 500, description: 'Error interno.' })
-  async getAuditoriasOrdenadas(@Res() res: any, @Query() queryParams: any) {
-    try {
-      const data =
-        await this.auditoriaService.getAuditoriasOrdenadas(queryParams);
-      res.status(HttpStatus.OK).json(data);
-    } catch (error) {
-      res.status(error.status || HttpStatus.INTERNAL_SERVER_ERROR).json({
-        Success: false,
-        Status: error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-        Message: 'Error en servicio ordenadas: parámetro inválido o sin datos.',
-        Data: error.message,
-      });
-    }
-  }
-
   @Get('auditor/:personaId')
   @ApiOperation({ summary: 'Obtener auditorías por auditor' })
   @ApiParam({

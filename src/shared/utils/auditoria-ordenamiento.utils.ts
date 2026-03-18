@@ -14,13 +14,14 @@ export function ordenarAuditoriasPorPlan(
   const auditoriasMap = new Map(
     auditorias.map((auditoria) => [auditoria._id, auditoria])
   );
+  const ordenSet = new Set(auditoriasOrden);
 
   const ordenadas = auditoriasOrden
     .map((id) => auditoriasMap.get(id))
     .filter((auditoria) => auditoria !== undefined);
 
   const restantes = auditorias.filter(
-    (auditoria) => !auditoriasOrden.includes(auditoria._id)
+    (auditoria) => !ordenSet.has(auditoria._id)
   );
 
   return [...ordenadas, ...restantes];

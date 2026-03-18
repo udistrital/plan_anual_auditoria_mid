@@ -1,9 +1,5 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { lastValueFrom } from 'rxjs';
-import { environment } from 'src/config/configuration';
-
-const { PLAN_AUDITORIA_CRUD_SERVICE } = environment;
+import { Injectable } from '@nestjs/common';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
 
 @Injectable()
 export class ActividadService {
@@ -13,10 +9,10 @@ export class ActividadService {
     { Id: 3, Nombre: 'Otro' },
   ];
 
-  constructor(private readonly httpService: HttpService) {}
+  constructor(private readonly auditoriaCrudService: AuditoriaCrudService) {}
 
   async getAll(queryParams: any) {
-    const data = await this.traerDataCrud(null, queryParams);
+    const data = await this.auditoriaCrudService.traerDataCrud('actividad', null, queryParams);
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
     }
@@ -24,7 +20,7 @@ export class ActividadService {
   }
 
   async getOne(id: string) {
-    const data = await this.traerDataCrud(id, null);
+    const data = await this.auditoriaCrudService.traerDataCrud('actividad', id, null);
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
     }
@@ -41,26 +37,6 @@ export class ActividadService {
       return validacion;
     } catch (error) {
       console.error(error);
-    }
-  }
-
-  private async traerDataCrud(id: string | null, queryParams: any) {
-    let url = `${PLAN_AUDITORIA_CRUD_SERVICE}actividad/`;
-    if (id != null && id != undefined) {
-      url = url + `${id}`;
-    }
-    if (queryParams) {
-      const queryString = new URLSearchParams(queryParams).toString();
-      url += `?${queryString}`;
-    }
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data;
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
     }
   }
 

@@ -143,7 +143,6 @@ export class PlantillaProgramaAuditoriaService {
             }),
         );
         
-
         const todosValidos = nombres.every((nombre) => nombre !== null);
 
         if (!todosValidos) {
