@@ -88,6 +88,10 @@ export class AuditoriaService {
   }
 
   async getByAuditor(personaId: string, queryParams: any) {
+    const queryEstado = queryParams.query
+        ? queryParams.query.split(',').filter((param: string) => param.startsWith('estado_id:'))[0]
+        : undefined;
+
     if (queryParams.query) {
       queryParams.query = queryParams.query
         .split(',')
@@ -95,25 +99,32 @@ export class AuditoriaService {
         .join(',');
     }
 
-    const data = await this.auditoriaCrudService.traerDataCrud('auditoria/auditor', personaId, queryParams);
-    const auditorias: any[] = data.Data;
-
-    if (auditorias.length > 0) {
-      const padres_ids: string[] = Array.from(new Set(auditorias.map(a => a?.auditoria_padre_id).filter(Boolean)));
-
-      let padreQueryStr = `_id__in:${padres_ids.join('|')}`;
-      if (queryParams.query) {
-        padreQueryStr = `${queryParams.query},${padreQueryStr}`;
+    let padreQueryStr = '';
+    for (const param of queryParams.query.split(',')) {
+      if (param.startsWith('tipo_evaluacion_id:') || param.startsWith('dependencia_id:')) {
+        padreQueryStr += padreQueryStr ? `,${param}` : param;
       }
+    }
 
-      const queryPadre = {
-        query: padreQueryStr,
-        limit: 0,
-        fields: '_id,titulo,tipo_evaluacion_id,macroproceso_id,proceso_id,dependencia_id',
-      };
+    const queryPadre = {
+      query: padreQueryStr,
+      limit: 0,
+      fields: '_id,titulo,tipo_evaluacion_id,macroproceso_id,proceso_id,dependencia_id',
+    };
 
-      const data2 = await this.auditoriaCrudService.traerDataCrud('auditoria-padre', null, queryPadre);
-      const auditorias_padre: any[] = data2.Data;
+    const data = await this.auditoriaCrudService.traerDataCrud('auditoria-padre', null, queryPadre);
+    const auditorias_padre: any[] = data.Data;
+    const padresIds: string[] = Array.from(new Set(auditorias_padre.map(a => a?.auditoria_padre_id).filter(Boolean)));
+
+    if (auditorias_padre.length > 0) {
+      const nuevaQuery = queryEstado ?
+        `${queryEstado},activo:true,auditoria_padre_id__in:${padresIds.join('|')}` :
+        `activo:true,auditoria_padre_id__in:${padresIds.join('|')}`;
+
+      const queryHijas = { ...queryParams, query: nuevaQuery };
+
+      const data2 = await this.auditoriaCrudService.traerDataCrud('auditoria/auditor', personaId, queryHijas);
+      const auditorias: any[] = data2.Data;
 
       const padresMap = Object.fromEntries(auditorias_padre.map(p => [p?._id, p]));
       const auditorias_unidas: any[] = auditorias

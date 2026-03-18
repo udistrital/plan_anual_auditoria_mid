@@ -55,19 +55,20 @@ describe('AuditoriaService', () => {
     it('getByAuditor debe heredar tipo_evaluacion_id y dependencia_id desde padre', async () => {
       // preparar mocks: traerDataCrud llamado para 'auditoria/auditor', 'auditoria-padre', 'auditoria-estado'
       mockCrudService.traerDataCrud.mockImplementation((resource: string, id: any, params: any) => {
-        if (resource === 'auditoria/auditor') {
+        if (resource === 'auditoria-padre') {
           return Promise.resolve({
             Data: [{
-              _id: 'h1',
-              auditoria_padre_id: 'p1',
+              _id: 'p1',
+              tipo_evaluacion_id: 7,
+              dependencia_id: 42,
               cronograma_nombre: [],
-              titulo: 'Hija'
+              titulo: 'Padre'
             }],
             MetaData: { Count: 1 },
           });
         }
-        if (resource === 'auditoria-padre') {
-          return Promise.resolve({ Data: [{ _id: 'p1', tipo_evaluacion_id: 7, dependencia_id: 42, titulo: 'Padre' }] });
+        if (resource === 'auditoria/auditor') {
+          return Promise.resolve({ Data: [{ _id: 'h1', auditoria_padre_id: 'p1', }], });
         }
         // para enriquecerAuditorias -> auditoria-estado
         if (resource === 'auditoria-estado') {
@@ -86,23 +87,27 @@ describe('AuditoriaService', () => {
       expect(res.Data[0].tipo_evaluacion_id).toBe(7);
       expect(res.Data[0].dependencia_id).toBe(42);
       expect(res.MetaData.Count).toBe(1);
-      // verificar que se consultaron las auditorías del auditor con el query correcto (incluye tipo_evaluacion)
+      // verificar que la consulta a las auditorías del auditor incluyó filtros de hija
+      expect(mockCrudService.traerDataCrud).toHaveBeenCalledWith(
+        'auditoria/auditor',
+        expect.any(String),
+        expect.objectContaining({ query: expect.stringContaining('activo:true') }),
+      );
+      expect(mockCrudService.traerDataCrud).toHaveBeenCalledWith(
+        'auditoria/auditor',
+        expect.any(String),
+        expect.objectContaining({ query: expect.stringContaining('auditoria_padre_id__in:') }),
+      );
       expect(mockCrudService.traerDataCrud).toHaveBeenCalledWith(
         'auditoria/auditor',
         'personaX',
-        expect.objectContaining({ query: expect.stringContaining('tipo_evaluacion_id:7') }),
+        expect.any(Object),
       );
       // verificar que se llamó a traerDataCrud para padres con el query correcto (incluye tipo_evaluacion)
       expect(mockCrudService.traerDataCrud).toHaveBeenCalledWith(
         'auditoria-padre',
         null,
         expect.objectContaining({ query: expect.stringContaining('tipo_evaluacion_id:7') }),
-      );
-      // y que la consulta inicial por auditor se llamó con el personaId
-      expect(mockCrudService.traerDataCrud).toHaveBeenCalledWith(
-        'auditoria/auditor',
-        'personaX',
-        expect.any(Object),
       );
         // verificar que se llamó a traerDataCrud para obtener padres con los fields esperados
         const calls = mockCrudService.traerDataCrud.mock.calls;
