@@ -116,15 +116,16 @@ export class AuditoriaService {
       const auditorias_padre: any[] = data2.Data;
 
       const padresMap = Object.fromEntries(auditorias_padre.map(p => [p?._id, p]));
-      const auditorias_unidas: any[] = auditorias.map(a => {
-        if (a?.auditoria_padre_id in padresMap) {
-          return {
-            ...(padresMap[a?.auditoria_padre_id] || {}),
-            ...a,
-          };
-        }
-        return a;
-      });
+      const auditorias_unidas: any[] = auditorias
+          .filter(a =>
+            a?.auditoria_padre_id && a.auditoria_padre_id in padresMap
+          )
+          .map(a => {
+            return {
+              ...(padresMap[a?.auditoria_padre_id] || {}),
+              ...a,
+            }
+          });
 
       data.Data = auditorias_unidas;
       data.MetaData.Count = auditorias_unidas.length;
@@ -204,15 +205,16 @@ export class AuditoriaService {
       const auditorias_hijas: any[] = data2.Data;
 
       const padresMap = Object.fromEntries(auditorias.map(p => [p?._id, p]));
-      const auditorias_unidas: any[] = auditorias_hijas.map(a => {
-        if (a?.auditoria_padre_id in padresMap) {
-          return {
-            ...(padresMap[a?.auditoria_padre_id] || {}),
-            ...a,
-          };
-        }
-        return a;
-      });
+      const auditorias_unidas: any[] = auditorias_hijas
+          .filter( a =>
+            a?.auditoria_padre_id && a.auditoria_padre_id in padresMap
+          )
+          .map(a => {
+            return {
+              ...(padresMap[a?.auditoria_padre_id] || {}),
+              ...a,
+            };
+          });
 
       data.Data = auditorias_unidas;
       data.MetaData.Count = auditorias_unidas.length;
