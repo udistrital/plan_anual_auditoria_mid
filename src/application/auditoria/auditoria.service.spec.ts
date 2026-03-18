@@ -96,7 +96,7 @@ describe('AuditoriaService', () => {
       expect(mockCrudService.traerDataCrud).toHaveBeenCalledWith(
         'auditoria/auditor',
         expect.any(String),
-        expect.objectContaining({ query: expect.stringContaining('auditoria_padre_id__in:') }),
+        expect.objectContaining({ query: expect.stringContaining('auditoria_padre_id__in:p1') }),
       );
       expect(mockCrudService.traerDataCrud).toHaveBeenCalledWith(
         'auditoria/auditor',
@@ -184,7 +184,7 @@ describe('AuditoriaService', () => {
         const hijaParams = hijaCall![2];
         expect(hijaParams.query).toContain('activo:true');
         expect(hijaParams.query).toContain('auditoria_padre_id__in:');
-        expect(hijaParams.query).toContain('tipo_evaluacion_id:9');
+        expect(hijaParams.query).not.toContain('tipo_evaluacion_id:9');
     });
   });
 });

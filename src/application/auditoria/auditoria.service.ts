@@ -90,7 +90,7 @@ export class AuditoriaService {
   async getByAuditor(personaId: string, queryParams: any) {
     const queryEstado = queryParams.query
         ? queryParams.query.split(',').filter((param: string) => param.startsWith('estado_id:'))[0]
-        : undefined;
+        : '';
 
     if (queryParams.query) {
       queryParams.query = queryParams.query
@@ -114,7 +114,7 @@ export class AuditoriaService {
 
     const data = await this.auditoriaCrudService.traerDataCrud('auditoria-padre', null, queryPadre);
     const auditorias_padre: any[] = data.Data;
-    const padresIds: string[] = Array.from(new Set(auditorias_padre.map(a => a?.auditoria_padre_id).filter(Boolean)));
+    const padresIds: string[] = Array.from(new Set(auditorias_padre.map(a => a?._id).filter(Boolean)));
 
     if (auditorias_padre.length > 0) {
       const nuevaQuery = queryEstado ?
@@ -201,10 +201,8 @@ export class AuditoriaService {
     if (auditorias.length > 0) {
       const ids: string[] = auditorias.map(a => a?._id);
 
-      // construir query de hijas incluyendo estado (si aplica) y tipo_evaluacion (si aplica)
-      const tipoEvalHija = tipoEvalParam ? tipoEvalParam : undefined;
+      // construir query de hijas incluyendo estado (si aplica)
       const nuevaQueryParts = [] as string[];
-      if (tipoEvalHija) nuevaQueryParts.push(tipoEvalHija);
       if (queryEstado) nuevaQueryParts.push(queryEstado);
       nuevaQueryParts.push('activo:true');
       nuevaQueryParts.push(`auditoria_padre_id__in:${ids.join('|')}`);
