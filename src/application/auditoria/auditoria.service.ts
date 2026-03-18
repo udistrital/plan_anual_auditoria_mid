@@ -88,29 +88,33 @@ export class AuditoriaService {
   }
 
   async getByAuditor(personaId: string, queryParams: any) {
-    const { estado_id, ...crudParams } = queryParams;
-
-    if (crudParams.query) {
-      crudParams.query = crudParams.query
+    if (queryParams.query) {
+      queryParams.query = queryParams.query
         .split(',')
         .filter((param: string) => !param.startsWith('estado_id:'))
         .join(',');
     }
 
-    const data = await this.auditoriaCrudService.traerDataCrud('auditoria/auditor', personaId, crudParams);
+    const data = await this.auditoriaCrudService.traerDataCrud('auditoria/auditor', personaId, queryParams);
     const auditorias: any[] = data.Data;
 
     if (auditorias.length > 0) {
-      const padres_ids: string[] = auditorias.map(a => a?.auditoria_padre_id);
-      if (crudParams?.query) {
-        crudParams.query += `,_id__in:${padres_ids.join("|")}`
-      } else {
-        crudParams.query = `_id__in:${padres_ids.join("|")}`
+      const padres_ids: string[] = Array.from(new Set(auditorias.map(a => a?.auditoria_padre_id).filter(Boolean)));
+
+      let padreQueryStr = `_id__in:${padres_ids.join('|')}`;
+      if (queryParams.query) {
+        padreQueryStr = `${queryParams.query},${padreQueryStr}`;
       }
-  
-      const data2 = await this.auditoriaCrudService.traerDataCrud('auditoria-padre', null, queryParams);
+
+      const queryPadre = {
+        query: padreQueryStr,
+        limit: 0,
+        fields: '_id,titulo,tipo_evaluacion_id,macroproceso_id,proceso_id,dependencia_id',
+      };
+
+      const data2 = await this.auditoriaCrudService.traerDataCrud('auditoria-padre', null, queryPadre);
       const auditorias_padre: any[] = data2.Data;
-      
+
       const padresMap = Object.fromEntries(auditorias_padre.map(p => [p?._id, p]));
       const auditorias_unidas: any[] = auditorias.map(a => {
         if (a?.auditoria_padre_id in padresMap) {
@@ -119,21 +123,14 @@ export class AuditoriaService {
             ...a,
           };
         }
+        return a;
       });
-  
+
       data.Data = auditorias_unidas;
       data.MetaData.Count = auditorias_unidas.length;
     }
     
     await this.enriquecerAuditorias(data.Data);
-
-    if (estado_id && estado_id !== '') {
-      const estadoId = parseInt(estado_id);
-      data.Data = data.Data.filter(
-        (auditoria: any) => auditoria.estado_id === estadoId,
-      );
-      data.MetaData.Count = data.Data.length;
-    }
 
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
@@ -158,22 +155,54 @@ export class AuditoriaService {
     }
 
     const dependenciasFilter = dependenciaIds.join('|');
-    const baseQuery = queryParams.query || '';
+
+    const queryEstado = queryParams.query
+      ? queryParams.query.split(',').filter((param: string) => param.startsWith('estado_id:'))[0]
+      : undefined;
+
+    const queryPadreBase = queryParams.query
+      ? queryParams.query.split(',').filter((param: string) => !param.startsWith('estado_id:')).join(',')
+      : '';
 
     const additionalFilters = `dependencia_id__in:${dependenciasFilter}`;
-    queryParams.query = baseQuery
-      ? `${baseQuery},${additionalFilters}`
-      : additionalFilters;
+    const queryPadreString = queryPadreBase ? `${queryPadreBase},${additionalFilters}` : additionalFilters;
 
-    const data = await this.auditoriaCrudService.traerDataCrud('auditoria-padre', null, queryParams);
+    // incluir tipo_evaluacion_id si viene en queryParams.query original
+    const tipoEvalParam = queryParams.query
+      ? queryParams.query.split(',').filter((param: string) => param.startsWith('tipo_evaluacion_id:'))[0]
+      : undefined;
+
+    let queryPadreFinal = queryPadreString;
+    if (tipoEvalParam) {
+      queryPadreFinal = `${tipoEvalParam},${queryPadreFinal}`;
+    }
+
+    const queryPadre = {
+      query: queryPadreFinal,
+      limit: 0,
+      fields: '_id,titulo,tipo_evaluacion_id,macroproceso_id,proceso_id,dependencia_id',
+    };
+
+    const data = await this.auditoriaCrudService.traerDataCrud('auditoria-padre', null, queryPadre);
     const auditorias: any[] = data.Data;
 
     if (auditorias.length > 0) {
       const ids: string[] = auditorias.map(a => a?._id);
-      const padresFilter = { query: `auditoria_padre_id__in:${ids.join('|')}`}
-      const data2 = await this.auditoriaCrudService.traerDataCrud('auditoria', null, padresFilter);
+
+      // construir query de hijas incluyendo estado (si aplica) y tipo_evaluacion (si aplica)
+      const tipoEvalHija = tipoEvalParam ? tipoEvalParam : undefined;
+      const nuevaQueryParts = [] as string[];
+      if (tipoEvalHija) nuevaQueryParts.push(tipoEvalHija);
+      if (queryEstado) nuevaQueryParts.push(queryEstado);
+      nuevaQueryParts.push('activo:true');
+      nuevaQueryParts.push(`auditoria_padre_id__in:${ids.join('|')}`);
+
+      const nuevaQuery = nuevaQueryParts.join(',');
+
+      const queryHijas = { ...queryParams, query: nuevaQuery };
+      const data2 = await this.auditoriaCrudService.traerDataCrud('auditoria', null, queryHijas);
       const auditorias_hijas: any[] = data2.Data;
-  
+
       const padresMap = Object.fromEntries(auditorias.map(p => [p?._id, p]));
       const auditorias_unidas: any[] = auditorias_hijas.map(a => {
         if (a?.auditoria_padre_id in padresMap) {
@@ -182,8 +211,9 @@ export class AuditoriaService {
             ...a,
           };
         }
+        return a;
       });
-  
+
       data.Data = auditorias_unidas;
       data.MetaData.Count = auditorias_unidas.length;
     }
