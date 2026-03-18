@@ -37,13 +37,16 @@ export class PlantillaProgramaAuditoriaService {
     private async organizarData(data: any) {
         try {
             const auditoria = data.auditoria;
+            const auditoriaPadreRespuesta = await this.auditoriaService.getAll({query: `_id:${auditoria.auditoria_padre_id}`});
+            const auditoriaPadre = auditoriaPadreRespuesta.Data[0];
+
             const [actividades, macroproceso, proceso, dependencia, Lider, Responsable, grupoAuditor] = await Promise.all([
             this.obtenerActividades(auditoria._id),
-            this.traerParametros(auditoria.macroproceso_id),
-            this.traerParametros(auditoria.proceso_id),
-            this.obtenerDependencia(auditoria.dependencia_id),
-            this.obtenerTerceroVinculado(environment.CARGO.JEFE_DEPENDENCIA_ID, auditoria.dependencia_id),
-            this.obtenerTerceroVinculado(environment.CARGO.ASISTENTE_DEPENDENCIA_ID, auditoria.dependencia_id),
+            this.traerParametros(auditoriaPadre.macroproceso_id),
+            this.traerParametros(auditoriaPadre.proceso_id),
+            this.obtenerDependencia(auditoriaPadre.dependencia_id),
+            this.obtenerTerceroVinculado(environment.CARGO.JEFE_DEPENDENCIA_ID, auditoriaPadre.dependencia_id),
+            this.obtenerTerceroVinculado(environment.CARGO.ASISTENTE_DEPENDENCIA_ID, auditoriaPadre.dependencia_id),
             this.obtenerNombresAuditores(auditoria._id)
         ]);
 
