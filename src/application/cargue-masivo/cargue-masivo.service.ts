@@ -116,13 +116,14 @@ export class CargueMasivoService {
       { nombre: 'Proceso', id: environment.TIPO_PARAMETRO.PROCESO },
     ]
 
-    // Load options for each parameter type and for Depenendencias.
+    // Load options for each parameter type and for Dependencias.
     let opciones: { [key: string]: string[] } = {};
     for (const tipo of tiposDeParametros) {
       const parametros = (await firstValueFrom(this.dominiosService.getParametros(tipo.id))).parametros;
       opciones[tipo.nombre] = parametros.map(p => p.Nombre);
     }
     opciones['Dependencia'] = (await firstValueFrom(this.dominiosService.getDependencias())).parametros.map(d => d.Nombre);
+    opciones['Cantidad'] = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 
     return opciones;
   }
@@ -154,6 +155,10 @@ export class CargueMasivoService {
           file_name_column: 'Dependencia',
           required: false,
           mapping: await this.getDependenciasMapping(),
+        },
+        cantidad_auditorias: {
+          file_name_column: 'Cantidad',
+          required: false,
         },
         cronograma_id: {
           column_group: Object.keys(MESES_MAPPING),
