@@ -33,11 +33,14 @@ export class PlantillaSolicitudInformacionService {
 
   private async organizarData(data: any) {
     const auditoria = data.auditoria;
+    const auditoriaPadreRespuesta = await this.auditoriaService.getAll({query: `_id:${auditoria.auditoria_padre_id}`});
+    const auditoriaPadre = auditoriaPadreRespuesta.Data[0];
+
     const [Lider, vigencia, auditoriaOSeguimiento, auditores] =
       await Promise.all([
-        this.obtenerTerceroVinculado(environment.CARGO.JEFE_DEPENDENCIA_ID, auditoria.dependencia_id,),
-        this.traerParametros(auditoria.tipo_evaluacion_id),
-        this.traerParametros(auditoria.tipo_evaluacion_id),
+        this.obtenerTerceroVinculado(environment.CARGO.JEFE_DEPENDENCIA_ID, auditoriaPadre.dependencia_id,),
+        this.traerParametros(auditoriaPadre.tipo_evaluacion_id),
+        this.traerParametros(auditoriaPadre.tipo_evaluacion_id),
         this.obtenerNombresAuditores(auditoria._id),
       ]);
 
