@@ -229,6 +229,7 @@ export class CargueMasivoService {
           mapping: MEDIO_MAPPING,
         },
         carpeta: { file_name_column: 'Carpeta', required: false },
+        observacion: { file_name_column: 'Observaciones', required: false },
       },
     };
   }
