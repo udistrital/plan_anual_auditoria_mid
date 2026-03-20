@@ -36,6 +36,8 @@ const MEDIO_MAPPING = {
   Otro: TIPO_EVALUACION.INFORME,
 };
 
+const CANTIDAD_MAPPING = {'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'11':11,'12':12}
+
 /** Interface representing a parameter object with an Id and Nombre property. */
 interface Parametro {
   Id: number;
@@ -159,6 +161,7 @@ export class CargueMasivoService {
         cantidad_auditorias: {
           file_name_column: 'Cantidad',
           required: false,
+          mapping: CANTIDAD_MAPPING,
         },
         cronograma_id: {
           column_group: Object.keys(MESES_MAPPING),
