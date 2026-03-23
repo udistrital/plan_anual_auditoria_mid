@@ -23,6 +23,7 @@ const MESES_ARCHIVO =
 const HEADERS = [
   'ID', 'Auditoria', 'Tipo de Evaluación',
   'Macroproceso', 'Proceso', 'Dependencia',
+  'Cantidad',
   ...MESES_ARCHIVO
 ];
 
@@ -34,6 +35,7 @@ export class AuditoriaExcel {
   proceso_nombre?: string;
   dependencia_nombre?: string;
   cronograma_nombre: Array<string>;
+  cantidad_auditorias?: string; 
 }
 
 /**
@@ -56,6 +58,8 @@ function dataSourceToExcelData(dataSource: Array<AuditoriaExcel>): Array<object>
     [HEADERS[4]]: dataSource.map(a => a.proceso_nombre || ''),
     // Dependencia
     [HEADERS[5]]: dataSource.map(a => a.dependencia_nombre || ''),
+    // Cantidad
+    [HEADERS[6]]: dataSource.map(a => a.cantidad_auditorias || '')
   };
 
   // 2. Transform cronograma into month columns
