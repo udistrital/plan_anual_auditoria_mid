@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CargueMasivoService } from './cargue-masivo.service';
-import { HttpService } from '@nestjs/axios';
+import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
 
 describe('CargueMasivoService', () => {
   let service: CargueMasivoService;
@@ -10,10 +10,10 @@ describe('CargueMasivoService', () => {
       providers: [
         CargueMasivoService,
         {
-          provide: HttpService,
+          provide: DominiosService,
           useValue: {
-            get: jest.fn(),
-            post: jest.fn(),
+            getParametros: jest.fn(),
+            getDependencias: jest.fn(),
           },
         },
       ],
