@@ -66,13 +66,13 @@ steps:
       event:
         - push
 
-  - name: run_sonar_scanner
-    image: aosapps/drone-sonar-plugin
-    settings:
-      sonar_host:
-        from_secret: SONAR_HOST
-      sonar_token:
-        from_secret: SONAR_TOKEN
+  # - name: run_sonar_scanner     # DESHABILITADO: aosapps/drone-sonar-plugin usa Java 11, incompatible con SonarQube 10.7 (requiere Java 17)
+  #   image: aosapps/drone-sonar-plugin
+  #   settings:
+  #     sonar_host:
+  #       from_secret: SONAR_HOST
+  #     sonar_token:
+  #       from_secret: SONAR_TOKEN
 
   - name: publish_to_ecr_release
     image: plugins/ecr

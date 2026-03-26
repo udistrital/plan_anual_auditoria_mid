@@ -15,6 +15,7 @@ export class PlantillaDto {
   octubre?: string;
   noviembre?: string;
   diciembre?: string;
+  cantidad_auditorias: Number;
 }
 
 export class jsonPlantillaDto {

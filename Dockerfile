@@ -1,4 +1,4 @@
-FROM sleavely/node-awscli:24.x
+FROM node:lts-alpine
 
 WORKDIR /
 COPY dist dist

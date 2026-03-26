@@ -38,7 +38,8 @@ export class PlantillaService {
   private async traerDataCrud(id: string, auditoriaPadre: boolean) {
     let urlPlanAuditoria = `${PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${id}`;
     let endpointAuditoria = auditoriaPadre ? 'auditoria-padre' : 'auditoria';
-    let urlAuditioria = `${PLAN_AUDITORIA_CRUD_SERVICE}${endpointAuditoria}?query=plan_auditoria_id:${id},activo:true&fields=titulo,macroproceso_id,proceso_id,dependencia_id,cronograma_id&limit=0`;
+    let urlAuditioria = `${PLAN_AUDITORIA_CRUD_SERVICE}${endpointAuditoria}?query=plan_auditoria_id:${id},` +
+      `activo:true&fields=titulo,macroproceso_id,proceso_id,dependencia_id,cronograma_id,cantidad_auditorias&limit=0`;
     try {
       const responsePlanAuditoria = await lastValueFrom(
         this.httpService.get(urlPlanAuditoria),
@@ -67,7 +68,8 @@ export class PlantillaService {
   private async anadirDataEspeciales(data: any, auditoriaPadre: boolean) {
     const vigenciaId = data.dataPlanAuditoria.Data?.vigencia_id;
     let endpointAuditoria = auditoriaPadre ? 'auditoria-padre' : 'auditoria';
-    const urlAuditioria = `${PLAN_AUDITORIA_CRUD_SERVICE}${endpointAuditoria}?query=vigencia_id:${vigenciaId},plan_auditoria_id__isnull:true,activo:true&fields=titulo,macroproceso_id,proceso_id,dependencia_id,cronograma_id&limit=0`;
+    const urlAuditioria = `${PLAN_AUDITORIA_CRUD_SERVICE}${endpointAuditoria}?query=vigencia_id:${vigenciaId},` +
+      `plan_auditoria_id__isnull:true,activo:true&fields=titulo,macroproceso_id,proceso_id,dependencia_id,cronograma_id,cantidad_auditorias&limit=0`;
 
     try {
       const responseAuditoriaEspecial = await lastValueFrom(
@@ -184,6 +186,7 @@ export class PlantillaService {
       macroproceso: macroproceso,
       proceso: proceso,
       dependencia: dependencia,
+      cantidad_auditorias: parseInt(data?.cantidad_auditorias, 10),
       ...mesesMarcados,
     };
   }

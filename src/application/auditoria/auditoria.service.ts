@@ -60,7 +60,6 @@ export class AuditoriaService {
         `activo:true,auditoria_padre_id__in:${padresIds.join('|')}`;
 
       const queryHijas = { ...queryParams, query: nuevaQuery }
-      console.log(queryHijas)
       
       const data2 = await this.auditoriaCrudService.traerDataCrud('auditoria', null, queryHijas);
       const auditorias: any[] = data2.Data;
@@ -76,9 +75,8 @@ export class AuditoriaService {
       });
       
       data.Data = auditorias_unidas;
-      data.MetaData.Count = auditorias_unidas.length;
+      data.MetaData.Count = data2.MetaData.Count;
     }
-    
 
     await this.enriquecerAuditorias(data.Data);
     if (await this.identificarCampo(data)) {
@@ -139,7 +137,7 @@ export class AuditoriaService {
           });
 
       data.Data = auditorias_unidas;
-      data.MetaData.Count = auditorias_unidas.length;
+      data.MetaData.Count = data2.MetaData.Count;
     }
     
     await this.enriquecerAuditorias(data.Data);
@@ -226,9 +224,8 @@ export class AuditoriaService {
           });
 
       data.Data = auditorias_unidas;
-      data.MetaData.Count = auditorias_unidas.length;
+      data.MetaData.Count = data2.MetaData.Count;
     }
-    
 
     if (data.Data && Array.isArray(data.Data) && data.Data.length > 0) {
       const dependenciaNombres =
