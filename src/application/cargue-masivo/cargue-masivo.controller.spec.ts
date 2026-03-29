@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CargueMasivoController } from './cargue-masivo.controller';
 import { CargueMasivoService } from './cargue-masivo.service';
 import { NuxeoService } from 'src/shared/utils/nuxeo/nuxeo.service';
+import { AuditoriaPadreService } from '../auditoria-padre/auditoria-padre.service';
 
 describe('CargueMasivoController', () => {
   let controller: CargueMasivoController;
@@ -21,6 +22,12 @@ describe('CargueMasivoController', () => {
           provide: NuxeoService,
           useValue: {
             obtenerPorUUID: jest.fn(),
+          },
+        },
+        {
+          provide: AuditoriaPadreService,
+          useValue: {
+            getAuditoriasOrdenadas: jest.fn(),
           },
         },
       ],

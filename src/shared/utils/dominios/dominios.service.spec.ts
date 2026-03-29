@@ -98,7 +98,7 @@ describe("DominiosService", () => {
     expect(result.nombre).toBe(DOMINIOS_CONFIG.NOMBRES_OIKOS.DEPENDENCIAS);
     expect(result.tipoParametroId).toBeUndefined();
     expect(result.parametros).toEqual(mockDependencias);
-    expect(oikosServiceGet).toHaveBeenCalledWith(`dependencia?query=Activo:true&fields=Id,Nombre&limit=0`);
+    expect(oikosServiceGet).toHaveBeenCalledWith(`dependencia?query=Activo:true&fields=Id,Nombre,CorreoElectronico&limit=0`);
   });
 
   it("should throw an error when getDependencias is called and the response format is invalid", async () => {
