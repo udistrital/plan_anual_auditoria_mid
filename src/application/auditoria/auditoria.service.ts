@@ -34,8 +34,8 @@ export class AuditoriaService {
 
   async getAll(queryParams: any) {
     const queryEstado = queryParams.query
-        .split(',')
-        .filter((param: string) => param.startsWith('estado_id:'))[0]
+        ? queryParams.query.split(',').filter((param: string) => param.startsWith('estado_id:'))[0]
+        : undefined;
     
     if (queryParams.query) {
       queryParams.query = queryParams.query
