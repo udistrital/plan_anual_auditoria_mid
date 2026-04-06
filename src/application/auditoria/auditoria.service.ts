@@ -45,7 +45,7 @@ export class AuditoriaService {
     }
 
     const queryPadre = {
-      query: queryParams.query,
+      query: queryParams.query.replace('auditoria_padre_id', '_id'),
       limit: 0,
       fields: '_id,titulo,tipo_evaluacion_id,macroproceso_id,proceso_id,dependencia_id'
     }
