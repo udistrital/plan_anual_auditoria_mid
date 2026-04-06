@@ -100,8 +100,8 @@ export class PlantillaProgramaAuditoriaService {
         return actividades.map((dataActividad) => ({
             actividad: dataActividad.titulo,
             auditor: grupoAuditor,
-            fechaInicial: moment(dataActividad.fecha_inicio).format('YYYY-MM-DD'),
-            fechaFinal: moment(dataActividad.fecha_fin).format('YYYY-MM-DD'),
+            fechaInicial: moment(dataActividad.fecha_inicio).format('DD/MM/YYYY'),
+            fechaFinal: moment(dataActividad.fecha_fin).format('DD/MM/YYYY'),
             observacion: dataActividad.observacion || '',
             referencia: dataActividad.referencia || '',
             descripcion: dataActividad.descripcion || '',
