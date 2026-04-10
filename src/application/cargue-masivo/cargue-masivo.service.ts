@@ -145,16 +145,19 @@ export class CargueMasivoService {
         },
         macroproceso_id: {
           file_name_column: 'Macroproceso',
+          separator: '|',
           required: false,
           mapping: await this.getParametrosMapping(TIPO_PARAMETRO.MACROPROCESO),
         },
         proceso_id: {
           file_name_column: 'Proceso',
+          separator: '|',
           required: false,
           mapping: await this.getParametrosMapping(TIPO_PARAMETRO.PROCESO),
         },
         dependencia_id: {
           file_name_column: 'Dependencia',
+          separator: '|',
           required: false,
           mapping: await this.getDependenciasMapping(),
         },
