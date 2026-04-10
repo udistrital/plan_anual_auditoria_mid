@@ -234,8 +234,13 @@ export class AuditoriaService {
       await this.enriquecerAuditorias(data.Data, false);
 
       data.Data.forEach((auditoria: any) => {
+        const dependenciaPrincipal = this.obtenerDependenciaPrincipal(
+          auditoria.dependencia_id,
+        );
         auditoria.dependencia_nombre =
-          dependenciaNombres.get(auditoria.dependencia_id) || null;
+          dependenciaPrincipal == null
+            ? null
+            : dependenciaNombres.get(dependenciaPrincipal) || null;
       });
 
       if (await this.identificarCampo(data)) {
@@ -296,14 +301,24 @@ export class AuditoriaService {
     return data;
   }
 
-  async getDatosTerceros(dependencia_id: number) {
+  async getDatosTerceros(dependencia_id: number | number[]) {
+    const dependenciaPrincipal = this.obtenerDependenciaPrincipal(dependencia_id);
+    if (dependenciaPrincipal == null) {
+      return {
+        jefe_nombre: null,
+        jefe_correo: null,
+        asistente_nombre: null,
+        asistente_correo: null,
+      };
+    }
+
     const jefe_dependencia = await this.traerTerceroVinculado(
-      dependencia_id,
+      dependenciaPrincipal,
       environment.CARGO.JEFE_DEPENDENCIA_ID,
     );
 
     const asistente_dependencia = await this.traerTerceroVinculado(
-      dependencia_id,
+      dependenciaPrincipal,
       environment.CARGO.ASISTENTE_DEPENDENCIA_ID,
     );
 
@@ -351,11 +366,26 @@ export class AuditoriaService {
     );
   }
 
-  private traerCorreoDependencia(dependenciaId: number): string {
+  private traerCorreoDependencia(dependenciaId: number | number[]): string {
+    const dependenciaPrincipal = this.obtenerDependenciaPrincipal(dependenciaId);
+    if (dependenciaPrincipal == null) {
+      return 'Correo no encontrado';
+    }
+
     const dependencia = this.dependencias.find(
-      (dep) => dep.Id === dependenciaId
+      (dep) => dep.Id === dependenciaPrincipal
     );
     return dependencia ? dependencia.CorreoElectronico : 'Correo no encontrado';
+  }
+
+  private obtenerDependenciaPrincipal(
+    dependenciaId: number | number[] | undefined | null,
+  ): number | null {
+    if (Array.isArray(dependenciaId)) {
+      return dependenciaId.length > 0 ? dependenciaId[0] : null;
+    }
+
+    return typeof dependenciaId === 'number' ? dependenciaId : null;
   }
 
 private async identificarCampo(data: any) {

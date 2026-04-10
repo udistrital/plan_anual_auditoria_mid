@@ -35,10 +35,11 @@ export class PlantillaSolicitudInformacionService {
     const auditoria = data.auditoria;
     const auditoriaPadreRespuesta = await this.auditoriaService.getAll({query: `_id:${auditoria.auditoria_padre_id}`});
     const auditoriaPadre = auditoriaPadreRespuesta.Data[0];
+    const dependenciaPrincipal = this.obtenerDependenciaPrincipal(auditoriaPadre?.dependencia_id);
 
     const [Lider, vigencia, auditoriaOSeguimiento, auditores] =
       await Promise.all([
-        this.obtenerTerceroVinculado(environment.CARGO.JEFE_DEPENDENCIA_ID, auditoriaPadre.dependencia_id,),
+        this.obtenerTerceroVinculado(environment.CARGO.JEFE_DEPENDENCIA_ID, dependenciaPrincipal,),
         this.traerParametros(auditoriaPadre.tipo_evaluacion_id),
         this.traerParametros(auditoriaPadre.tipo_evaluacion_id),
         this.obtenerNombresAuditores(auditoria._id),
@@ -138,7 +139,11 @@ export class PlantillaSolicitudInformacionService {
     }
   }
 
-  private async obtenerTerceroVinculado(idCargo: number, idDependencia: number) {
+    private async obtenerTerceroVinculado(idCargo: number, idDependencia: number | null) {
+      if (idDependencia == null) {
+        return null;
+      }
+
         try {
             const datosPersona = await this.auditoriaService.traerTerceroVinculado(idDependencia, idCargo);
             return datosPersona;
@@ -149,4 +154,12 @@ export class PlantillaSolicitudInformacionService {
             );
         }
     }
+
+  private obtenerDependenciaPrincipal(dependenciaId: number | number[]): number | null {
+    if (Array.isArray(dependenciaId)) {
+      return dependenciaId.length > 0 ? dependenciaId[0] : null;
+    }
+
+    return typeof dependenciaId === 'number' ? dependenciaId : null;
+  }
 }
