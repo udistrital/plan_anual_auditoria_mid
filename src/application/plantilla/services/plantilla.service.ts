@@ -178,8 +178,8 @@ export class PlantillaService {
                     : this.getParametroName(data.proceso_id, dominios.proceso);
 
     const dependencia = data.dependencia_id == null
-                      ? 'No definido'
-                      : this.getParametroName(data.dependencia_id, dominios.dependencia);
+              ? 'No definido'
+              : this.getParametroName(data.dependencia_id, dominios.dependencia);
 
     return {
       actividad: data.titulo || 'No definido',
@@ -230,10 +230,19 @@ export class PlantillaService {
    * @returns "?error" if the parameter with the given ID is not found in the Dominio.
    * @throws An error if there is an issue during the search process.
    */
-  private getParametroName(parametroId: number, dominio: Dominio): string {
+  private getParametroName(parametroId: number | number[], dominio: Dominio): string {
     const parametros = dominio.parametros;
 
     try {
+      if (Array.isArray(parametroId)) {
+        return parametroId
+          .map((id) => {
+            const parametro = parametros.find((p) => p.Id === id);
+            return parametro ? parametro.Nombre : String(id);
+          })
+          .join(', ');
+      }
+
       const parametro = parametros.find((p) => p.Id === parametroId);
       if (!parametro) {
         console.error(`Parametro with ID ${parametroId} not found in dominio ${dominio.nombre}`);
