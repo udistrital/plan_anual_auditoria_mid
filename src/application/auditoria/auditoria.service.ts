@@ -469,61 +469,40 @@ private async identificarCampo(data: any) {
   }
 
   private reemplazarCampos(data: any) {
-    if (Array.isArray(data.Data)) {
-      data.Data.forEach((element) => {
-        if (element.tipo_evaluacion_id !== undefined) {
-          this.reemplazar(this.tiposEvaluacion, element, 'tipo_evaluacion_id');
-        }
-        if (element.cronograma_id !== undefined) {
-          this.reemplazar(this.cronogramasActividad, element, 'cronograma_id');
-        }
-        if (element.estado_id !== undefined) {
-          this.reemplazar(this.estados, element, 'estado_id');
-        }
-        if (element.macroproceso_id !== undefined) {
-          this.reemplazar(this.macroprocesos, element, 'macroproceso_id');
-        }
-        if (element.vigencia_id !== undefined) {
-          this.reemplazar(this.vigencias, element, 'vigencia_id');
-        }
-        if (element.proceso_id !== undefined) {
-          this.reemplazar(this.procesos, element, 'proceso_id');
-        }
-        if (element.dependencia_id !== undefined) {
-          this.reemplazar(this.dependencias, element, 'dependencia_id');
-        }
+    const procesar = (element: any) => {
+      if (element.tipo_evaluacion_id !== undefined)
+        this.reemplazar(this.tiposEvaluacion, element, 'tipo_evaluacion_id');
+      if (element.cronograma_id !== undefined)
+        this.reemplazar(this.cronogramasActividad, element, 'cronograma_id');
+      if (element.estado_id !== undefined)
+        this.reemplazar(this.estados, element, 'estado_id');
+      if (element.macroproceso_id !== undefined)
+        this.reemplazar(this.macroprocesos, element, 'macroproceso_id');
+      if (element.vigencia_id !== undefined)
+        this.reemplazar(this.vigencias, element, 'vigencia_id');
+      if (element.proceso_id !== undefined)
+        this.reemplazar(this.procesos, element, 'proceso_id');
+      if (element.dependencia_id !== undefined)
+        this.reemplazar(this.dependencias, element, 'dependencia_id');
 
-        element.cronograma = this.unirCronogramaNombres(
-          element.cronograma_nombre,
-        );
-      });
+      const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+      element.cronograma = this.unirNombres(element.cronograma_nombre, MESES);
+      element.macroproceso = this.unirNombres(element.macroproceso_nombre);
+      element.proceso = this.unirNombres(element.proceso_nombre);
+      element.dependencia = this.unirNombres(element.dependencia_nombre);
+    };
+
+    if (Array.isArray(data.Data)) {
+      data.Data.forEach(procesar);
     } else if (typeof data.Data === 'object' && data.Data !== null) {
-      if (data.Data.tipo_evaluacion_id !== undefined) {
-        this.reemplazar(this.tiposEvaluacion, data.Data, 'tipo_evaluacion_id');
-      }
-      if (data.Data.cronograma_id !== undefined) {
-        this.reemplazar(this.cronogramasActividad, data.Data, 'cronograma_id');
-      }
-      if (data.Data.estado_id !== undefined) {
-        this.reemplazar(this.estados, data.Data, 'estado_id');
-      }
-      if (data.Data.macroproceso_id !== undefined) {
-        this.reemplazar(this.macroprocesos, data.Data, 'macroproceso_id');
-      }
-      if (data.Data.vigencia_id !== undefined) {
-        this.reemplazar(this.vigencias, data.Data, 'vigencia_id');
-      }
-      if (data.Data.proceso_id !== undefined) {
-        this.reemplazar(this.procesos, data.Data, 'proceso_id');
-      }
       if (data.Data.dependencia_id !== undefined) {
         data.Data = {
           ...data.Data,
           ...this.datosTerceros,
-          ...{correo_dependencia: this.traerCorreoDependencia(data.Data.dependencia_id)}
+          correo_dependencia: this.traerCorreoDependencia(data.Data.dependencia_id),
         };
-        this.reemplazar(this.dependencias, data.Data, 'dependencia_id');
       }
+      procesar(data.Data);
     }
     return data;
   }
@@ -565,30 +544,13 @@ private async identificarCampo(data: any) {
     return auditoresAuditoria.Data;
   }
 
-  private unirCronogramaNombres(cronograma_nombre: any[]) {
-    if (Array.isArray(cronograma_nombre) && cronograma_nombre.length === 12) {
-      const mesesCompletos = [
-        'Enero',
-        'Febrero',
-        'Marzo',
-        'Abril',
-        'Mayo',
-        'Junio',
-        'Julio',
-        'Agosto',
-        'Septiembre',
-        'Octubre',
-        'Noviembre',
-        'Diciembre',
-      ];
-      const tieneLosMeses = mesesCompletos.every((mes) =>
-        cronograma_nombre.some((nombre) => nombre === mes),
-      );
-      if (tieneLosMeses) {
-        return 'Todos';
-      }
+  private unirNombres(nombres: any[], todosSiCompletos?: string[]): string {
+    if (!Array.isArray(nombres)) return nombres ?? null;
+    if (todosSiCompletos?.length && nombres.length === todosSiCompletos.length &&
+      todosSiCompletos.every((n) => nombres.includes(n))) {
+      return 'Todos';
     }
-    return unirListaNombresConComas(cronograma_nombre);
+    return unirListaNombresConComas(nombres);
   }
 
   async deleteAuditoria(auditoriaId: string, planAuditoriaId: string) {
