@@ -228,19 +228,22 @@ export class AuditoriaService {
     }
 
     if (data.Data && Array.isArray(data.Data) && data.Data.length > 0) {
-      const dependenciaNombres =
-        await this.getDependenciaNombres(dependenciaIds);
+      const todosDepIds: number[] = Array.from(new Set(
+        data.Data.flatMap((a: any) =>
+          Array.isArray(a.dependencia_id) ? a.dependencia_id : a.dependencia_id != null ? [a.dependencia_id] : []
+        )
+      ));
+      const dependenciaNombres = await this.getDependenciaNombres(todosDepIds);
 
       await this.enriquecerAuditorias(data.Data, false);
 
       data.Data.forEach((auditoria: any) => {
-        const dependenciaPrincipal = this.obtenerDependenciaPrincipal(
-          auditoria.dependencia_id,
-        );
-        auditoria.dependencia_nombre =
-          dependenciaPrincipal == null
-            ? null
-            : dependenciaNombres.get(dependenciaPrincipal) || null;
+        const ids = Array.isArray(auditoria.dependencia_id)
+          ? auditoria.dependencia_id
+          : auditoria.dependencia_id != null ? [auditoria.dependencia_id] : [];
+        auditoria.dependencia_nombre = ids
+          .map((id: number) => dependenciaNombres.get(id))
+          .filter(Boolean);
       });
 
       if (await this.identificarCampo(data)) {
