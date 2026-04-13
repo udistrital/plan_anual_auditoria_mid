@@ -13,6 +13,11 @@ const {
   PLANTILLAS,
   PARAMETROS_SERVICE,
   TERCEROS_SERVICE,
+  OIKOS_SERVICE,
+  logoUDistrital,
+  contactoOCI,
+  ID_DEPENDENCIA_OCI,
+  ID_CARGO_OCI
 } = environment;
 
 @Injectable()
@@ -37,32 +42,31 @@ export class PlantillaSolicitudInformacionService {
     const auditoriaPadre = auditoriaPadreRespuesta.Data[0];
     const dependenciaPrincipal = this.obtenerDependenciaPrincipal(auditoriaPadre?.dependencia_id);
 
-    const [Lider, vigencia, auditoriaOSeguimiento, auditores] =
+    const [dependencias, vigencia, auditoriaOSeguimiento, auditores, jefeOci] =
       await Promise.all([
-        this.obtenerTerceroVinculado(environment.CARGO.JEFE_DEPENDENCIA_ID, dependenciaPrincipal,),
-        this.traerParametros(auditoriaPadre.tipo_evaluacion_id),
+        this.obtenergrupoDependencias(auditoriaPadre.dependencia_id),
+        this.traerParametros(auditoriaPadre.vigencia_id),
         this.traerParametros(auditoriaPadre.tipo_evaluacion_id),
         this.obtenerNombresAuditores(auditoria._id),
+        this.obtenerJefeOci()
       ]);
 
     const infoParaPlantilla = {
       plantilla_id: PLANTILLAS.SOLICITUD_INFORMACION,
       data: {
+        logoUDistrital: logoUDistrital,
         fecha: moment().locale('es').format('D [de] MMMM [de] YYYY'),
-        oci: auditoria.consecutivo_OCI,
-        ie: auditoria.consecutivo_IE,
-        nombreIngeniero: Lider?.NombreCompleto || '',
+        fecha_inicio: moment(auditoria.fecha_inicio).locale('es').format('DD/MM/YYYY'),
+        consecutivo_oci: auditoria.consecutivo_OCI,
+        dependencias: dependencias,
         ciudad: 'Bogotá D.C.',
-        referencia: auditoria.titulo,
+        referencia: auditoriaOSeguimiento.Nombre + " - " + auditoriaPadre.titulo,
         anoAuditoria: vigencia.Nombre,
-        auditoriaOSeguimiento: auditoriaOSeguimiento.Nombre,
+        tipo_auditoria: auditoriaOSeguimiento.Nombre,
         auditores: auditores,
-        temas: [
-          'Políticas de control interno',
-          'Cumplimiento normativo',
-          'Análisis de riesgos',
-        ], //quemado
-        imgFirmaTabla: 'https://example.com/signature-image.png',
+        tema: auditoria.tema,
+        jefe_oci: jefeOci || "No se encontró el jefe de la Oficina Asesora de Control Interno",
+        contacto_oci: contactoOCI
       },
     };
 
@@ -139,27 +143,85 @@ export class PlantillaSolicitudInformacionService {
     }
   }
 
-    private async obtenerTerceroVinculado(idCargo: number, idDependencia: number | null) {
-      if (idDependencia == null) {
-        return null;
-      }
-
-        try {
-            const datosPersona = await this.auditoriaService.traerTerceroVinculado(idDependencia, idCargo);
-            return datosPersona;
-        } catch (error) {
-            throw new HttpException(
-                'Error al obtener los datos del tercero vinculado',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
-        }
+  private async obtenerTerceroVinculado(idCargo: number, idDependencia: number | null) {
+    if (idDependencia == null) {
+      return null;
     }
+
+      try {
+          const datosPersona = await this.auditoriaService.traerTerceroVinculado(idDependencia, idCargo);
+          return datosPersona;
+      } catch (error) {
+          throw new HttpException(
+              'Error al obtener los datos del tercero vinculado',
+              HttpStatus.INTERNAL_SERVER_ERROR,
+          );
+      }
+  }
 
   private obtenerDependenciaPrincipal(dependenciaId: number | number[]): number | null {
-    if (Array.isArray(dependenciaId)) {
-      return dependenciaId.length > 0 ? dependenciaId[0] : null;
-    }
+  if (Array.isArray(dependenciaId)) {
+    return dependenciaId.length > 0 ? dependenciaId[0] : null;
+  }
 
-    return typeof dependenciaId === 'number' ? dependenciaId : null;
+  return typeof dependenciaId === 'number' ? dependenciaId : null;
+  }
+  
+  private async obtenerDependencia(idDependencia: string) {
+    const url = `${OIKOS_SERVICE}dependencia/${idDependencia}`;
+    try {
+        const response = await lastValueFrom(this.httpService.get(url));
+        return response.data;
+    } catch (error) {
+        throw new HttpException(
+            'Error al obtener los datos de la dependencia',
+            HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+    }
+  }
+
+  private async obtenerJefeOci() {
+    const url = `${TERCEROS_SERVICE}vinculacion?query=DependenciaId:${ID_DEPENDENCIA_OCI},CargoId:${ID_CARGO_OCI},Activo:true`;
+    try {
+        const response = await lastValueFrom(this.httpService.get(url)); 
+        return response.data[0].TerceroPrincipalId.NombreCompleto;
+    } catch (error) {
+        throw new HttpException(
+            'Error al obtener los datos de terceros',
+            HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+    }
+  }
+
+  private async obtenergrupoDependencias(dependencias: any): Promise<any> {
+    const respuestaDependencias = [];
+
+    try {
+      if (Array.isArray(dependencias)) {
+        for (const idDependencia of dependencias) {
+          const dependencia = await this.obtenerDependencia(idDependencia);
+          const responsableDependencia = await this.obtenerTerceroVinculado(environment.CARGO.JEFE_DEPENDENCIA_ID, idDependencia);
+
+          respuestaDependencias.push({
+            nombre: dependencia.Nombre,
+            responsable: responsableDependencia?.NombreCompleto || 'No se encontró el responsable de la dependencia'
+          });
+        }
+      } else {
+        const dependencia = await this.obtenerDependencia(dependencias);
+        const responsableDependencia = await this.obtenerTerceroVinculado(environment.CARGO.JEFE_DEPENDENCIA_ID, dependencias);
+
+        respuestaDependencias.push({
+          nombre: dependencia.Nombre,
+          responsable: responsableDependencia?.NombreCompleto || 'No se encontró el responsable de la dependencia'
+        });
+      }
+      return respuestaDependencias;
+    } catch (error) {
+      throw new HttpException(
+            'Error al consultar el grupo de dependencias',
+            HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+    }
   }
 }
