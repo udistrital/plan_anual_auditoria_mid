@@ -22,7 +22,7 @@ export class AuditoriaService {
   private procesos: any[] = [];
   private dependencias: any[] = [];
   private vigencias: any[] = [];
-  private datosTerceros: any = {};
+  private datosTerceros: any[] = [];
   private estados: { Id: number; Nombre: string }[] = [];
 
   constructor(
@@ -301,28 +301,19 @@ export class AuditoriaService {
     return data;
   }
 
-  async getDatosTerceros(dependencia_id: number | number[]) {
-    const dependenciaPrincipal = this.obtenerDependenciaPrincipal(dependencia_id);
-    if (dependenciaPrincipal == null) {
-      return {
-        jefe_nombre: null,
-        jefe_correo: null,
-        asistente_nombre: null,
-        asistente_correo: null,
-      };
-    }
-
+  async getDatosTerceros(dependencia_id: number) {
     const jefe_dependencia = await this.traerTerceroVinculado(
-      dependenciaPrincipal,
+      dependencia_id,
       environment.CARGO.JEFE_DEPENDENCIA_ID,
     );
 
     const asistente_dependencia = await this.traerTerceroVinculado(
-      dependenciaPrincipal,
+      dependencia_id,
       environment.CARGO.ASISTENTE_DEPENDENCIA_ID,
     );
 
     return {
+      dependencia_id: dependencia_id,
       jefe_nombre: jefe_dependencia?.NombreCompleto,
       jefe_correo: jefe_dependencia?.UsuarioWSO2,
       asistente_nombre: asistente_dependencia?.NombreCompleto,
@@ -366,14 +357,9 @@ export class AuditoriaService {
     );
   }
 
-  private traerCorreoDependencia(dependenciaId: number | number[]): string {
-    const dependenciaPrincipal = this.obtenerDependenciaPrincipal(dependenciaId);
-    if (dependenciaPrincipal == null) {
-      return 'Correo no encontrado';
-    }
-
+  private traerCorreoDependencia(dependenciaId: number): string {
     const dependencia = this.dependencias.find(
-      (dep) => dep.Id === dependenciaPrincipal
+      (dep) => dep.Id === dependenciaId
     );
     return dependencia ? dependencia.CorreoElectronico : 'Correo no encontrado';
   }
@@ -442,7 +428,12 @@ private async identificarCampo(data: any) {
     if ('dependencia_id' in firstElement) {
       observables['dependencia_id'] = this.dominiosService.getDependencias();
       if (!Array.isArray(data.Data)) {
-        this.datosTerceros = await this.getDatosTerceros(firstElement.dependencia_id);
+        if (Array.isArray(firstElement.dependencia_id)) {
+          for (const dep_id of firstElement.dependencia_id) {
+            const datos = await this.getDatosTerceros(dep_id);
+            this.datosTerceros.push(datos);
+          }
+        }
       }
     }
 
@@ -496,11 +487,15 @@ private async identificarCampo(data: any) {
       data.Data.forEach(procesar);
     } else if (typeof data.Data === 'object' && data.Data !== null) {
       if (data.Data.dependencia_id !== undefined) {
+        this.datosTerceros.forEach((datos) => {
+          datos.correo_dependencia = this.traerCorreoDependencia(datos.dependencia_id);
+          datos.dependencia_nombre = this.dependencias.find(dep => dep.Id === datos.dependencia_id)?.Nombre || null;
+        });
         data.Data = {
           ...data.Data,
-          ...this.datosTerceros,
-          correo_dependencia: this.traerCorreoDependencia(data.Data.dependencia_id),
+          datos_dependencias: this.datosTerceros,
         };
+        this.datosTerceros = [];
       }
       procesar(data.Data);
     }
@@ -588,7 +583,7 @@ private async identificarCampo(data: any) {
         Message: 'Auditoría eliminada exitosamente',
         Data: null,
       };
-    } catch (error) {
+    } catch (error: any) {
       throw new HttpException(
         error.response?.data?.message || 'Error al eliminar la auditoría',
         error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
