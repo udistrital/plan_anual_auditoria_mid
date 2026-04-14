@@ -42,7 +42,7 @@ steps:
   - name: install_dependencies
     image: node:current-alpine
     commands:
-      - corepack enable pnpm
+      - npm install -g pnpm
       - pnpm install
     when:
       branch:
@@ -55,7 +55,7 @@ steps:
   - name: build
     image: node:current-alpine
     commands:
-      - corepack enable pnpm
+      - npm install -g pnpm
       - pnpm install
       - pnpm run build
     when:
