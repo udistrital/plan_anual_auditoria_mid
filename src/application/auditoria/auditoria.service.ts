@@ -99,7 +99,11 @@ export class AuditoriaService {
 
     let padreQueryStr = '';
     for (const param of queryParams.query.split(',')) {
-      if (param.startsWith('tipo_evaluacion_id:') || param.startsWith('dependencia_id:')) {
+      if (
+        param.startsWith('tipo_evaluacion_id:') ||
+        param.startsWith('dependencia_id:') ||
+        param.startsWith('vigencia_id:')
+      ) {
         padreQueryStr += padreQueryStr ? `,${param}` : param;
       }
     }
@@ -141,6 +145,10 @@ export class AuditoriaService {
     }
     
     await this.enriquecerAuditorias(data.Data);
+    data.Data = data.Data.filter((a: any) =>
+      a.auditores?.some((auditor: any) => auditor.auditor_id === Number(personaId))
+    );
+    data.MetaData.Count = data.Data.length;
 
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
@@ -533,6 +541,7 @@ private async identificarCampo(data: any) {
     const query = {
       auditoria_id: idAuditor,
       activo: true,
+      asignado: true,
     };
     const queryString = Object.entries(query)
       .map(([key, value]) => `${key}:${value}`)
