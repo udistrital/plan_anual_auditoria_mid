@@ -99,7 +99,11 @@ export class AuditoriaService {
 
     let padreQueryStr = '';
     for (const param of queryParams.query.split(',')) {
-      if (param.startsWith('tipo_evaluacion_id:') || param.startsWith('dependencia_id:')) {
+      if (
+        param.startsWith('tipo_evaluacion_id:') ||
+        param.startsWith('dependencia_id:') ||
+        param.startsWith('vigencia_id:')
+      ) {
         padreQueryStr += padreQueryStr ? `,${param}` : param;
       }
     }
@@ -141,6 +145,10 @@ export class AuditoriaService {
     }
     
     await this.enriquecerAuditorias(data.Data);
+    data.Data = data.Data.filter((a: any) =>
+      a.auditores?.some((auditor: any) => auditor.auditor_id === Number(personaId))
+    );
+    data.MetaData.Count = data.Data.length;
 
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
@@ -228,19 +236,22 @@ export class AuditoriaService {
     }
 
     if (data.Data && Array.isArray(data.Data) && data.Data.length > 0) {
-      const dependenciaNombres =
-        await this.getDependenciaNombres(dependenciaIds);
+      const todosDepIds: number[] = Array.from(new Set(
+        data.Data.flatMap((a: any) =>
+          Array.isArray(a.dependencia_id) ? a.dependencia_id : a.dependencia_id != null ? [a.dependencia_id] : []
+        )
+      ));
+      const dependenciaNombres = await this.getDependenciaNombres(todosDepIds);
 
       await this.enriquecerAuditorias(data.Data, false);
 
       data.Data.forEach((auditoria: any) => {
-        const dependenciaPrincipal = this.obtenerDependenciaPrincipal(
-          auditoria.dependencia_id,
-        );
-        auditoria.dependencia_nombre =
-          dependenciaPrincipal == null
-            ? null
-            : dependenciaNombres.get(dependenciaPrincipal) || null;
+        const ids = Array.isArray(auditoria.dependencia_id)
+          ? auditoria.dependencia_id
+          : auditoria.dependencia_id != null ? [auditoria.dependencia_id] : [];
+        auditoria.dependencia_nombre = ids
+          .map((id: number) => dependenciaNombres.get(id))
+          .filter(Boolean);
       });
 
       if (await this.identificarCampo(data)) {
@@ -525,6 +536,7 @@ private async identificarCampo(data: any) {
     const query = {
       auditoria_id: idAuditor,
       activo: true,
+      asignado: true,
     };
     const queryString = Object.entries(query)
       .map(([key, value]) => `${key}:${value}`)
