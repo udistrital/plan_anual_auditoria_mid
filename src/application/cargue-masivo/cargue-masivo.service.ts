@@ -71,7 +71,7 @@ export class CargueMasivoService {
     }
     catch (error) {
       const newError = new Error('Failed to add validations to the template');
-      newError.stack += "\nCaused by: " + error.stack;
+      this.addErrorCause(newError, error);
       throw newError;
     }
   }
@@ -101,7 +101,7 @@ export class CargueMasivoService {
     }
     catch (error) {
       const newError = new Error('Failed to export auditorias to Excel');
-      newError.stack += "\nCaused by: " + error.stack;
+      this.addErrorCause(newError, error);
       throw newError;
     }
   }
@@ -145,16 +145,19 @@ export class CargueMasivoService {
         },
         macroproceso_id: {
           file_name_column: 'Macroproceso',
+          separator: '|',
           required: false,
           mapping: await this.getParametrosMapping(TIPO_PARAMETRO.MACROPROCESO),
         },
         proceso_id: {
           file_name_column: 'Proceso',
+          separator: '|',
           required: false,
           mapping: await this.getParametrosMapping(TIPO_PARAMETRO.PROCESO),
         },
         dependencia_id: {
           file_name_column: 'Dependencia',
+          separator: '|',
           required: false,
           mapping: await this.getDependenciasMapping(),
         },
@@ -190,7 +193,7 @@ export class CargueMasivoService {
     }
     catch (error) {
       const newError = new Error('Failed to get parametros');
-      newError.stack += "\nCaused by: " + error.stack;
+      this.addErrorCause(newError, error);
       throw newError;
     }
   }
@@ -213,7 +216,7 @@ export class CargueMasivoService {
     }
     catch (error) {
       const newError = new Error('Failed to get dependencias');
-      newError.stack += "\nCaused by: " + error.stack;
+      this.addErrorCause(newError, error);
       throw newError;
     }
   }
@@ -240,6 +243,19 @@ export class CargueMasivoService {
         observacion: { file_name_column: 'Observaciones', required: false },
       },
     };
+  }
+
+  /**
+   * Adds the stack trace of a cause error to a new error's stack trace, ensuring that the original error information is preserved and accessible in the new error.
+   * @param newError The new error to which the cause's stack trace will be added.
+   * @param cause The original error whose stack trace is to be added to the new error.
+   */
+  private addErrorCause(newError: Error, cause: any): void {
+    const causeString = cause instanceof Error
+        ? (cause.stack || cause.message || String(cause))
+        : String(cause);
+    newError.stack = (newError.stack || newError.message || '')
+        + causeString ? ("\nCaused by: " + causeString) : '';
   }
 
 }
