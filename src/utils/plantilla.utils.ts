@@ -1,4 +1,4 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
 import { environment } from 'src/config/configuration';
 import { HttpService } from '@nestjs/axios';
@@ -34,7 +34,7 @@ export class PlantillaUtilsService {
     } catch (error) {
       throw new HttpException(
         'Error al obtener los datos del servicio externo ',
-        error,
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }

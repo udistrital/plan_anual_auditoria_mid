@@ -93,7 +93,11 @@ export class AuditoriaService {
 
     let padreQueryStr = '';
     for (const param of (queryParams.query ?? '').split(',')) {
-      if (param.startsWith('tipo_evaluacion_id:') || param.startsWith('dependencia_id:')) {
+      if (
+        param.startsWith('tipo_evaluacion_id:') ||
+        param.startsWith('dependencia_id:') ||
+        param.startsWith('vigencia_id:')
+      ) {
         padreQueryStr += padreQueryStr ? `,${param}` : param;
       }
     }
@@ -299,21 +303,20 @@ export class AuditoriaService {
     ]);
 
     const dep = depResponse.data;
-    
-    // correo_complementario puede ser [] vacío o [{ dependencia_id, correo_complementario }]
-  const complementario = Array.isArray(correosComplementarios)
-    ? correosComplementarios.find(c => c?.dependencia_id === dependenciaId)
-    : undefined;
 
-  return {
-    dependencia_id: dependenciaId,
-    ...(dep?.Nombre && { dependencia_nombre: dep.Nombre }),
-    ...(dep?.CorreoElectronico?.trim() && { correo_dependencia: dep.CorreoElectronico.trim() }),
-    ...datosTerceros,
-    ...(complementario?.correo?.trim() && {
-      correo_complementario: complementario.correo.trim(),
-    }),
-  };
+    const complementario = Array.isArray(correosComplementarios)
+      ? correosComplementarios.find(c => c?.dependencia_id === dependenciaId)
+      : undefined;
+
+    return {
+      dependencia_id: dependenciaId,
+      ...(dep?.Nombre && { dependencia_nombre: dep.Nombre }),
+      ...(dep?.CorreoElectronico?.trim() && { correo_dependencia: dep.CorreoElectronico.trim() }),
+      ...datosTerceros,
+      ...(complementario?.correo?.trim() && {
+        correo_complementario: complementario.correo.trim(),
+      }),
+    };
   }
 
   private async resolverInfoDependencias(

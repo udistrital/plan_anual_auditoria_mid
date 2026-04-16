@@ -31,9 +31,9 @@ const HEADERS = [
 export class AuditoriaExcel {
   titulo: string;
   tipo_evaluacion_nombre: string;
-  macroproceso_nombre?: string;
-  proceso_nombre?: string;
-  dependencia_nombre?: string;
+  macroproceso_nombre?: string[];
+  proceso_nombre?: string[];
+  dependencia_nombre?: string[];
   cronograma_nombre: Array<string>;
   cantidad_auditorias?: string; 
 }
@@ -53,11 +53,11 @@ function dataSourceToExcelData(dataSource: Array<AuditoriaExcel>): Array<object>
     // Tipo de Evaluación
     [HEADERS[2]]: dataSource.map(a => a.tipo_evaluacion_nombre),
     // Macroproceso
-    [HEADERS[3]]: dataSource.map(a => a.macroproceso_nombre || ''),
+    [HEADERS[3]]: dataSource.map(a => a.macroproceso_nombre.join('|') || ''),
     // Proceso
-    [HEADERS[4]]: dataSource.map(a => a.proceso_nombre || ''),
+    [HEADERS[4]]: dataSource.map(a => a.proceso_nombre.join('|') || ''),
     // Dependencia
-    [HEADERS[5]]: dataSource.map(a => a.dependencia_nombre || ''),
+    [HEADERS[5]]: dataSource.map(a => a.dependencia_nombre.join('|') || ''),
     // Cantidad
     [HEADERS[6]]: dataSource.map(a => a.cantidad_auditorias || '')
   };
