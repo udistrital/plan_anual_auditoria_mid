@@ -7,9 +7,9 @@ import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditor
 const {
   TERCEROS_SERVICE,
   PARAMETROS_SERVICE,
-  PLAN_AUDITORIA_CRUD_SERVICE,
   TIPO_PARAMETRO,
   PLAN_ESTADO,
+  AUDITORIA_PADRE_ESTADO,
 } = environment;
 
 @Injectable()
@@ -92,14 +92,16 @@ export class PlanAuditoriaService {
     if (Array.isArray(Data)) {
       await Promise.all(
         Data.map(async (plan: any) => {
-          const [estado, tieneRechazos, tercero] = await Promise.all([
+          const [estado, tieneRechazos, tieneModificaciones, tercero] = await Promise.all([
             this.traerEstadoPorPlan(plan._id),
             this.traerMotivosRechazo(plan._id, PLAN_ESTADO.RECHAZADO),
+            this.tieneModificaciones(plan.auditorias),
             plan.creado_por_id ? this.traerTercero(plan.creado_por_id) : null,
           ]);
 
           if (estado?.actual) plan.estado = estado;
           plan.tiene_rechazos = tieneRechazos;
+          plan.tiene_modificaciones = tieneModificaciones;
           if (tercero) plan.creado_por_nombre = tercero.NombreCompleto ?? null;
         }),
       );
@@ -112,39 +114,34 @@ export class PlanAuditoriaService {
   }
 
   private async traerMotivosRechazo(planAuditoriaId: string, estadoId: number) {
-    const url = `${PLAN_AUDITORIA_CRUD_SERVICE}estado?query=plan_auditoria_id:${planAuditoriaId},estado_id:${estadoId},activo:true&limit=1&fields=_id`;
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      if (response.data.MetaData.Count) {
-        return true;
-      }
-      return false;
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos del estado',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+    const queryParams = {
+      query: `plan_auditoria_id:${planAuditoriaId},estado_id:${estadoId},activo:true`,
+      limit: 1,
+      fields: '_id',
     }
+    const data = await this.auditoriaCrudService.traerDataCrud('estado', null, queryParams);
+    return data?.MetaData?.Count > 0;
+  }
+
+  private async tieneModificaciones(auditorias: string[]): Promise<boolean> {
+    const queryParams: any = {
+      query: `estado_id:${AUDITORIA_PADRE_ESTADO.CON_MODIFICACION_EXTEMPORANEA_ID},auditoria_padre_id__in:${auditorias.join('|')}`,
+      limit: 0,
+      fields: '_id',
+    }
+    const data = await this.auditoriaCrudService.traerDataCrud('auditoria-padre-estado', null, queryParams);
+    return data?.MetaData?.Count > 0;
   }
 
   private async traerEstadoPorPlan(planAuditoriaId: string) {
-    const url = `${PLAN_AUDITORIA_CRUD_SERVICE}estado?query=plan_auditoria_id:${planAuditoriaId},actual:true`;
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      if (
-        response.data &&
-        response.data.Data &&
-        response.data.Data.length > 0
-      ) {
-        return response.data.Data[0];
-      }
-      return null;
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos del estado',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+    const queryParams = {
+      query: `plan_auditoria_id:${planAuditoriaId},actual:true`,
     }
+    const data = await this.auditoriaCrudService.traerDataCrud('estado', null, queryParams);
+    if ( data && data.Data && data.Data.length > 0 ) {
+      return data.Data[0];
+    }
+    return null;
   }
 
   private reemplazarCampos(data: any) {
