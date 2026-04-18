@@ -30,12 +30,6 @@ const MESES_MAPPING = {
   Dic: MESES.DICIEMBRE,
 };
 
-const MEDIO_MAPPING = {
-  Fisico: TIPO_EVALUACION.AUDITORIA_INTERNA,
-  Digital: TIPO_EVALUACION.SEGUIMIENTO,
-  Otro: TIPO_EVALUACION.INFORME,
-};
-
 const CANTIDAD_MAPPING = {'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'11':11,'12':12}
 
 /** Interface representing a parameter object with an Id and Nombre property. */
@@ -222,7 +216,8 @@ export class CargueMasivoService {
   }
 
   crearEstructuraActividad(base64data: string, complemento: Object): any {
-    return {
+
+    const estructura = {
       base64data,
       service: environment.PLAN_AUDITORIA_CRUD_SERVICE,
       endpoint: 'actividad',
@@ -234,15 +229,13 @@ export class CargueMasivoService {
         referencia: { file_name_column: 'Referencia', required: false },
         descripcion: { file_name_column: 'Descripcion', required: false },
         folio: { file_name_column: 'Folio', required: false },
-        Medio_id: {
-          file_name_column: 'Medio',
-          required: false,
-          mapping: MEDIO_MAPPING,
-        },
+        medio: { file_name_column: 'Medio', required: false, },
         carpeta: { file_name_column: 'Carpeta', required: false },
         observacion: { file_name_column: 'Observaciones', required: false },
       },
     };
+
+    return estructura;
   }
 
   /**
