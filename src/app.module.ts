@@ -13,6 +13,7 @@ import { AuditorModule } from './auditor/auditor.module';
 import { InformeModule } from './informe/informe.module';
 import { AuditoriaEstadoModule } from './auditoria-estado/auditoria-estado.module';
 import { AuditoriaCrudModule } from './shared/services/auditoria-crud/auditoria-crud.module';
+import { AuditadoModule } from './auditado/auditado.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { AuditoriaCrudModule } from './shared/services/auditoria-crud/auditoria-
       isGlobal: true,
     }),
     InformeModule,
+    AuditadoModule,
   ],
   controllers: [AppController],
   providers: [AppService],
