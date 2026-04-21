@@ -14,7 +14,7 @@ const {
   PARAMETROS_SERVICE,
   TERCEROS_SERVICE,
   OIKOS_SERVICE,
-  logoUDistrital,
+  logoUDistritalOCI,
   contactoOCI,
   ID_DEPENDENCIA_OCI,
   ID_CARGO_OCI
@@ -54,7 +54,7 @@ export class PlantillaSolicitudInformacionService {
     const infoParaPlantilla = {
       plantilla_id: PLANTILLAS.SOLICITUD_INFORMACION,
       data: {
-        logoUDistrital: logoUDistrital,
+        logoUDistrital: logoUDistritalOCI,
         fecha: moment().locale('es').format('D [de] MMMM [de] YYYY'),
         fecha_inicio: moment(auditoria.fecha_inicio).locale('es').format('DD/MM/YYYY'),
         consecutivo_oci: auditoria.consecutivo_OCI,
