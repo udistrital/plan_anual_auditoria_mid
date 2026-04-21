@@ -30,12 +30,6 @@ const MESES_MAPPING = {
   Dic: MESES.DICIEMBRE,
 };
 
-const MEDIO_MAPPING = {
-  Fisico: TIPO_EVALUACION.AUDITORIA_INTERNA,
-  Digital: TIPO_EVALUACION.SEGUIMIENTO,
-  Otro: TIPO_EVALUACION.INFORME,
-};
-
 const CANTIDAD_MAPPING = {'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'11':11,'12':12}
 
 /** Interface representing a parameter object with an Id and Nombre property. */
@@ -71,7 +65,7 @@ export class CargueMasivoService {
     }
     catch (error) {
       const newError = new Error('Failed to add validations to the template');
-      newError.stack += "\nCaused by: " + error.stack;
+      this.addErrorCause(newError, error);
       throw newError;
     }
   }
@@ -101,7 +95,7 @@ export class CargueMasivoService {
     }
     catch (error) {
       const newError = new Error('Failed to export auditorias to Excel');
-      newError.stack += "\nCaused by: " + error.stack;
+      this.addErrorCause(newError, error);
       throw newError;
     }
   }
@@ -145,16 +139,19 @@ export class CargueMasivoService {
         },
         macroproceso_id: {
           file_name_column: 'Macroproceso',
+          separator: '|',
           required: false,
           mapping: await this.getParametrosMapping(TIPO_PARAMETRO.MACROPROCESO),
         },
         proceso_id: {
           file_name_column: 'Proceso',
+          separator: '|',
           required: false,
           mapping: await this.getParametrosMapping(TIPO_PARAMETRO.PROCESO),
         },
         dependencia_id: {
           file_name_column: 'Dependencia',
+          separator: '|',
           required: false,
           mapping: await this.getDependenciasMapping(),
         },
@@ -190,7 +187,7 @@ export class CargueMasivoService {
     }
     catch (error) {
       const newError = new Error('Failed to get parametros');
-      newError.stack += "\nCaused by: " + error.stack;
+      this.addErrorCause(newError, error);
       throw newError;
     }
   }
@@ -213,13 +210,14 @@ export class CargueMasivoService {
     }
     catch (error) {
       const newError = new Error('Failed to get dependencias');
-      newError.stack += "\nCaused by: " + error.stack;
+      this.addErrorCause(newError, error);
       throw newError;
     }
   }
 
   crearEstructuraActividad(base64data: string, complemento: Object): any {
-    return {
+
+    const estructura = {
       base64data,
       service: environment.PLAN_AUDITORIA_CRUD_SERVICE,
       endpoint: 'actividad',
@@ -231,15 +229,26 @@ export class CargueMasivoService {
         referencia: { file_name_column: 'Referencia', required: false },
         descripcion: { file_name_column: 'Descripcion', required: false },
         folio: { file_name_column: 'Folio', required: false },
-        Medio_id: {
-          file_name_column: 'Medio',
-          required: false,
-          mapping: MEDIO_MAPPING,
-        },
+        medio: { file_name_column: 'Medio', required: false, },
         carpeta: { file_name_column: 'Carpeta', required: false },
         observacion: { file_name_column: 'Observaciones', required: false },
       },
     };
+
+    return estructura;
+  }
+
+  /**
+   * Adds the stack trace of a cause error to a new error's stack trace, ensuring that the original error information is preserved and accessible in the new error.
+   * @param newError The new error to which the cause's stack trace will be added.
+   * @param cause The original error whose stack trace is to be added to the new error.
+   */
+  private addErrorCause(newError: Error, cause: any): void {
+    const causeString = cause instanceof Error
+        ? (cause.stack || cause.message || String(cause))
+        : String(cause);
+    newError.stack = (newError.stack || newError.message || '')
+        + causeString ? ("\nCaused by: " + causeString) : '';
   }
 
 }

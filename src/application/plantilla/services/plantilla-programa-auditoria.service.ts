@@ -39,14 +39,15 @@ export class PlantillaProgramaAuditoriaService {
             const auditoria = data.auditoria;
             const auditoriaPadreRespuesta = await this.auditoriaService.getAll({query: `_id:${auditoria.auditoria_padre_id}`});
             const auditoriaPadre = auditoriaPadreRespuesta.Data[0];
+            const dependenciaPrincipal = this.obtenerDependenciaPrincipal(auditoriaPadre?.dependencia_id);
 
             const [actividades, macroproceso, proceso, dependencia, Lider, Responsable, grupoAuditor] = await Promise.all([
             this.obtenerActividades(auditoria._id),
             this.traerParametros(auditoriaPadre.macroproceso_id),
             this.traerParametros(auditoriaPadre.proceso_id),
-            this.obtenerDependencia(auditoriaPadre.dependencia_id),
-            this.obtenerTerceroVinculado(environment.CARGO.JEFE_DEPENDENCIA_ID, auditoriaPadre.dependencia_id),
-            this.obtenerTerceroVinculado(environment.CARGO.ASISTENTE_DEPENDENCIA_ID, auditoriaPadre.dependencia_id),
+            this.obtenerDependencia(dependenciaPrincipal),
+            this.obtenerTerceroVinculado(environment.CARGO.JEFE_DEPENDENCIA_ID, dependenciaPrincipal),
+            this.obtenerTerceroVinculado(environment.CARGO.ASISTENTE_DEPENDENCIA_ID, dependenciaPrincipal),
             this.obtenerNombresAuditores(auditoria._id)
         ]);
 
@@ -181,7 +182,11 @@ export class PlantillaProgramaAuditoriaService {
         }
     }
 
-    private async obtenerDependencia(idDependencia: string) {
+    private async obtenerDependencia(idDependencia: number | null) {
+        if (idDependencia == null) {
+            return { Nombre: 'No definido' };
+        }
+
         const url = `${OIKOS_SERVICE}dependencia/${idDependencia}`;
         try {
             const response = await lastValueFrom(this.httpService.get(url));
@@ -194,7 +199,11 @@ export class PlantillaProgramaAuditoriaService {
         }
     }
 
-    private async obtenerTerceroVinculado(idCargo: number, idDependencia: number) {
+    private async obtenerTerceroVinculado(idCargo: number, idDependencia: number | null) {
+        if (idDependencia == null) {
+            return null;
+        }
+
         try {
             const datosPersona = await this.auditoriaService.traerTerceroVinculado(idDependencia, idCargo);
             return datosPersona;
@@ -204,5 +213,13 @@ export class PlantillaProgramaAuditoriaService {
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
         }
+    }
+
+    private obtenerDependenciaPrincipal(dependenciaId: number | number[]): number | null {
+        if (Array.isArray(dependenciaId)) {
+            return dependenciaId.length > 0 ? dependenciaId[0] : null;
+        }
+
+        return typeof dependenciaId === 'number' ? dependenciaId : null;
     }
 }

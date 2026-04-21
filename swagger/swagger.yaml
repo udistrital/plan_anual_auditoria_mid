@@ -592,6 +592,44 @@ paths:
           description: Informes de la auditoría obtenidos
       summary: Obtener informes por auditoría
       tags: *ref_9
+  /auditado/{personaId}/documento:
+    get:
+      operationId: AuditadoController_filtrarDocumentosPorDependencia
+      parameters:
+        - name: personaId
+          required: true
+          in: path
+          description: ID del auditado para filtrar los documentos.
+          schema:
+            type: number
+        - name: auditoria_id
+          required: true
+          in: query
+          description: ID de la auditoría para filtrar los documentos.
+          schema:
+            type: string
+        - name: cargo_id
+          required: true
+          in: query
+          description: ID del cargo del auditado para filtrar los documentos.
+          schema:
+            type: number
+        - name: tipo_documento_id
+          required: false
+          in: query
+          description: ID del tipo de documento para filtrar los documentos (opcional).
+          explode: false
+          style: form
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Documentos filtrados exitosamente.
+        '404':
+          description: No se encontraron documentos para el auditado.
+      summary: Filtrar los documentos a visualizar para el auditado
+      tags:
+        - Auditado
 info:
   title: Plan Anual Auditoria MID
   description: API MID para la gestion de planes de auditorias, auditorias y actividades

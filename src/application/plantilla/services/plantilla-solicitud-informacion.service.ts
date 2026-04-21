@@ -14,7 +14,7 @@ const {
   PARAMETROS_SERVICE,
   TERCEROS_SERVICE,
   OIKOS_SERVICE,
-  logoUDistrital,
+  logoUDistritalOCI,
   contactoOCI,
   ID_DEPENDENCIA_OCI,
   ID_CARGO_OCI
@@ -40,6 +40,7 @@ export class PlantillaSolicitudInformacionService {
     const auditoria = data.auditoria;
     const auditoriaPadreRespuesta = await this.auditoriaService.getAll({query: `_id:${auditoria.auditoria_padre_id}`});
     const auditoriaPadre = auditoriaPadreRespuesta.Data[0];
+    const dependenciaPrincipal = this.obtenerDependenciaPrincipal(auditoriaPadre?.dependencia_id);
 
     const [dependencias, vigencia, auditoriaOSeguimiento, auditores, jefeOci] =
       await Promise.all([
@@ -53,7 +54,7 @@ export class PlantillaSolicitudInformacionService {
     const infoParaPlantilla = {
       plantilla_id: PLANTILLAS.SOLICITUD_INFORMACION,
       data: {
-        logoUDistrital: logoUDistrital,
+        logoUDistrital: logoUDistritalOCI,
         fecha: moment().locale('es').format('D [de] MMMM [de] YYYY'),
         fecha_inicio: moment(auditoria.fecha_inicio).locale('es').format('DD/MM/YYYY'),
         consecutivo_oci: auditoria.consecutivo_OCI,
@@ -142,17 +143,29 @@ export class PlantillaSolicitudInformacionService {
     }
   }
 
-  private async obtenerTerceroVinculado(idCargo: number, idDependencia: number) {
-        try {
-            const datosPersona = await this.auditoriaService.traerTerceroVinculado(idDependencia, idCargo);
-            return datosPersona;
-        } catch (error) {
-            throw new HttpException(
-                'Error al obtener los datos del tercero vinculado',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
-        }
+  private async obtenerTerceroVinculado(idCargo: number, idDependencia: number | null) {
+    if (idDependencia == null) {
+      return null;
     }
+
+      try {
+          const datosPersona = await this.auditoriaService.traerTerceroVinculado(idDependencia, idCargo);
+          return datosPersona;
+      } catch (error) {
+          throw new HttpException(
+              'Error al obtener los datos del tercero vinculado',
+              HttpStatus.INTERNAL_SERVER_ERROR,
+          );
+      }
+  }
+
+  private obtenerDependenciaPrincipal(dependenciaId: number | number[]): number | null {
+  if (Array.isArray(dependenciaId)) {
+    return dependenciaId.length > 0 ? dependenciaId[0] : null;
+  }
+
+  return typeof dependenciaId === 'number' ? dependenciaId : null;
+  }
   
   private async obtenerDependencia(idDependencia: string) {
     const url = `${OIKOS_SERVICE}dependencia/${idDependencia}`;

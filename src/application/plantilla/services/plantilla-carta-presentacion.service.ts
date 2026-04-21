@@ -1,35 +1,99 @@
 import { Injectable } from '@nestjs/common';
-import * as moment from 'moment';
-import 'moment/locale/es';
 import { PlantillaUtilsService } from '../../../utils/plantilla.utils';
 import { environment } from 'src/config/configuration';
+import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
+
+interface CartaRenderizada {
+  dependencia_id: number | null;
+  dependencia_nombre: string;
+  base64: string;
+}
 
 @Injectable()
 export class PlantillaCartaPresentacionService {
-  constructor(private readonly plantillaUtils: PlantillaUtilsService) {}
+  constructor(
+    private readonly plantillaUtils: PlantillaUtilsService,
+    private readonly auditoriaService: AuditoriaService,
+  ) {}
 
   async get(idAuditoria: string) {
-    const auditoria = await this.plantillaUtils.obtenerAuditoria(idAuditoria);
-    const infoParaPlantilla = await this.organizarData(auditoria);
-    const baseRenderizado =
-      await this.plantillaUtils.renderizarPlantilla(infoParaPlantilla);
-    return baseRenderizado;
+    const auditoriaResponse = await this.auditoriaService.getOne(idAuditoria);
+    const auditoria = auditoriaResponse?.Data || {};
+
+    const dependencias: number[] = Array.isArray(auditoria.dependencia_id)
+      ? auditoria.dependencia_id
+      : [];
+    const nombresDependencias = this.normalizarNombresDependencias(
+      auditoria.dependencia_nombre,
+      dependencias,
+    );
+
+    const dependenciasRenderizar =
+      dependencias.length > 0 ? dependencias : [null];
+
+    const cartas = await Promise.all(
+      dependenciasRenderizar.map(async (dependenciaId, index) => {
+        const dependenciaNombre = String(
+          nombresDependencias[index] || `Dependencia ${index + 1}`,
+        );
+        const infoParaPlantilla = await this.organizarData(
+          auditoria,
+          dependenciaNombre,
+        );
+        const baseRenderizado =
+          await this.plantillaUtils.renderizarPlantilla(infoParaPlantilla);
+
+        return {
+          dependencia_id: dependenciaId,
+          dependencia_nombre: dependenciaNombre,
+          base64: baseRenderizado?.Data || baseRenderizado,
+        } as CartaRenderizada;
+      }),
+    );
+
+    return {
+      Success: true,
+      Status: 200,
+      Message: 'Plantillas generadas exitosamente.',
+      Data: cartas,
+    };
   }
 
-  private async organizarData(data: any) {
-    const auditoria = data.auditoria;
-    const fechaInicio = moment(auditoria.fecha_inicio);
+  private async organizarData(auditoria: any, dependenciaNombre: string) {
+    const fechaInicio = auditoria?.fecha_inicio
+      ? new Date(auditoria.fecha_inicio)
+      : new Date();
+    const mes = new Intl.DateTimeFormat('es-CO', { month: 'long' }).format(
+      fechaInicio,
+    );
+
     const infoParaPlantilla = {
       plantilla_id: environment.PLANTILLAS.CARTA_PRESENTACION,
       data: {
         ciudad: 'Bogotá D.C.',
         auditoria: auditoria.titulo,
-        dia: fechaInicio.date(),
-        mes: fechaInicio.format('MMMM'),
-        anio: fechaInicio.year(),
+        dia: fechaInicio.getDate(),
+        mes,
+        anio: fechaInicio.getFullYear(),
         objetivo: auditoria.objetivo,
+        dependencia: dependenciaNombre,
       },
     };
     return infoParaPlantilla;
+  }
+
+  private normalizarNombresDependencias(
+    dependenciasNombre: string[] | string,
+    dependencias: number[],
+  ): string[] {
+    if (Array.isArray(dependenciasNombre)) {
+      return dependenciasNombre;
+    }
+
+    if (typeof dependenciasNombre === 'string' && dependenciasNombre.length > 0) {
+      return [dependenciasNombre];
+    }
+
+    return dependencias.map((_, index) => `Dependencia ${index + 1}`);
   }
 }
