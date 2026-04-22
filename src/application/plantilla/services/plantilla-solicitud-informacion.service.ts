@@ -204,7 +204,7 @@ export class PlantillaSolicitudInformacionService {
 
           respuestaDependencias.push({
             nombre: dependencia.Nombre,
-            responsable: responsableDependencia?.nombre || 'No se encontró el responsable de la dependencia'
+            responsable: responsableDependencia?.NombreCompleto || 'No se encontró el responsable de la dependencia'
           });
         }
       } else {
@@ -213,7 +213,7 @@ export class PlantillaSolicitudInformacionService {
 
         respuestaDependencias.push({
           nombre: dependencia.Nombre,
-          responsable: responsableDependencia?.nombre || 'No se encontró el responsable de la dependencia'
+          responsable: responsableDependencia?.NombreCompleto || 'No se encontró el responsable de la dependencia'
         });
       }
       return respuestaDependencias;
