@@ -1,6 +1,3 @@
-import * as dotenv from 'dotenv';
-dotenv.config();
-
 export const environment = {
   PARAMETROS_SERVICE: process.env.PARAMETROS_SERVICE,
   PLAN_AUDITORIA_MID_PORT: process.env.PLAN_AUDITORIA_MID_PORT,
