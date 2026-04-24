@@ -12,7 +12,7 @@ const {
     TIPO_EVALUACION,
     ESTADOS_INFORME_AUDITORIA_PRELIMINAR,
     ID_DEPENDENCIA_OCI,
-    ID_CARGO_OCI
+    CARGO
 } = environment;
 
 @Injectable()
@@ -221,7 +221,7 @@ export class PlantillaInformeSeguimientoService {
     }
 
     private async obtenerJefeOci() {
-        const url = `${TERCEROS_SERVICE}vinculacion?query=DependenciaId:${ID_DEPENDENCIA_OCI},CargoId:${ID_CARGO_OCI},Activo:true`;
+        const url = `${TERCEROS_SERVICE}vinculacion?query=DependenciaId:${ID_DEPENDENCIA_OCI},CargoId:${CARGO.JEFE_DEPENDENCIA_ID},Activo:true`;
         try {
             const response = await lastValueFrom(this.httpService.get(url));
             return response.data[0].TerceroPrincipalId.NombreCompleto;

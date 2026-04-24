@@ -13,7 +13,8 @@ const {
     TIPO_EVALUACION,
     ESTADOS_INFORME_AUDITORIA_PRELIMINAR,
     ID_DEPENDENCIA_OCI,
-    ID_CARGO_OCI
+    CARGO,
+    OIKOS_SERVICE
 } = environment;
 
 @Injectable()
@@ -41,14 +42,17 @@ export class PlantillaInformeAuditoriaService {
             if (!informe?._id) {
                 throw new Error('No se encontró el informe asociado a la auditoría');
             }
-
+            
+            const auditoriaPadreRespuesta = await this.auditoriaService.getAll({query: `_id:${auditoria.auditoria_padre_id}`});
+            const auditoriaPadre = auditoriaPadreRespuesta.Data[0];
             const temas = await this.obtenerTemasInforme(informe._id);
             const temasReestructurados = await this.reestructurarTemas(temas);
             const [anio, mes, dia] = informe.fecha_emision.split('T')[0].split('-');
-            const [tituloInforme, jefeOci, auditorResponsable] = await Promise.all([
+            const [tituloInforme, jefeOci, auditorResponsable, dependencias] = await Promise.all([
                 this.generarTituloInforme(auditoria._id, auditoria.tipo_evaluacion_id, auditoria.titulo),
                 this.obtenerJefeOci(),
-                this.obtenerAuditorResponsable(auditoria._id)
+                this.obtenerAuditorResponsable(auditoria._id),
+                this.obtenergrupoDependencias(auditoriaPadre.dependencia_id)
             ]);
 
             const infoParaPlantilla = {
@@ -62,9 +66,8 @@ export class PlantillaInformeAuditoriaService {
                     },
                     informe: {
                         titulo: tituloInforme,
-                        dependencia: auditoria.proceso_nombre[0] + ' / ' + auditoria.dependencia_nombre[0], // TODO: Ajustar para diferentes dependencias y procesos
-                        lider: auditoria.jefe_nombre,
-                        responsable: auditoria.asistente_nombre,
+                        dependencias: dependencias,
+                        procreso: auditoria.proceso,
                         objetivo: auditoria.objetivo,
                         alcance: auditoria.alcance,
                         criterios: auditoria.criterio,
@@ -232,7 +235,7 @@ export class PlantillaInformeAuditoriaService {
 
 
     private async obtenerJefeOci() {
-        const url = `${TERCEROS_SERVICE}vinculacion?query=DependenciaId:${ID_DEPENDENCIA_OCI},CargoId:${ID_CARGO_OCI},Activo:true`;
+        const url = `${TERCEROS_SERVICE}vinculacion?query=DependenciaId:${ID_DEPENDENCIA_OCI},CargoId:${CARGO.JEFE_DEPENDENCIA_ID},Activo:true`;
         try {
             const response = await lastValueFrom(this.httpService.get(url));
             return response.data?.[0]?.TerceroPrincipalId?.NombreCompleto || "No se encontró el jefe de la Oficina Asesora de Control Interno";
@@ -240,4 +243,69 @@ export class PlantillaInformeAuditoriaService {
             return "No se encontró el jefe de la Oficina Asesora de Control Interno";
         }
     }
+
+    private async obtenergrupoDependencias(dependencias: any): Promise<any> {
+    const respuestaDependencias = [];
+
+    try {
+      if (Array.isArray(dependencias)) {
+        for (const idDependencia of dependencias) {
+          const dependencia = await this.obtenerDependencia(idDependencia);
+          const liderDependencia = await this.obtenerTerceroVinculado(CARGO.JEFE_DEPENDENCIA_ID, idDependencia);
+          const responsableDependencia = await this.obtenerTerceroVinculado(CARGO.ASISTENTE_DEPENDENCIA_ID, idDependencia);  
+
+          respuestaDependencias.push({
+            nombre: dependencia.Nombre,
+            lider: liderDependencia?.NombreCompleto || 'No se encontró el líder de la dependencia',
+            responsable: responsableDependencia?.NombreCompleto || 'No se encontró el responsable de la dependencia'
+          });
+        }
+      } else {
+        const dependencia = await this.obtenerDependencia(dependencias);
+        const liderDependencia = await this.obtenerTerceroVinculado(CARGO.JEFE_DEPENDENCIA_ID, dependencias);
+        const responsableDependencia = await this.obtenerTerceroVinculado(CARGO.ASISTENTE_DEPENDENCIA_ID, dependencias);
+
+        respuestaDependencias.push({
+          nombre: dependencia.Nombre,
+          lider: liderDependencia?.NombreCompleto || 'No se encontró el líder de la dependencia',
+          responsable: responsableDependencia?.NombreCompleto || 'No se encontró el responsable de la dependencia'
+        });
+      }
+      return respuestaDependencias;
+    } catch (error) {
+      throw new HttpException(
+            'Error al consultar el grupo de dependencias',
+            HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+    }
+  }
+
+  private async obtenerDependencia(idDependencia: string) {
+    const url = `${OIKOS_SERVICE}dependencia/${idDependencia}`;
+    try {
+        const response = await lastValueFrom(this.httpService.get(url));
+        return response.data;
+    } catch (error) {
+        throw new HttpException(
+            'Error al obtener los datos de la dependencia',
+            HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+    }
+  }
+
+  private async obtenerTerceroVinculado(idCargo: number, idDependencia: number | null) {
+    if (idDependencia == null) {
+      return null;
+    }
+
+      try {
+          const datosPersona = await this.auditoriaService.traerTerceroVinculado(idDependencia, idCargo);
+          return datosPersona;
+      } catch (error) {
+          throw new HttpException(
+              'Error al obtener los datos del tercero vinculado',
+              HttpStatus.INTERNAL_SERVER_ERROR,
+          );
+      }
+  }
 }
