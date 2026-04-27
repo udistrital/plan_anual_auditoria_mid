@@ -14,6 +14,7 @@ import { InformeModule } from './informe/informe.module';
 import { AuditoriaEstadoModule } from './auditoria-estado/auditoria-estado.module';
 import { AuditoriaCrudModule } from './shared/services/auditoria-crud/auditoria-crud.module';
 import { AuditadoModule } from './auditado/auditado.module';
+import { env } from './config/configuration';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { AuditadoModule } from './auditado/auditado.module';
     AuditoriaCrudModule,
     ConfigModule.forRoot({
       isGlobal: true,
+      load: [env]
     }),
     InformeModule,
     AuditadoModule,
