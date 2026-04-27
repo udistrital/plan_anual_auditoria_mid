@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { environment } from "src/config/configuration";
+import { environment as env } from "src/config/configuration";
 import { HttpService } from "@nestjs/axios";
 import { Observable, map, catchError } from "rxjs";
 
@@ -8,7 +8,7 @@ import { Observable, map, catchError } from "rxjs";
 export class ParametrosService {
 
   /** The base URL for the Parametros API, loaded from the environment configuration. */
-  private readonly baseUrl = environment.PARAMETROS_SERVICE;
+  private readonly baseUrl = env().PARAMETROS_SERVICE;
 
   constructor(private readonly httpService: HttpService) {}
 

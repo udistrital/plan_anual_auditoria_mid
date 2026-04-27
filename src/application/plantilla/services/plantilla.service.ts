@@ -1,17 +1,10 @@
 import { Injectable, HttpException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { environment } from 'src/config/configuration';
+import { environment as env } from 'src/config/configuration';
 import { lastValueFrom } from 'rxjs';
 import { jsonPlantillaDto, PlantillaDto } from '../dto/plantilla.dto';
 import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
 import { Dominio } from 'src/shared/utils/dominios/dominio.model';
-
-const {
-  PLAN_AUDITORIA_CRUD_SERVICE,
-  PLANTILLAS,
-  MESES,
-  PLANTILLAS_MID_SERVICE,
-} = environment;
 
 /** Interface representing a parameter with an ID and a name. */
 interface Parametro {
@@ -36,9 +29,9 @@ export class PlantillaService {
   }
 
   private async traerDataCrud(id: string, auditoriaPadre: boolean) {
-    let urlPlanAuditoria = `${PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${id}`;
+    let urlPlanAuditoria = `${env().PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${id}`;
     let endpointAuditoria = auditoriaPadre ? 'auditoria-padre' : 'auditoria';
-    let urlAuditioria = `${PLAN_AUDITORIA_CRUD_SERVICE}${endpointAuditoria}?query=plan_auditoria_id:${id},` +
+    let urlAuditioria = `${env().PLAN_AUDITORIA_CRUD_SERVICE}${endpointAuditoria}?query=plan_auditoria_id:${id},` +
       `activo:true&fields=titulo,macroproceso_id,proceso_id,dependencia_id,cronograma_id,cantidad_auditorias&limit=0`;
     try {
       const responsePlanAuditoria = await lastValueFrom(
@@ -68,7 +61,7 @@ export class PlantillaService {
   private async anadirDataEspeciales(data: any, auditoriaPadre: boolean) {
     const vigenciaId = data.dataPlanAuditoria.Data?.vigencia_id;
     let endpointAuditoria = auditoriaPadre ? 'auditoria-padre' : 'auditoria';
-    const urlAuditioria = `${PLAN_AUDITORIA_CRUD_SERVICE}${endpointAuditoria}?query=vigencia_id:${vigenciaId},` +
+    const urlAuditioria = `${env().PLAN_AUDITORIA_CRUD_SERVICE}${endpointAuditoria}?query=vigencia_id:${vigenciaId},` +
       `plan_auditoria_id__isnull:true,activo:true&fields=titulo,macroproceso_id,proceso_id,dependencia_id,cronograma_id,cantidad_auditorias&limit=0`;
 
     try {
@@ -97,8 +90,8 @@ export class PlantillaService {
     );
 
     const dominios: { [key: string]: Dominio } = {};
-    dominios.macroproceso = await lastValueFrom(this.dominiosService.getParametros(environment.TIPO_PARAMETRO.MACROPROCESO));
-    dominios.proceso = await lastValueFrom(this.dominiosService.getParametros(environment.TIPO_PARAMETRO.PROCESO));
+    dominios.macroproceso = await lastValueFrom(this.dominiosService.getParametros(env().TIPO_PARAMETRO.MACROPROCESO));
+    dominios.proceso = await lastValueFrom(this.dominiosService.getParametros(env().TIPO_PARAMETRO.PROCESO));
     dominios.dependencia = await lastValueFrom(this.dominiosService.getDependencias());
 
     const items: Promise<PlantillaDto[]> = Array.isArray(auditorias)
@@ -120,7 +113,7 @@ export class PlantillaService {
         ))
       : Promise.resolve([]);
 
-    json.plantilla_id = PLANTILLAS.PLAN_ANUAL_AUDITORIA;
+    json.plantilla_id = env().PLANTILLAS.PLAN_ANUAL_AUDITORIA;
     json.data = {
       codigo: 'EC-PR-005-FR-001',
       proceso: 'Gestión de la Evaluación y el Control',
@@ -137,6 +130,7 @@ export class PlantillaService {
   }
 
   private async organizarItems(data: any, dominios: { [key: string]: Dominio }): Promise<PlantillaDto> {
+    const MESES = env().MESES;
     const idMesMap = {
       [MESES.ENERO]: 'enero',
       [MESES.FEBRERO]: 'febrero',
@@ -210,7 +204,7 @@ export class PlantillaService {
   }
 
   private async renderizar(data: jsonPlantillaDto) {
-    let urlPlanAuditoria = `${PLANTILLAS_MID_SERVICE}/v1/plantilla/renderizar`;
+    let urlPlanAuditoria = `${env().PLANTILLAS_MID_SERVICE}/v1/plantilla/renderizar`;
     try {
       const response = await lastValueFrom(
         this.httpService.post(urlPlanAuditoria, data),

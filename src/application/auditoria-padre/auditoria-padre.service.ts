@@ -1,14 +1,12 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom, forkJoin } from 'rxjs';
-import { environment } from 'src/config/configuration';
+import { environment as env } from 'src/config/configuration';
 import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
 import { Dominio } from 'src/shared/utils/dominios/dominio.model';
 import { unirListaNombresConComas } from 'src/utils/texto.utils';
 import { AuditoriaOrdenadaService } from 'src/shared/services/auditoria-ordenada/auditoria-ordenada.service';
 import { aplicarOrdenamiento } from '../../shared/utils/auditoria-ordenamiento.utils';
-
-const { PLAN_AUDITORIA_CRUD_SERVICE, TIPO_PARAMETRO } = environment;
 
 @Injectable()
 export class AuditoriaPadreService {
@@ -92,10 +90,10 @@ export class AuditoriaPadreService {
     }
 
     try {
-      const deleteUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria-padre/${auditoriaPadreId}`;
+      const deleteUrl = `${env().PLAN_AUDITORIA_CRUD_SERVICE}auditoria-padre/${auditoriaPadreId}`;
       await lastValueFrom(this.httpService.delete(deleteUrl));
 
-      const getPlanUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${planAuditoriaId}`;
+      const getPlanUrl = `${env().PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${planAuditoriaId}`;
       const planResponse = await lastValueFrom(this.httpService.get(getPlanUrl));
       const plan = planResponse.data.Data;
 
@@ -103,7 +101,7 @@ export class AuditoriaPadreService {
         (id: string) => id !== auditoriaPadreId,
       );
 
-      const putPlanUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${planAuditoriaId}`;
+      const putPlanUrl = `${env().PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${planAuditoriaId}`;
       await lastValueFrom(
         this.httpService.put(putPlanUrl, { auditorias: auditoriasPadreActualizadas }),
       );
@@ -141,7 +139,7 @@ export class AuditoriaPadreService {
   }
 
   private async traerDataCrud(id: string | null, queryParams: any) {
-    let url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria-padre/`;
+    let url = `${env().PLAN_AUDITORIA_CRUD_SERVICE}auditoria-padre/`;
     if (id != null && id != undefined) {
       url = url + `${id}`;
     }
@@ -170,32 +168,32 @@ export class AuditoriaPadreService {
     const camposConfig = [
       {
         campo: 'tipo_evaluacion_id',
-        tipoParametro: TIPO_PARAMETRO.TIPO_EVALUACION,
+        tipoParametro: env().TIPO_PARAMETRO.TIPO_EVALUACION,
         destino: this.tiposEvaluacion,
       },
       {
         campo: 'cronograma_id',
-        tipoParametro: TIPO_PARAMETRO.CRONOGRAMA,
+        tipoParametro: env().TIPO_PARAMETRO.CRONOGRAMA,
         destino: this.cronogramasActividad,
       },
       {
         campo: 'estado_id',
-        tipoParametro: TIPO_PARAMETRO.AUDITORIA_PADRE_ESTADO,
+        tipoParametro: env().TIPO_PARAMETRO.AUDITORIA_PADRE_ESTADO,
         destino: this.estados,
       },
       {
         campo: 'macroproceso_id',
-        tipoParametro: TIPO_PARAMETRO.MACROPROCESO,
+        tipoParametro: env().TIPO_PARAMETRO.MACROPROCESO,
         destino: this.macroprocesos,
       },
       {
         campo: 'proceso_id',
-        tipoParametro: TIPO_PARAMETRO.PROCESO,
+        tipoParametro: env().TIPO_PARAMETRO.PROCESO,
         destino: this.procesos,
       },
       {
         campo: 'vigencia_id',
-        tipoParametro: TIPO_PARAMETRO.VIGENCIA,
+        tipoParametro: env().TIPO_PARAMETRO.VIGENCIA,
         destino: this.vigencias,
       },
     ];

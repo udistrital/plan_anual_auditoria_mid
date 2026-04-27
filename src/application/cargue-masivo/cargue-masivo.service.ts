@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { environment } from 'src/config/configuration';
+import { environment as env } from 'src/config/configuration';
 import { firstValueFrom } from 'rxjs';
 import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
 import { setupValidationDomains, descargarAuditorias, AuditoriaExcel } from 'src/shared/utils/auditoriasExcel.utils';
@@ -7,28 +7,6 @@ import {
   base64ToArrayBuffer,
   arrayBufferToBase64,
 } from 'src/shared/utils/base64.utils';
-
-const {
-  PLAN_AUDITORIA_CRUD_SERVICE,
-  TIPO_EVALUACION,
-  TIPO_PARAMETRO,
-  MESES,
-} = environment;
-
-const MESES_MAPPING = {
-  Ene: MESES.ENERO,
-  Feb: MESES.FEBRERO,
-  Mar: MESES.MARZO,
-  Abr: MESES.ABRIL,
-  May: MESES.MAYO,
-  Jun: MESES.JUNIO,
-  Jul: MESES.JULIO,
-  Ago: MESES.AGOSTO,
-  Sep: MESES.SEPTIEMBRE,
-  Oct: MESES.OCTUBRE,
-  Nov: MESES.NOVIEMBRE,
-  Dic: MESES.DICIEMBRE,
-};
 
 const CANTIDAD_MAPPING = {'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'11':11,'12':12}
 
@@ -43,6 +21,22 @@ export class CargueMasivoService {
   constructor(
     private readonly dominiosService: DominiosService,
   ) {}
+
+  private MESES = env().MESES;
+  private MESES_MAPPING = {
+    Ene: this.MESES.ENERO,
+    Feb: this.MESES.FEBRERO,
+    Mar: this.MESES.MARZO,
+    Abr: this.MESES.ABRIL,
+    May: this.MESES.MAYO,
+    Jun: this.MESES.JUNIO,
+    Jul: this.MESES.JULIO,
+    Ago: this.MESES.AGOSTO,
+    Sep: this.MESES.SEPTIEMBRE,
+    Oct: this.MESES.OCTUBRE,
+    Nov: this.MESES.NOVIEMBRE,
+    Dic: this.MESES.DICIEMBRE,
+  };
 
   /**
    * Add validation domains and formulaes to the template before downloading it,
@@ -107,9 +101,9 @@ export class CargueMasivoService {
   async prepararHeadersValidacion(): Promise<{ [key: string]: string[] }> {
     // Types of parameters to load from the Parametros API.
     const tiposDeParametros = [
-      { nombre: 'Tipo de Evaluación', id: environment.TIPO_PARAMETRO.TIPO_EVALUACION },
-      { nombre: 'Macroproceso', id: environment.TIPO_PARAMETRO.MACROPROCESO },
-      { nombre: 'Proceso', id: environment.TIPO_PARAMETRO.PROCESO },
+      { nombre: 'Tipo de Evaluación', id: env().TIPO_PARAMETRO.TIPO_EVALUACION },
+      { nombre: 'Macroproceso', id: env().TIPO_PARAMETRO.MACROPROCESO },
+      { nombre: 'Proceso', id: env().TIPO_PARAMETRO.PROCESO },
     ]
 
     // Load options for each parameter type and for Dependencias.
@@ -127,7 +121,7 @@ export class CargueMasivoService {
   async crearEstructura(base64data: string, complemento: Object): Promise<any> {
     return {
       base64data,
-      service: PLAN_AUDITORIA_CRUD_SERVICE,
+      service: env().PLAN_AUDITORIA_CRUD_SERVICE,
       endpoint: 'auditoria-gestion',
       complement: complemento,
       structure: {
@@ -135,19 +129,19 @@ export class CargueMasivoService {
         tipo_evaluacion_id: {
           file_name_column: 'Tipo de Evaluación',
           required: true,
-          mapping: await this.getParametrosMapping(TIPO_PARAMETRO.TIPO_EVALUACION),
+          mapping: await this.getParametrosMapping(env().TIPO_PARAMETRO.TIPO_EVALUACION),
         },
         macroproceso_id: {
           file_name_column: 'Macroproceso',
           separator: '|',
           required: false,
-          mapping: await this.getParametrosMapping(TIPO_PARAMETRO.MACROPROCESO),
+          mapping: await this.getParametrosMapping(env().TIPO_PARAMETRO.MACROPROCESO),
         },
         proceso_id: {
           file_name_column: 'Proceso',
           separator: '|',
           required: false,
-          mapping: await this.getParametrosMapping(TIPO_PARAMETRO.PROCESO),
+          mapping: await this.getParametrosMapping(env().TIPO_PARAMETRO.PROCESO),
         },
         dependencia_id: {
           file_name_column: 'Dependencia',
@@ -161,8 +155,8 @@ export class CargueMasivoService {
           mapping: CANTIDAD_MAPPING,
         },
         cronograma_id: {
-          column_group: Object.keys(MESES_MAPPING),
-          mapping: MESES_MAPPING,
+          column_group: Object.keys(this.MESES_MAPPING),
+          mapping: this.MESES_MAPPING,
         },
       },
     };
@@ -219,7 +213,7 @@ export class CargueMasivoService {
 
     const estructura = {
       base64data,
-      service: environment.PLAN_AUDITORIA_CRUD_SERVICE,
+      service: env().PLAN_AUDITORIA_CRUD_SERVICE,
       endpoint: 'actividad',
       complement: complemento,
       structure: {

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { OikosService } from './oikos.service';
-import { environment } from 'src/config/configuration';
+import { environment as env } from 'src/config/configuration';
 import { HttpModule, HttpService } from '@nestjs/axios';
 import AxiosMockAdapter from 'axios-mock-adapter';
 import { catchError, firstValueFrom } from 'rxjs';
@@ -9,7 +9,7 @@ describe('OikosService', () => {
   let service: OikosService;
   let httpService: HttpService;
   let axiosMock: AxiosMockAdapter;
-  const urlPrefix = environment.OIKOS_SERVICE + '/';
+  const urlPrefix = env().OIKOS_SERVICE + '/';
   const serviceName = 'OikosService';
 
   beforeEach(async () => {

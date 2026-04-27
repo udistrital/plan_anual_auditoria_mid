@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { Observable, map, catchError } from "rxjs";
 import { ParametrosService } from "src/shared/services/parametros/parametros.service";
 import { OikosService } from "src/shared/services/oikos/oikos.service";
-import { environment } from "src/config/configuration";
+import { environment as env } from "src/config/configuration";
 import { Parametro, Dominio } from "./dominio.model";
 import { DOMINIOS_CONFIG } from "./dominios.config";
 
@@ -14,13 +14,13 @@ export class DominiosService {
   ) {}
 
   /**
-   * Retrieves the name of a parameter type based on its ID by searching through the PARAMETROS_TIPO_PARAMETRO configuration in the environment.
+   * Retrieves the name of a parameter type based on its ID by searching through the PARAMETROS_TIPO_PARAMETRO configuration in the env().
    * @param tipoParametroId The ID of the parameter type for which to retrieve the name.
    * @returns The name of the parameter type corresponding to the provided ID.
    * @throws An error if the provided ID is not found in the environment configuration.
    */
   getNombreTipoParametro(tipoParametroId: number): string {
-    const tipos = environment.TIPO_PARAMETRO;
+    const tipos = env().TIPO_PARAMETRO;
     for (const tipo of Object.keys(tipos)) {
       if (tipos[tipo] == tipoParametroId)
         return tipo;

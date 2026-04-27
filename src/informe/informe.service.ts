@@ -2,9 +2,7 @@ import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom, forkJoin, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
-import { environment } from 'src/config/configuration';
-
-const { PLAN_AUDITORIA_CRUD_SERVICE } = environment;
+import { environment as env } from 'src/config/configuration';
 
 @Injectable()
 export class InformeService {
@@ -18,7 +16,7 @@ export class InformeService {
 
       // Obtener informe base del CRUD
       const informeBase = await lastValueFrom(
-        this.httpService.get(`${PLAN_AUDITORIA_CRUD_SERVICE}informe/${id}`).pipe(
+        this.httpService.get(`${env().PLAN_AUDITORIA_CRUD_SERVICE}informe/${id}`).pipe(
           map(res => res.data.Data),
           catchError(() => {
             throw new HttpException(
@@ -32,7 +30,7 @@ export class InformeService {
       // Orquestar llamadas paralelas para complementar datos
       const complementos$ = forkJoin({
         auditoria: this.httpService
-          .get(`${PLAN_AUDITORIA_CRUD_SERVICE}auditoria/${informeBase.auditoria_id}`)
+          .get(`${env().PLAN_AUDITORIA_CRUD_SERVICE}auditoria/${informeBase.auditoria_id}`)
           .pipe(
             map(res => res.data.Data),
             catchError((error) => {
@@ -42,7 +40,7 @@ export class InformeService {
           ),
 
         hallazgos: this.httpService
-          .get(`${PLAN_AUDITORIA_CRUD_SERVICE}informe/${id}/hallazgos`)
+          .get(`${env().PLAN_AUDITORIA_CRUD_SERVICE}informe/${id}/hallazgos`)
           .pipe(
             map(res => res.data.Data),
             catchError((error) => {
@@ -52,7 +50,7 @@ export class InformeService {
           ),
 
         temas: this.httpService
-          .get(`${PLAN_AUDITORIA_CRUD_SERVICE}tema?query=informe_id:${id},activo:true`)
+          .get(`${env().PLAN_AUDITORIA_CRUD_SERVICE}tema?query=informe_id:${id},activo:true`)
           .pipe(
             map(res => res.data.Data),
             catchError((error) => {
@@ -88,7 +86,7 @@ export class InformeService {
   async getAll(queryParams: any) {
     try {
       const queryString = new URLSearchParams(queryParams).toString();
-      const url = `${PLAN_AUDITORIA_CRUD_SERVICE}informe?${queryString}`;
+      const url = `${env().PLAN_AUDITORIA_CRUD_SERVICE}informe?${queryString}`;
 
       const response = await lastValueFrom(
         this.httpService.get(url).pipe(
@@ -108,7 +106,7 @@ export class InformeService {
           response.Data.map(async (informe: any) => {
             const complementos$ = forkJoin({
               auditoria: this.httpService
-                .get(`${PLAN_AUDITORIA_CRUD_SERVICE}auditoria/${informe.auditoria_id}`)
+                .get(`${env().PLAN_AUDITORIA_CRUD_SERVICE}auditoria/${informe.auditoria_id}`)
                 .pipe(
                   map(res => res.data.Data),
                   catchError(() => of(null))
@@ -167,7 +165,7 @@ export class InformeService {
       this.logger.log(`Actualizando informe con ID: ${id}`);
 
       const response = await lastValueFrom(
-        this.httpService.put(`${PLAN_AUDITORIA_CRUD_SERVICE}informe/${id}`, body).pipe(
+        this.httpService.put(`${env().PLAN_AUDITORIA_CRUD_SERVICE}informe/${id}`, body).pipe(
           map(res => res.data),
           catchError((error) => {
             throw new HttpException(

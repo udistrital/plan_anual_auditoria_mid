@@ -1,16 +1,9 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
-import { environment } from 'src/config/configuration';
+import { environment as env } from 'src/config/configuration';
 import { reemplazar, reemplazarCampoRol } from 'src/utils/campo.utils';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
-
-const {
-  PARAMETROS_SERVICE,
-  TERCEROS_SERVICE,
-  TIPO_PARAMETRO,
-  ETIQUETAS_ROL,
-} = environment;
 
 @Injectable()
 export class PlanEstadoService {
@@ -42,7 +35,7 @@ export class PlanEstadoService {
     try {
       const firstElement = Array.isArray(data.Data) ? data.Data[0] : data.Data;
       if ('estado_id' in firstElement) {
-        let param = await this.traerParametros(TIPO_PARAMETRO.PLAN_ESTADO);
+        let param = await this.traerParametros(env().TIPO_PARAMETRO.PLAN_ESTADO);
         this.estados.push(...param);
         validacion = true;
       }
@@ -53,7 +46,7 @@ export class PlanEstadoService {
   }
 
   private async traerParametros(idParam: number) {
-    const url = `${PARAMETROS_SERVICE}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre`;
+    const url = `${env().PARAMETROS_SERVICE}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data.Data;
@@ -73,7 +66,7 @@ export class PlanEstadoService {
             reemplazar(this.estados, element, 'estado_id', 'estado');
           }
           if (element.usuario_rol !== undefined) {
-            reemplazarCampoRol(element, ETIQUETAS_ROL);
+            reemplazarCampoRol(element, env().ETIQUETAS_ROL);
           }
           if (element.usuario_id !== undefined) {
             await this.reemplazarCampoUsuario(element);
@@ -85,7 +78,7 @@ export class PlanEstadoService {
         reemplazar(this.estados, data.Data, 'estado_id', 'estado');
       }
       if (data.Data.usuario_rol !== undefined) {
-        reemplazarCampoRol(data.Data, ETIQUETAS_ROL);
+        reemplazarCampoRol(data.Data, env().ETIQUETAS_ROL);
       }
       if (data.Data.usuario_id !== undefined) {
         await this.reemplazarCampoUsuario(data.Data);
@@ -110,7 +103,7 @@ export class PlanEstadoService {
   }
 
   private async traerUsuario(idUsuario: string) {
-    const url = `${TERCEROS_SERVICE}/tercero/${idUsuario}`;
+    const url = `${env().TERCEROS_SERVICE}/tercero/${idUsuario}`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       const data = response.data;

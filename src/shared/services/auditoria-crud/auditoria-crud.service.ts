@@ -1,9 +1,7 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
-import { environment } from 'src/config/configuration';
-
-const { PLAN_AUDITORIA_CRUD_SERVICE } = environment;
+import { environment as env } from 'src/config/configuration';
 
 @Injectable()
 export class AuditoriaCrudService {
@@ -17,7 +15,7 @@ export class AuditoriaCrudService {
    * @returns Datos obtenidos de la API CRUD.
    */
   async traerDataCrud(endpoint: string, id: string | null, queryParams: any) {
-    let url = `${PLAN_AUDITORIA_CRUD_SERVICE}${endpoint}${id ? '/'+id : ''}` 
+    let url = `${env().PLAN_AUDITORIA_CRUD_SERVICE}${endpoint}${id ? '/'+id : ''}` 
 
     if (queryParams) {
       const queryString = new URLSearchParams(queryParams).toString();

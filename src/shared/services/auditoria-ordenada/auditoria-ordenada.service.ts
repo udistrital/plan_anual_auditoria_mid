@@ -1,13 +1,11 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
-import { environment } from 'src/config/configuration';
+import { environment as env } from 'src/config/configuration';
 import {
   ordenarAuditoriasPorPlan,
   aplicarOrdenamiento,
 } from '../../utils/auditoria-ordenamiento.utils';
-
-const { PLAN_AUDITORIA_CRUD_SERVICE } = environment;
 
 /**
  * Servicio compartido para obtener auditorías ordenadas.
@@ -58,7 +56,7 @@ export class AuditoriaOrdenadaService {
   }
 
   private async obtenerAuditoriasDeCrud(planId: string, tipo: string = 'auditoria'): Promise<any[]> {
-    const url = `${PLAN_AUDITORIA_CRUD_SERVICE}${tipo}?query=plan_auditoria_id:${planId},activo:true&limit=0`;
+    const url = `${env().PLAN_AUDITORIA_CRUD_SERVICE}${tipo}?query=plan_auditoria_id:${planId},activo:true&limit=0`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data?.Data || [];
@@ -71,7 +69,7 @@ export class AuditoriaOrdenadaService {
   }
 
   private async obtenerPlan(planId: string): Promise<any> {
-    const url = `${PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${planId}`;
+    const url = `${env().PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${planId}`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data?.Data;

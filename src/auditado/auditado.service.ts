@@ -1,12 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
-import { environment } from 'src/config/configuration';
-
-const {
-    PLAN_AUDITORIA_CRUD_SERVICE,
-    TERCEROS_SERVICE
-} = environment;
+import { environment as env } from 'src/config/configuration';
 
 @Injectable()
 export class AuditadoService {
@@ -16,7 +11,7 @@ export class AuditadoService {
     ) {}
 
     async filtrarDocumentosPorDependencia(personaId: number, auditoriaId: string, cargoId: number, tipoDocumentoId?: string) {
-        const documentosUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}documento?query=referencia_id:${auditoriaId},activo:true`;
+        const documentosUrl = `${env().PLAN_AUDITORIA_CRUD_SERVICE}documento?query=referencia_id:${auditoriaId},activo:true`;
         const tiposDocumentosArray = tipoDocumentoId ? tipoDocumentoId.split(',').map(id => parseInt(id, 10)) : [];
         const dependenciasAuditado = await this.obtenerDependenciasPersona(personaId, cargoId);
 
@@ -32,7 +27,7 @@ export class AuditadoService {
     }
 
     private async obtenerDependenciasPersona(personaId: number, cargoId: number): Promise<number[]> {
-        const url = `${TERCEROS_SERVICE}vinculacion?query=TerceroPrincipalId:${personaId},Activo:true,CargoId:${cargoId}&fields=DependenciaId`;
+        const url = `${env().TERCEROS_SERVICE}vinculacion?query=TerceroPrincipalId:${personaId},Activo:true,CargoId:${cargoId}&fields=DependenciaId`;
         try {
           const response = await lastValueFrom(this.httpService.get(url));
     

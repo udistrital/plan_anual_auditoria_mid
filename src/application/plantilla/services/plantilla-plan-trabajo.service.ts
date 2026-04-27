@@ -1,16 +1,10 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { environment } from 'src/config/configuration';
+import { environment as env } from 'src/config/configuration';
 import { lastValueFrom } from 'rxjs';
 import * as moment from 'moment';
 import 'moment/locale/es';
 import { PlantillaUtilsService } from '../../../utils/plantilla.utils';
-
-const {
-  PLAN_AUDITORIA_CRUD_SERVICE,
-  PLANTILLAS,
-  PARAMETROS_SERVICE
-} = environment;
 
 @Injectable()
 export class PlantillaPlanTrabajoService {
@@ -28,8 +22,8 @@ export class PlantillaPlanTrabajoService {
   }
 
   private async obtenerAuditoria(idAuditoria: string) {
-    let urlAuditoria = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria/${idAuditoria}`;
-    let urlActividades = `${PLAN_AUDITORIA_CRUD_SERVICE}actividad?query=auditoria_id:${idAuditoria},activo:true&limit=0`;
+    let urlAuditoria = `${env().PLAN_AUDITORIA_CRUD_SERVICE}auditoria/${idAuditoria}`;
+    let urlActividades = `${env().PLAN_AUDITORIA_CRUD_SERVICE}actividad?query=auditoria_id:${idAuditoria},activo:true&limit=0`;
     try {
       const respuestaAuditoria = await lastValueFrom(
         this.httpService.get(urlAuditoria),
@@ -58,7 +52,7 @@ export class PlantillaPlanTrabajoService {
     ]);
     const actividades = this.organizarActividades(data.actividadesAuditoria);
     const infoParaPlantilla = {
-      plantilla_id: PLANTILLAS.PROGRAMA_TRABAJO,
+      plantilla_id: env().PLANTILLAS.PROGRAMA_TRABAJO,
       data: {
         recursosTecnologicos: auditoria.rec_tecnologico,
         recursosHumanos: auditoria.rec_humano,
@@ -90,7 +84,7 @@ export class PlantillaPlanTrabajoService {
   }
 
   private async traerParametros(idParam: string) {
-    const url = `${PARAMETROS_SERVICE}/parametro?query=Id:${idParam}&fields=Nombre`;
+    const url = `${env().PARAMETROS_SERVICE}/parametro?query=Id:${idParam}&fields=Nombre`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data.Data[0];

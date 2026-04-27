@@ -2,23 +2,11 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import * as moment from 'moment';
 import 'moment/locale/es';
 import { PlantillaUtilsService } from '../../../utils/plantilla.utils';
-import { environment } from 'src/config/configuration';
+import { environment as env } from 'src/config/configuration';
 import { lastValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { capitalize, unirListaNombres } from 'src/utils/texto.utils';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
-
-const {
-  PLAN_AUDITORIA_CRUD_SERVICE,
-  PLANTILLAS,
-  PARAMETROS_SERVICE,
-  TERCEROS_SERVICE,
-  OIKOS_SERVICE,
-  logoUDistritalOCI,
-  contactoOCI,
-  ID_DEPENDENCIA_OCI,
-  CARGO
-} = environment;
 
 @Injectable()
 export class PlantillaSolicitudInformacionService {
@@ -52,9 +40,9 @@ export class PlantillaSolicitudInformacionService {
       ]);
 
     const infoParaPlantilla = {
-      plantilla_id: PLANTILLAS.SOLICITUD_INFORMACION,
+      plantilla_id: env().PLANTILLAS.SOLICITUD_INFORMACION,
       data: {
-        logoUDistrital: logoUDistritalOCI,
+        logoUDistrital: env().logoUDistritalOCI,
         fecha: moment().locale('es').format('D [de] MMMM [de] YYYY'),
         fecha_inicio: moment(auditoria.fecha_inicio).locale('es').format('DD/MM/YYYY'),
         consecutivo_oci: auditoria.consecutivo_OCI,
@@ -66,7 +54,7 @@ export class PlantillaSolicitudInformacionService {
         auditores: auditores,
         tema: auditoria.tema,
         jefe_oci: jefeOci || "No se encontró el jefe de la Oficina Asesora de Control Interno",
-        contacto_oci: contactoOCI
+        contacto_oci: env().contactoOCI
       },
     };
 
@@ -74,7 +62,7 @@ export class PlantillaSolicitudInformacionService {
   }
 
   private async traerParametros(idParam: string) {
-    const url = `${PARAMETROS_SERVICE}/parametro?query=Id:${idParam}&fields=Nombre`;
+    const url = `${env().PARAMETROS_SERVICE}/parametro?query=Id:${idParam}&fields=Nombre`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data.Data[0];
@@ -118,7 +106,7 @@ export class PlantillaSolicitudInformacionService {
   }
 
   private async traerAuditores(auditoriaId: string) {
-    const url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditor?query=auditoria_id:${auditoriaId},activo:true&limit=0&fields=auditor_id`;
+    const url = `${env().PLAN_AUDITORIA_CRUD_SERVICE}auditor?query=auditoria_id:${auditoriaId},activo:true&limit=0&fields=auditor_id`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data.Data;
@@ -131,7 +119,7 @@ export class PlantillaSolicitudInformacionService {
   }
 
   private async traerTercero(terceroId: number) {
-    const url = `${TERCEROS_SERVICE}/tercero/${terceroId}`;
+    const url = `${env().TERCEROS_SERVICE}/tercero/${terceroId}`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data;
@@ -168,7 +156,7 @@ export class PlantillaSolicitudInformacionService {
   }
   
   private async obtenerDependencia(idDependencia: string) {
-    const url = `${OIKOS_SERVICE}dependencia/${idDependencia}`;
+    const url = `${env().OIKOS_SERVICE}dependencia/${idDependencia}`;
     try {
         const response = await lastValueFrom(this.httpService.get(url));
         return response.data;
@@ -181,7 +169,7 @@ export class PlantillaSolicitudInformacionService {
   }
 
   private async obtenerJefeOci() {
-    const url = `${TERCEROS_SERVICE}vinculacion?query=DependenciaId:${ID_DEPENDENCIA_OCI},CargoId:${CARGO.JEFE_DEPENDENCIA_ID},Activo:true`;
+    const url = `${env().TERCEROS_SERVICE}vinculacion?query=DependenciaId:${env().ID_DEPENDENCIA_OCI},CargoId:${env().CARGO.JEFE_DEPENDENCIA_ID},Activo:true`;
     try {
         const response = await lastValueFrom(this.httpService.get(url)); 
         return response.data[0].TerceroPrincipalId.NombreCompleto;
@@ -200,7 +188,7 @@ export class PlantillaSolicitudInformacionService {
       if (Array.isArray(dependencias)) {
         for (const idDependencia of dependencias) {
           const dependencia = await this.obtenerDependencia(idDependencia);
-          const responsableDependencia = await this.obtenerTerceroVinculado(environment.CARGO.JEFE_DEPENDENCIA_ID, idDependencia);
+          const responsableDependencia = await this.obtenerTerceroVinculado(env().CARGO.JEFE_DEPENDENCIA_ID, idDependencia);
 
           respuestaDependencias.push({
             nombre: dependencia.Nombre,
@@ -209,7 +197,7 @@ export class PlantillaSolicitudInformacionService {
         }
       } else {
         const dependencia = await this.obtenerDependencia(dependencias);
-        const responsableDependencia = await this.obtenerTerceroVinculado(environment.CARGO.JEFE_DEPENDENCIA_ID, dependencias);
+        const responsableDependencia = await this.obtenerTerceroVinculado(env().CARGO.JEFE_DEPENDENCIA_ID, dependencias);
 
         respuestaDependencias.push({
           nombre: dependencia.Nombre,

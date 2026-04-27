@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { environment } from "src/config/configuration";
+import { environment as env } from "src/config/configuration";
 import { HttpService } from "@nestjs/axios";
 import { Observable, map, catchError } from "rxjs";
 
@@ -8,7 +8,7 @@ import { Observable, map, catchError } from "rxjs";
 export class OikosService {
 
   /** The base URL for the Oikos API, loaded from the environment configuration. */
-  private readonly baseUrl = environment.OIKOS_SERVICE;
+  private readonly baseUrl = env().OIKOS_SERVICE;
 
   constructor(private readonly httpService: HttpService) {}
 

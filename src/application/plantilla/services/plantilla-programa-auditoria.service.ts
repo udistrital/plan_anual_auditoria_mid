@@ -2,22 +2,11 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import * as moment from 'moment';
 import 'moment/locale/es';
 import { PlantillaUtilsService } from '../../../utils/plantilla.utils';
-import { environment } from 'src/config/configuration';
+import { environment as env } from 'src/config/configuration';
 import { lastValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { capitalize, unirListaNombres } from 'src/utils/texto.utils';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
-
-
-const {
-    PLAN_AUDITORIA_CRUD_SERVICE,
-    PLANTILLAS,
-    PARAMETROS_SERVICE,
-    TERCEROS_SERVICE,
-    OIKOS_SERVICE,
-    logoUDistrital,
-    logoSIGUD
-} = environment;
 
 @Injectable()
 export class PlantillaProgramaAuditoriaService {
@@ -46,14 +35,14 @@ export class PlantillaProgramaAuditoriaService {
             this.traerParametros(auditoriaPadre.macroproceso_id),
             this.traerParametros(auditoriaPadre.proceso_id),
             this.obtenerDependencia(dependenciaPrincipal),
-            this.obtenerTerceroVinculado(environment.CARGO.JEFE_DEPENDENCIA_ID, dependenciaPrincipal),
-            this.obtenerTerceroVinculado(environment.CARGO.ASISTENTE_DEPENDENCIA_ID, dependenciaPrincipal),
+            this.obtenerTerceroVinculado(env().CARGO.JEFE_DEPENDENCIA_ID, dependenciaPrincipal),
+            this.obtenerTerceroVinculado(env().CARGO.ASISTENTE_DEPENDENCIA_ID, dependenciaPrincipal),
             this.obtenerNombresAuditores(auditoria._id)
         ]);
 
         const actividadesOrganizadas = this.organizarActividades(actividades, grupoAuditor);
         const infoParaPlantilla = {
-            plantilla_id: PLANTILLAS.PROGRAMA_TRABAJO,
+            plantilla_id: env().PLANTILLAS.PROGRAMA_TRABAJO,
             data: {
                 actividades: actividadesOrganizadas,
                 recursosTecnologicos: auditoria.rec_tecnologico,
@@ -68,8 +57,8 @@ export class PlantillaProgramaAuditoriaService {
                 criterios: auditoria.criterio,
                 equipoAuditor: grupoAuditor,
                 periodoEjecucion: moment(auditoria.fecha_inicio).format('DD/MM/YYYY') + " - " + moment(auditoria.fecha_fin).format('DD/MM/YYYY'),
-                logoUDistrital: logoUDistrital,
-                logoSIGUD: logoSIGUD
+                logoUDistrital: env().logoUDistrital,
+                logoSIGUD: env().logoSIGUD
             }
         };
 
@@ -83,7 +72,7 @@ export class PlantillaProgramaAuditoriaService {
     }
 
     private async obtenerActividades(idAuditoria: string) {
-        let urlActividades = `${PLAN_AUDITORIA_CRUD_SERVICE}actividad?query=auditoria_id:${idAuditoria},activo:true&fields=titulo,fecha_inicio,fecha_fin,observacion,referencia,descripcion,folio,medio_id,carpeta&limit=0`;
+        let urlActividades = `${env().PLAN_AUDITORIA_CRUD_SERVICE}actividad?query=auditoria_id:${idAuditoria},activo:true&fields=titulo,fecha_inicio,fecha_fin,observacion,referencia,descripcion,folio,medio_id,carpeta&limit=0`;
         try {
             const responseActividades = await lastValueFrom(
                 this.httpService.get(urlActividades),
@@ -113,7 +102,7 @@ export class PlantillaProgramaAuditoriaService {
     }
 
     private async traerParametros(idParam: string) {
-        const url = `${PARAMETROS_SERVICE}/parametro?query=Id:${idParam}&fields=Nombre`;
+        const url = `${env().PARAMETROS_SERVICE}/parametro?query=Id:${idParam}&fields=Nombre`;
         try {
             const response = await lastValueFrom(this.httpService.get(url));
             return response.data.Data[0];
@@ -157,7 +146,7 @@ export class PlantillaProgramaAuditoriaService {
     }
 
     private async traerAuditores(auditoriaId: string) {
-        const url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditor?query=auditoria_id:${auditoriaId},activo:true&limit=0&fields=auditor_id`;
+        const url = `${env().PLAN_AUDITORIA_CRUD_SERVICE}auditor?query=auditoria_id:${auditoriaId},activo:true&limit=0&fields=auditor_id`;
         try {
             const response = await lastValueFrom(this.httpService.get(url));
             return response.data.Data;
@@ -170,7 +159,7 @@ export class PlantillaProgramaAuditoriaService {
     }
 
     private async traerTercero(terceroId: string) {
-        const url = `${TERCEROS_SERVICE}tercero/${terceroId}`;
+        const url = `${env().TERCEROS_SERVICE}tercero/${terceroId}`;
         try {
             const response = await lastValueFrom(this.httpService.get(url));
             return response.data;
@@ -187,7 +176,7 @@ export class PlantillaProgramaAuditoriaService {
             return { Nombre: 'No definido' };
         }
 
-        const url = `${OIKOS_SERVICE}dependencia/${idDependencia}`;
+        const url = `${env().OIKOS_SERVICE}dependencia/${idDependencia}`;
         try {
             const response = await lastValueFrom(this.httpService.get(url));
             return response.data;

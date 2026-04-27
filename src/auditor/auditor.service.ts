@@ -1,10 +1,8 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
-import { environment } from 'src/config/configuration';
+import { environment as env } from 'src/config/configuration';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
-
-const { TERCEROS_SERVICE } = environment;
 
 @Injectable()
 export class AuditorService {
@@ -26,7 +24,7 @@ export class AuditorService {
   }
 
   private async traerTercero(documento: string) {
-    const url = `${TERCEROS_SERVICE}/tercero/${documento}`;
+    const url = `${env().TERCEROS_SERVICE}/tercero/${documento}`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data;

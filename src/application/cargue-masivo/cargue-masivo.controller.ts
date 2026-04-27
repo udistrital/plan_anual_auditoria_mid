@@ -10,7 +10,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { CargueMasivoService } from './cargue-masivo.service';
 import axios from 'axios';
-import { environment } from 'src/config/configuration';
+import { environment as env } from 'src/config/configuration';
 import { NuxeoService } from 'src/shared/utils/nuxeo/nuxeo.service';
 import { AuditoriaPadreService } from '../auditoria-padre/auditoria-padre.service';
 import { firstValueFrom } from 'rxjs';
@@ -24,7 +24,7 @@ export class CargueMasivoController {
     private readonly auditoriaPadreService: AuditoriaPadreService,
   ) {}
 
-  private cargueMasivoUrl = `${environment.CARGUE_MASIVO_SERVERLESS_MID}registro-datos-archivo`;
+  private cargueMasivoUrl = `${env().CARGUE_MASIVO_SERVERLESS_MID}registro-datos-archivo`;
 
   @Get('auditorias/plantilla')
   @ApiOperation({ summary: 'Descargar plantilla de auditorías' })
@@ -50,7 +50,7 @@ export class CargueMasivoController {
     try {
       const response = await firstValueFrom(
         this.nuxeoService.obtenerPorUUID(
-          environment.PLANTILLA_CARGUE_MASIVO_AUDITORIAS
+          env().PLANTILLA_CARGUE_MASIVO_AUDITORIAS
         )
       );
       const plantillaConValidaciones =
@@ -94,7 +94,7 @@ export class CargueMasivoController {
       const ordenadas = await this.auditoriaPadreService.getAuditoriasOrdenadas({ query: `plan_auditoria_id:${planId}` });
       const plantillaResponse = await firstValueFrom(
         this.nuxeoService.obtenerPorUUID(
-          environment.PLANTILLA_CARGUE_MASIVO_AUDITORIAS
+          env().PLANTILLA_CARGUE_MASIVO_AUDITORIAS
         )
       );
       if (!ordenadas || !ordenadas.Data)

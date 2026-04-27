@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GestorDocumentalService } from './gestor-documental.service';
-import { environment } from 'src/config/configuration';
+import { environment as env } from 'src/config/configuration';
 import { HttpModule, HttpService } from '@nestjs/axios';
 import AxiosMockAdapter from 'axios-mock-adapter';
 import { catchError, firstValueFrom } from 'rxjs';
@@ -9,7 +9,7 @@ describe('GestorDocumentalService', () => {
   let service: GestorDocumentalService;
   let httpService: HttpService;
   let axiosMock: AxiosMockAdapter;
-  const urlPrefix = environment.GESTOR_DOCUMENTAL_SERVICE + '/';
+  const urlPrefix = env().GESTOR_DOCUMENTAL_SERVICE + '/';
   const serviceName = 'GestorDocumentalService';
 
   beforeEach(async () => {

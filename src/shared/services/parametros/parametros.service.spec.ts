@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ParametrosService } from './parametros.service';
-import { environment } from 'src/config/configuration';
+import { environment as env } from 'src/config/configuration';
 import { HttpModule, HttpService } from '@nestjs/axios';
 import AxiosMockAdapter from 'axios-mock-adapter';
 import { catchError, firstValueFrom } from 'rxjs';
@@ -9,7 +9,7 @@ describe('ParametrosService', () => {
   let service: ParametrosService;
   let httpService: HttpService;
   let axiosMock: AxiosMockAdapter;
-  const urlPrefix = environment.PARAMETROS_SERVICE + '/';
+  const urlPrefix = env().PARAMETROS_SERVICE + '/';
   const serviceName = 'ParametrosService';
 
   beforeEach(async () => {

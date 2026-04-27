@@ -2,20 +2,8 @@ import { HttpService } from '@nestjs/axios';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
-import { environment } from 'src/config/configuration';
+import { environment as env } from 'src/config/configuration';
 import { PlantillaUtilsService } from 'src/utils/plantilla.utils';
-
-const {
-    PLAN_AUDITORIA_CRUD_SERVICE,
-    PLANTILLAS,
-    // PARAMETROS_SERVICE,
-    TERCEROS_SERVICE,
-    TIPO_EVALUACION,
-    ESTADOS_INFORME_AUDITORIA_PRELIMINAR,
-    ID_DEPENDENCIA_OCI,
-    CARGO,
-    OIKOS_SERVICE
-} = environment;
 
 @Injectable()
 export class PlantillaInformeAuditoriaService {
@@ -56,7 +44,7 @@ export class PlantillaInformeAuditoriaService {
             ]);
 
             const infoParaPlantilla = {
-                plantilla_id: PLANTILLAS.INFORME_AUDITORIA_INTERNA,
+                plantilla_id: env().PLANTILLAS.INFORME_AUDITORIA_INTERNA,
                 data: {
                     consecutivo: auditoria.consecutivo_no_auditoria,
                     fecha_emision: {
@@ -107,7 +95,7 @@ export class PlantillaInformeAuditoriaService {
     }
 
     private async obtenerInformeAuditoria(idAuditoria: string) {
-        const urlInforme = `${PLAN_AUDITORIA_CRUD_SERVICE}informe?query=auditoria_id:${idAuditoria},activo:true&fields=_id,fecha_emision,muestra,aspecto_general,informe_final,observacion_conclusion,nota&limit=1`;
+        const urlInforme = `${env().PLAN_AUDITORIA_CRUD_SERVICE}informe?query=auditoria_id:${idAuditoria},activo:true&fields=_id,fecha_emision,muestra,aspecto_general,informe_final,observacion_conclusion,nota&limit=1`;
         try {
             const respuestaInforme = await lastValueFrom(this.httpService.get(urlInforme));
             return respuestaInforme.data.Data[0];
@@ -121,7 +109,7 @@ export class PlantillaInformeAuditoriaService {
 
 
     private async obtenerTemasInforme(idInforme: string) {
-        const urlTemas = `${PLAN_AUDITORIA_CRUD_SERVICE}tema?query=informe_id:${idInforme},activo:true`;
+        const urlTemas = `${env().PLAN_AUDITORIA_CRUD_SERVICE}tema?query=informe_id:${idInforme},activo:true`;
         try {
             const respuestaTemas = await lastValueFrom(
                 this.httpService.get(urlTemas),
@@ -137,13 +125,13 @@ export class PlantillaInformeAuditoriaService {
 
     private async generarTituloInforme(idAuditoria: string, tipo_evaluacion_id: number, auditoriaTitulo: string) {
         const tipo =
-            tipo_evaluacion_id === TIPO_EVALUACION.AUDITORIA_INTERNA
+            tipo_evaluacion_id === env().TIPO_EVALUACION.AUDITORIA_INTERNA
                 ? "Auditoria Interna"
                 : "Auditoria de Seguimiento";
 
         const estado_id = await this.consultarEstadoAuditoria(idAuditoria);
 
-        const sufijo = ESTADOS_INFORME_AUDITORIA_PRELIMINAR.includes(estado_id)
+        const sufijo = env().ESTADOS_INFORME_AUDITORIA_PRELIMINAR.includes(estado_id)
             ? "Preliminar"
             : "Final";
 
@@ -151,7 +139,7 @@ export class PlantillaInformeAuditoriaService {
     }
 
     private async consultarEstadoAuditoria(idAuditoria: string) {
-        const urlEstadoAuditoria = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria-estado?query=auditoria_id:${idAuditoria},activo:true,actual:true&fields=estado_id&limit=1`;
+        const urlEstadoAuditoria = `${env().PLAN_AUDITORIA_CRUD_SERVICE}auditoria-estado?query=auditoria_id:${idAuditoria},activo:true,actual:true&fields=estado_id&limit=1`;
 
         try {
             const respuestaEstado = await lastValueFrom(this.httpService.get(urlEstadoAuditoria));
@@ -208,7 +196,7 @@ export class PlantillaInformeAuditoriaService {
     }
 
     private async obtenerAuditores(auditoriaId: string) {
-        const url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditor?query=auditoria_id:${auditoriaId},activo:true&limit=0`;
+        const url = `${env().PLAN_AUDITORIA_CRUD_SERVICE}auditor?query=auditoria_id:${auditoriaId},activo:true&limit=0`;
         try {
             const response = await lastValueFrom(this.httpService.get(url));
             return response.data.Data;
@@ -221,7 +209,7 @@ export class PlantillaInformeAuditoriaService {
     }
 
     private async obtenerTercero(terceroId: string) {
-        const url = `${TERCEROS_SERVICE}/tercero/${terceroId}`;
+        const url = `${env().TERCEROS_SERVICE}/tercero/${terceroId}`;
         try {
             const response = await lastValueFrom(this.httpService.get(url));
             return response.data;
@@ -235,7 +223,7 @@ export class PlantillaInformeAuditoriaService {
 
 
     private async obtenerJefeOci() {
-        const url = `${TERCEROS_SERVICE}vinculacion?query=DependenciaId:${ID_DEPENDENCIA_OCI},CargoId:${CARGO.JEFE_DEPENDENCIA_ID},Activo:true`;
+        const url = `${env().TERCEROS_SERVICE}vinculacion?query=DependenciaId:${env().ID_DEPENDENCIA_OCI},CargoId:${env().CARGO.JEFE_DEPENDENCIA_ID},Activo:true`;
         try {
             const response = await lastValueFrom(this.httpService.get(url));
             return response.data?.[0]?.TerceroPrincipalId?.NombreCompleto || "No se encontró el jefe de la Oficina Asesora de Control Interno";
@@ -251,8 +239,8 @@ export class PlantillaInformeAuditoriaService {
       if (Array.isArray(dependencias)) {
         for (const idDependencia of dependencias) {
           const dependencia = await this.obtenerDependencia(idDependencia);
-          const liderDependencia = await this.obtenerTerceroVinculado(CARGO.JEFE_DEPENDENCIA_ID, idDependencia);
-          const responsableDependencia = await this.obtenerTerceroVinculado(CARGO.ASISTENTE_DEPENDENCIA_ID, idDependencia);  
+          const liderDependencia = await this.obtenerTerceroVinculado(env().CARGO.JEFE_DEPENDENCIA_ID, idDependencia);
+          const responsableDependencia = await this.obtenerTerceroVinculado(env().CARGO.ASISTENTE_DEPENDENCIA_ID, idDependencia);  
 
           respuestaDependencias.push({
             nombre: dependencia.Nombre,
@@ -262,8 +250,8 @@ export class PlantillaInformeAuditoriaService {
         }
       } else {
         const dependencia = await this.obtenerDependencia(dependencias);
-        const liderDependencia = await this.obtenerTerceroVinculado(CARGO.JEFE_DEPENDENCIA_ID, dependencias);
-        const responsableDependencia = await this.obtenerTerceroVinculado(CARGO.ASISTENTE_DEPENDENCIA_ID, dependencias);
+        const liderDependencia = await this.obtenerTerceroVinculado(env().CARGO.JEFE_DEPENDENCIA_ID, dependencias);
+        const responsableDependencia = await this.obtenerTerceroVinculado(env().CARGO.ASISTENTE_DEPENDENCIA_ID, dependencias);
 
         respuestaDependencias.push({
           nombre: dependencia.Nombre,
@@ -281,7 +269,7 @@ export class PlantillaInformeAuditoriaService {
   }
 
   private async obtenerDependencia(idDependencia: string) {
-    const url = `${OIKOS_SERVICE}dependencia/${idDependencia}`;
+    const url = `${env().OIKOS_SERVICE}dependencia/${idDependencia}`;
     try {
         const response = await lastValueFrom(this.httpService.get(url));
         return response.data;

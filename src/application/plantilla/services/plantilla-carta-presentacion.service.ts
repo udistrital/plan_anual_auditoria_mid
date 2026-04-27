@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PlantillaUtilsService } from '../../../utils/plantilla.utils';
-import { environment } from 'src/config/configuration';
+import { environment as env } from 'src/config/configuration';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
 
 interface CartaRenderizada {
@@ -68,7 +68,7 @@ export class PlantillaCartaPresentacionService {
     );
 
     const infoParaPlantilla = {
-      plantilla_id: environment.PLANTILLAS.CARTA_PRESENTACION,
+      plantilla_id: env().PLANTILLAS.CARTA_PRESENTACION,
       data: {
         ciudad: 'Bogotá D.C.',
         auditoria: auditoria.titulo,

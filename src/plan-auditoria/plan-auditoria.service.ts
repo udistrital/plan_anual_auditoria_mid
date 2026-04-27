@@ -1,16 +1,8 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
-import { environment } from 'src/config/configuration';
+import { environment as env } from 'src/config/configuration';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
-
-const {
-  TERCEROS_SERVICE,
-  PARAMETROS_SERVICE,
-  TIPO_PARAMETRO,
-  PLAN_ESTADO,
-  AUDITORIA_PADRE_ESTADO,
-} = environment;
 
 @Injectable()
 export class PlanAuditoriaService {
@@ -40,7 +32,7 @@ export class PlanAuditoriaService {
   }
 
   private async traerTercero(documento: string) {
-    const url = `${TERCEROS_SERVICE}/tercero/${documento}`;
+    const url = `${env().TERCEROS_SERVICE}/tercero/${documento}`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data;
@@ -57,14 +49,14 @@ export class PlanAuditoriaService {
     try {
       const firstElement = Array.isArray(data.Data) ? data.Data[0] : data.Data;
       if ('vigencia_id' in firstElement) {
-        let param = await this.traerParametros(TIPO_PARAMETRO.VIGENCIA);
+        let param = await this.traerParametros(env().TIPO_PARAMETRO.VIGENCIA);
         this.vigencias.push(...param);
         validacion = true;
       }
       if ('estado' in firstElement && firstElement.estado !== null) {
         const estadoId = firstElement.estado.estado_id;
         if (estadoId) {
-          let paramEstado = await this.traerParametros(TIPO_PARAMETRO.PLAN_ESTADO);
+          let paramEstado = await this.traerParametros(env().TIPO_PARAMETRO.PLAN_ESTADO);
           this.estados.push(...paramEstado);
         }
         validacion = true;
@@ -76,7 +68,7 @@ export class PlanAuditoriaService {
   }
 
   private async traerParametros(idParam: number) {
-    const url = `${PARAMETROS_SERVICE}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre&limit=0`;
+    const url = `${env().PARAMETROS_SERVICE}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre&limit=0`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data.Data;
@@ -94,7 +86,7 @@ export class PlanAuditoriaService {
         Data.map(async (plan: any) => {
           const [estado, tieneRechazos, tieneModificaciones, tercero] = await Promise.all([
             this.traerEstadoPorPlan(plan._id),
-            this.traerMotivosRechazo(plan._id, PLAN_ESTADO.RECHAZADO),
+            this.traerMotivosRechazo(plan._id, env().PLAN_ESTADO.RECHAZADO),
             this.tieneModificaciones(plan.auditorias),
             plan.creado_por_id ? this.traerTercero(plan.creado_por_id) : null,
           ]);
@@ -125,7 +117,7 @@ export class PlanAuditoriaService {
 
   private async tieneModificaciones(auditorias: string[]): Promise<boolean> {
     const queryParams: any = {
-      query: `estado_id:${AUDITORIA_PADRE_ESTADO.CON_MODIFICACION_EXTEMPORANEA_ID},auditoria_padre_id__in:${auditorias.join('|')}`,
+      query: `estado_id:${env().AUDITORIA_PADRE_ESTADO.CON_MODIFICACION_EXTEMPORANEA_ID},auditoria_padre_id__in:${auditorias.join('|')}`,
       limit: 0,
       fields: '_id',
     }

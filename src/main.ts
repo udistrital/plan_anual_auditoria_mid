@@ -4,11 +4,11 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import * as fs from 'fs';
 import * as yaml from 'js-yaml';
-import { environment } from './config/configuration';
+import { environment as env } from './config/configuration';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const port = environment.PLAN_AUDITORIA_MID_PORT;
+  const port = env().PLAN_AUDITORIA_MID_PORT;
 
   //Swagger
   const config = new DocumentBuilder()

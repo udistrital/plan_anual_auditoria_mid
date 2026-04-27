@@ -1,19 +1,8 @@
 import { HttpService } from '@nestjs/axios';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
-import { environment } from 'src/config/configuration';
+import { environment as env } from 'src/config/configuration';
 import { PlantillaUtilsService } from 'src/utils/plantilla.utils';
-
-const {
-    PLAN_AUDITORIA_CRUD_SERVICE,
-    PLANTILLAS,
-    PARAMETROS_SERVICE,
-    TERCEROS_SERVICE,
-    TIPO_EVALUACION,
-    ESTADOS_INFORME_AUDITORIA_PRELIMINAR,
-    ID_DEPENDENCIA_OCI,
-    CARGO
-} = environment;
 
 @Injectable()
 export class PlantillaInformeSeguimientoService {
@@ -46,7 +35,7 @@ export class PlantillaInformeSeguimientoService {
             ]);
 
             const infoParaPlantilla = {
-                plantilla_id: PLANTILLAS.INFORME_SEGUIMIENTO,
+                plantilla_id: env().PLANTILLAS.INFORME_SEGUIMIENTO,
                 data: {
                     consecutivo: auditoria.no_auditoria,
                     fecha_emision: {
@@ -83,7 +72,7 @@ export class PlantillaInformeSeguimientoService {
     }
 
     private async obtenerInformeSeguimiento(idAuditoria: string) {
-        const urlInforme = `${PLAN_AUDITORIA_CRUD_SERVICE}informe?query=auditoria_id:${idAuditoria},activo:true&fields=_id,fecha_emision,muestra,aspectos_generales,informe_final,observaciones_conclusiones,notas&limit=1`;
+        const urlInforme = `${env().PLAN_AUDITORIA_CRUD_SERVICE}informe?query=auditoria_id:${idAuditoria},activo:true&fields=_id,fecha_emision,muestra,aspectos_generales,informe_final,observaciones_conclusiones,notas&limit=1`;
         try {
             const respuestaInforme = await lastValueFrom(
                 this.httpService.get(urlInforme),
@@ -100,7 +89,7 @@ export class PlantillaInformeSeguimientoService {
 
 
     private async obtenerTemasInforme(idInforme: string) {
-        const urlTemas = `${PLAN_AUDITORIA_CRUD_SERVICE}tema?query=informe_id:${idInforme},activo:true`;
+        const urlTemas = `${env().PLAN_AUDITORIA_CRUD_SERVICE}tema?query=informe_id:${idInforme},activo:true`;
         try {
             const respuestaTemas = await lastValueFrom(
                 this.httpService.get(urlTemas),
@@ -118,7 +107,7 @@ export class PlantillaInformeSeguimientoService {
     private async generarTituloInforme(idAuditoria: string, tipo_evaluacion_id: number, auditoriaTitulo: string) {
         let titulo = "";
 
-        if (tipo_evaluacion_id == TIPO_EVALUACION.AUDITORIA_INTERNA) {
+        if (tipo_evaluacion_id == env().TIPO_EVALUACION.AUDITORIA_INTERNA) {
             titulo += "Auditoria Interna: ";
         } else {
             titulo += "Auditoria de Seguimiento: "
@@ -127,7 +116,7 @@ export class PlantillaInformeSeguimientoService {
         titulo += auditoriaTitulo;
         const estado_auditoria_id = await this.consultarEstadoAuditoria(idAuditoria);
 
-        if (estado_auditoria_id in ESTADOS_INFORME_AUDITORIA_PRELIMINAR) {
+        if (estado_auditoria_id in env().ESTADOS_INFORME_AUDITORIA_PRELIMINAR) {
             titulo += " - Preliminar";
         } else {
             titulo += " - Final";
@@ -136,7 +125,7 @@ export class PlantillaInformeSeguimientoService {
     }
 
     private async consultarEstadoAuditoria(idAuditoria: string) {
-        const urlEstadoAuditoria = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria-estado?query=auditoria_id:${idAuditoria},activo:true,actual:true&fields=estado_interno_id&limit=1`;
+        const urlEstadoAuditoria = `${env().PLAN_AUDITORIA_CRUD_SERVICE}auditoria-estado?query=auditoria_id:${idAuditoria},activo:true,actual:true&fields=estado_interno_id&limit=1`;
 
         try {
             const respuestaEstado = await lastValueFrom(
@@ -162,7 +151,7 @@ export class PlantillaInformeSeguimientoService {
     }
 
     private async traerParametros(idParam: string) {
-        const url = `${PARAMETROS_SERVICE}/parametro?query=Id:${idParam}&fields=Nombre`;
+        const url = `${env().PARAMETROS_SERVICE}/parametro?query=Id:${idParam}&fields=Nombre`;
         try {
             const response = await lastValueFrom(this.httpService.get(url));
             return response.data.Data[0];
@@ -195,7 +184,7 @@ export class PlantillaInformeSeguimientoService {
     }
 
     private async obtenerAuditores(auditoriaId: string) {
-        const url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditor?query=auditoria_id:${auditoriaId},activo:true&limit=0`;
+        const url = `${env().PLAN_AUDITORIA_CRUD_SERVICE}auditor?query=auditoria_id:${auditoriaId},activo:true&limit=0`;
         try {
             const response = await lastValueFrom(this.httpService.get(url));
             return response.data.Data;
@@ -208,7 +197,7 @@ export class PlantillaInformeSeguimientoService {
     }
 
     private async obtenerTercero(terceroId: string) {
-        const url = `${TERCEROS_SERVICE}/tercero/${terceroId}`;
+        const url = `${env().TERCEROS_SERVICE}/tercero/${terceroId}`;
         try {
             const response = await lastValueFrom(this.httpService.get(url));
             return response.data;
@@ -221,7 +210,7 @@ export class PlantillaInformeSeguimientoService {
     }
 
     private async obtenerJefeOci() {
-        const url = `${TERCEROS_SERVICE}vinculacion?query=DependenciaId:${ID_DEPENDENCIA_OCI},CargoId:${CARGO.JEFE_DEPENDENCIA_ID},Activo:true`;
+        const url = `${env().TERCEROS_SERVICE}vinculacion?query=DependenciaId:${env().ID_DEPENDENCIA_OCI},CargoId:${env().CARGO.JEFE_DEPENDENCIA_ID},Activo:true`;
         try {
             const response = await lastValueFrom(this.httpService.get(url));
             return response.data[0].TerceroPrincipalId.NombreCompleto;

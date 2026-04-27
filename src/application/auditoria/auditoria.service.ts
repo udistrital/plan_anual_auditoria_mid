@@ -1,18 +1,12 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom, forkJoin } from 'rxjs';
-import { environment } from 'src/config/configuration';
+import { environment as env } from 'src/config/configuration';
 import { AuditorService } from '../../auditor/auditor.service';
 import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
 import { Dominio } from 'src/shared/utils/dominios/dominio.model';
 import { unirListaNombresConComas } from 'src/utils/texto.utils';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
-
-const {
-  PLAN_AUDITORIA_CRUD_SERVICE,
-  TIPO_PARAMETRO,
-  TERCEROS_SERVICE,
-} = environment;
 
 @Injectable()
 export class AuditoriaService {
@@ -266,7 +260,7 @@ export class AuditoriaService {
     personaId: number,
     cargoId: number,
   ): Promise<number[]> {
-    const url = `${TERCEROS_SERVICE}vinculacion?query=TerceroPrincipalId:${personaId},Activo:true,CargoId:${cargoId}&fields=DependenciaId`;
+    const url = `${env().TERCEROS_SERVICE}vinculacion?query=TerceroPrincipalId:${personaId},Activo:true,CargoId:${cargoId}&fields=DependenciaId`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
 
@@ -314,8 +308,8 @@ export class AuditoriaService {
 
   async getDatosTerceros(dependencia_id: number) {
     const [jefe_dep, asistente_dep] = await Promise.all([
-      this.traerTerceroVinculado(dependencia_id, environment.CARGO.JEFE_DEPENDENCIA_ID),
-      this.traerTerceroVinculado(dependencia_id, environment.CARGO.ASISTENTE_DEPENDENCIA_ID),
+      this.traerTerceroVinculado(dependencia_id, env().CARGO.JEFE_DEPENDENCIA_ID),
+      this.traerTerceroVinculado(dependencia_id, env().CARGO.ASISTENTE_DEPENDENCIA_ID),
     ]);
 
     return {
@@ -331,7 +325,7 @@ export class AuditoriaService {
     dependenciaId: number,
     cargoId: number,
   ): Promise<any> {
-    const url = `${TERCEROS_SERVICE}vinculacion?order=desc&sortby=Id&fields=TerceroPrincipalId&`
+    const url = `${env().TERCEROS_SERVICE}vinculacion?order=desc&sortby=Id&fields=TerceroPrincipalId&`
       +`query=Activo:true,DependenciaId:${dependenciaId},CargoId:${cargoId}`;
     try {
       const response = await lastValueFrom(this.httpService.get(url));
@@ -390,32 +384,32 @@ private async identificarCampo(data: any) {
     const camposConfig = [
       {
         campo: 'tipo_evaluacion_id',
-        tipoParametro: TIPO_PARAMETRO.TIPO_EVALUACION,
+        tipoParametro: env().TIPO_PARAMETRO.TIPO_EVALUACION,
         destino: this.tiposEvaluacion,
       },
       {
         campo: 'cronograma_id',
-        tipoParametro: TIPO_PARAMETRO.CRONOGRAMA,
+        tipoParametro: env().TIPO_PARAMETRO.CRONOGRAMA,
         destino: this.cronogramasActividad,
       },
       {
         campo: 'estado_id',
-        tipoParametro: TIPO_PARAMETRO.AUDITORIA_ESTADO,
+        tipoParametro: env().TIPO_PARAMETRO.AUDITORIA_ESTADO,
         destino: this.estados,
       },
       {
         campo: 'macroproceso_id',
-        tipoParametro: TIPO_PARAMETRO.MACROPROCESO,
+        tipoParametro: env().TIPO_PARAMETRO.MACROPROCESO,
         destino: this.macroprocesos,
       },
       {
         campo: 'proceso_id',
-        tipoParametro: TIPO_PARAMETRO.PROCESO,
+        tipoParametro: env().TIPO_PARAMETRO.PROCESO,
         destino: this.procesos,
       },
       {
         campo: 'vigencia_id',
-        tipoParametro: TIPO_PARAMETRO.VIGENCIA,
+        tipoParametro: env().TIPO_PARAMETRO.VIGENCIA,
         destino: this.vigencias,
       },
     ];
@@ -565,11 +559,11 @@ private async identificarCampo(data: any) {
 
     try {
       // 1. Eliminar lógicamente la auditoría
-      const deleteUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria/${auditoriaId}`;
+      const deleteUrl = `${env().PLAN_AUDITORIA_CRUD_SERVICE}auditoria/${auditoriaId}`;
       await lastValueFrom(this.httpService.delete(deleteUrl));
 
       // 2. Obtener el plan de auditoría actual
-      const getPlanUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${planAuditoriaId}`;
+      const getPlanUrl = `${env().PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${planAuditoriaId}`;
       const planResponse = await lastValueFrom(this.httpService.get(getPlanUrl));
       const plan = planResponse.data.Data;
 
@@ -579,7 +573,7 @@ private async identificarCampo(data: any) {
       );
 
       // 4. Actualizar el plan de auditoría
-      const putPlanUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${planAuditoriaId}`;
+      const putPlanUrl = `${env().PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${planAuditoriaId}`;
       await lastValueFrom(
         this.httpService.put(putPlanUrl, { auditorias: auditoriasActualizadas }),
       );

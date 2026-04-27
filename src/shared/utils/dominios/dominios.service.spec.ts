@@ -4,7 +4,7 @@ import { DominiosModule } from "./dominios.module";
 import { DominiosService } from "./dominios.service";
 import { ParametrosService } from "src/shared/services/parametros/parametros.service";
 import { OikosService } from "src/shared/services/oikos/oikos.service";
-import { environment } from "src/config/configuration";
+import { environment as env } from "src/config/configuration";
 import { ParametrosModule } from "src/shared/services/parametros/parametros.module";
 import { OikosModule } from "src/shared/services/oikos/oikos.module";
 import { DOMINIOS_CONFIG } from "./dominios.config";
@@ -13,7 +13,7 @@ describe("DominiosService", () => {
   let service: DominiosService;
   let parametrosServiceGet: jest.SpyInstance;
   let oikosServiceGet: jest.SpyInstance;
-  const ORIGINAL_TIPO_PARAMETRO = environment.TIPO_PARAMETRO;
+  const ORIGINAL_TIPO_PARAMETRO = env().TIPO_PARAMETRO;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -30,7 +30,7 @@ describe("DominiosService", () => {
   });
 
   afterEach(() => {
-    environment.TIPO_PARAMETRO = ORIGINAL_TIPO_PARAMETRO;
+    env().TIPO_PARAMETRO = ORIGINAL_TIPO_PARAMETRO;
   });
 
   it("should be defined", () => {
@@ -40,7 +40,7 @@ describe("DominiosService", () => {
   it("should return the parameter name when getNombreTipoParametro is called with a valid tipoParametroId", async () => {
     const mockTipoParametroId = 1;
     const mockTipoParametroName = "Test Parameter";
-    (environment as any).TIPO_PARAMETRO = { [mockTipoParametroName]: mockTipoParametroId };
+    env().TIPO_PARAMETRO = { [mockTipoParametroName]: mockTipoParametroId };
 
     const result = service.getNombreTipoParametro(mockTipoParametroId);
     expect(result).toBe(mockTipoParametroName);
@@ -48,7 +48,7 @@ describe("DominiosService", () => {
 
   it ("should throw an error when getNombreTipoParametro is called with an invalid tipoParametroId", async () => {
     const invalidTipoParametroId = 999;
-    (environment as any).TIPO_PARAMETRO = { VALID_PARAMETER: 1 };
+    env().TIPO_PARAMETRO = { VALID_PARAMETER: 1 };
 
     try {
       service.getNombreTipoParametro(invalidTipoParametroId);
@@ -63,7 +63,7 @@ describe("DominiosService", () => {
     const mockTipoParametroId = 1;
     const mockTipoParametroName = "Test Parameter";
     const mockParametros = [{ id: 1, nombre: "Param1" }, { id: 2, nombre: "Param2" }];
-    (environment as any).TIPO_PARAMETRO = { [mockTipoParametroName]: mockTipoParametroId };
+    env().TIPO_PARAMETRO = { [mockTipoParametroName]: mockTipoParametroId };
     parametrosServiceGet.mockReturnValue(of({ Data: mockParametros }));
 
     const result = await firstValueFrom(service.getParametros(mockTipoParametroId));
@@ -77,7 +77,7 @@ describe("DominiosService", () => {
   it("should throw an error when getParametros is called and the response format is invalid", async () => {
     const mockTipoParametroId = 1;
     const mockTipoParametroName = "Test Parameter";
-    (environment as any).TIPO_PARAMETRO = { [mockTipoParametroName]: mockTipoParametroId };
+    env().TIPO_PARAMETRO = { [mockTipoParametroName]: mockTipoParametroId };
     parametrosServiceGet.mockReturnValue(of({ InvalidData: [] }));
 
     try {
