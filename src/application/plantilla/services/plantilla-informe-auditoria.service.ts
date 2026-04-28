@@ -1,28 +1,26 @@
-import { HttpService } from '@nestjs/axios';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { lastValueFrom } from 'rxjs';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
 import { environment } from 'src/config/configuration';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
+import { OikosService } from 'src/shared/services/oikos/oikos.service';
 import { PlantillasMidService } from 'src/shared/services/plantillas-mid/plantillas-mid.service';
+import { TercerosHelperService } from 'src/shared/services/terceros/terceros-helper.service';
 
 const {
     PLANTILLAS,
-    TERCEROS_SERVICE,
     TIPO_EVALUACION,
     ESTADOS_INFORME_AUDITORIA_PRELIMINAR,
-    ID_DEPENDENCIA_OCI,
     CARGO,
-    OIKOS_SERVICE
 } = environment;
 
 @Injectable()
 export class PlantillaInformeAuditoriaService {
     constructor(
-        private readonly httpService: HttpService,
         private readonly plantillasMidService: PlantillasMidService,
         private readonly auditoriaCrudService: AuditoriaCrudService,
-        private readonly auditoriaService: AuditoriaService
+        private readonly auditoriaService: AuditoriaService,
+        private readonly tercerosService: TercerosHelperService,
+        private readonly oikosService: OikosService,
     ) { }
 
     async get(idAuditoria: string) {
@@ -48,7 +46,7 @@ export class PlantillaInformeAuditoriaService {
             const [anio, mes, dia] = informe.fecha_emision.split('T')[0].split('-');
             const [tituloInforme, jefeOci, auditorResponsable, dependencias] = await Promise.all([
                 this.generarTituloInforme(auditoria._id, auditoria.tipo_evaluacion_id, auditoria.titulo),
-                this.obtenerJefeOci(),
+                this.tercerosService.getJefeOCI(),
                 this.obtenerAuditorResponsable(auditoria._id),
                 this.obtenergrupoDependencias(auditoria.dependencia_id)
             ]);
@@ -159,41 +157,17 @@ export class PlantillaInformeAuditoriaService {
             case 0:
                 return 'Sin auditor asignado.';
             case 1:
-                const tercero = await this.obtenerTercero(auditores[0].auditor_id);
+                const tercero = await this.tercerosService.getTerceroById(auditores[0].auditor_id);
                 return tercero?.NombreCompleto || 'Sin auditor asignado.';
             default:
                 const auditorLider = auditores.find(a => a.auditor_lider == true);
                 if (auditorLider) {
-                    const tercero = await this.obtenerTercero(auditorLider.auditor_id);
+                    const tercero = await this.tercerosService.getTerceroById(auditorLider.auditor_id);
                     return tercero?.NombreCompleto || 'Sin auditor asignado.';
                 } else {
-                    const tercero = await this.obtenerTercero(auditores[0].auditor_id);
+                    const tercero = await this.tercerosService.getTerceroById(auditores[0].auditor_id);
                     return tercero?.NombreCompleto || 'Sin auditor asignado.';
                 }
-        }
-    }
-
-    private async obtenerTercero(terceroId: string) {
-        const url = `${TERCEROS_SERVICE}/tercero/${terceroId}`;
-        try {
-            const response = await lastValueFrom(this.httpService.get(url));
-            return response.data;
-        } catch (error) {
-            throw new HttpException(
-                'Error al obtener los datos de terceros',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
-        }
-    }
-
-
-    private async obtenerJefeOci() {
-        const url = `${TERCEROS_SERVICE}vinculacion?query=DependenciaId:${ID_DEPENDENCIA_OCI},CargoId:${CARGO.JEFE_DEPENDENCIA_ID},Activo:true`;
-        try {
-            const response = await lastValueFrom(this.httpService.get(url));
-            return response.data?.[0]?.TerceroPrincipalId?.NombreCompleto || "No se encontró el jefe de la Oficina Asesora de Control Interno";
-        } catch (error) {
-            return "No se encontró el jefe de la Oficina Asesora de Control Interno";
         }
     }
 
@@ -203,9 +177,9 @@ export class PlantillaInformeAuditoriaService {
     try {
       if (Array.isArray(dependencias)) {
         for (const idDependencia of dependencias) {
-          const dependencia = await this.obtenerDependencia(idDependencia);
-          const liderDependencia = await this.obtenerTerceroVinculado(CARGO.JEFE_DEPENDENCIA_ID, idDependencia);
-          const responsableDependencia = await this.obtenerTerceroVinculado(CARGO.ASISTENTE_DEPENDENCIA_ID, idDependencia);  
+          const dependencia = await this.oikosService.traerData('dependencia', idDependencia, null).then(data => data.Data);
+          const liderDependencia = await this.tercerosService.getTerceroVinculado(idDependencia, CARGO.JEFE_DEPENDENCIA_ID);
+          const responsableDependencia = await this.tercerosService.getTerceroVinculado(idDependencia, CARGO.ASISTENTE_DEPENDENCIA_ID);  
 
           respuestaDependencias.push({
             nombre: dependencia.Nombre,
@@ -214,9 +188,9 @@ export class PlantillaInformeAuditoriaService {
           });
         }
       } else {
-        const dependencia = await this.obtenerDependencia(dependencias);
-        const liderDependencia = await this.obtenerTerceroVinculado(CARGO.JEFE_DEPENDENCIA_ID, dependencias);
-        const responsableDependencia = await this.obtenerTerceroVinculado(CARGO.ASISTENTE_DEPENDENCIA_ID, dependencias);
+        const dependencia = await this.oikosService.traerData('dependencia', dependencias, null).then(data => data.Data);
+        const liderDependencia = await this.tercerosService.getTerceroVinculado(dependencias, CARGO.JEFE_DEPENDENCIA_ID);
+        const responsableDependencia = await this.tercerosService.getTerceroVinculado(dependencias, CARGO.ASISTENTE_DEPENDENCIA_ID);
 
         respuestaDependencias.push({
           nombre: dependencia.Nombre,
@@ -233,32 +207,4 @@ export class PlantillaInformeAuditoriaService {
     }
   }
 
-  private async obtenerDependencia(idDependencia: string) {
-    const url = `${OIKOS_SERVICE}dependencia/${idDependencia}`;
-    try {
-        const response = await lastValueFrom(this.httpService.get(url));
-        return response.data;
-    } catch (error) {
-        throw new HttpException(
-            'Error al obtener los datos de la dependencia',
-            HttpStatus.INTERNAL_SERVER_ERROR,
-        );
-    }
-  }
-
-  private async obtenerTerceroVinculado(idCargo: number, idDependencia: number | null) {
-    if (idDependencia == null) {
-      return null;
-    }
-
-      try {
-        //   const datosPersona = await this.auditoriaService.traerTerceroVinculado(idDependencia, idCargo);
-        //   return datosPersona;
-      } catch (error) {
-          throw new HttpException(
-              'Error al obtener los datos del tercero vinculado',
-              HttpStatus.INTERNAL_SERVER_ERROR,
-          );
-      }
-  }
 }

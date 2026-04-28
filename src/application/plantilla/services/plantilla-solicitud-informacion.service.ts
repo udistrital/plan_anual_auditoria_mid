@@ -2,32 +2,30 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import * as moment from 'moment';
 import 'moment/locale/es';
 import { environment } from 'src/config/configuration';
-import { lastValueFrom } from 'rxjs';
-import { HttpService } from '@nestjs/axios';
 import { capitalize, unirListaNombres } from 'src/utils/texto.utils';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
 import { PlantillasMidService } from 'src/shared/services/plantillas-mid/plantillas-mid.service';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
 import { ParametrosService } from 'src/shared/services/parametros/parametros.service';
+import { TercerosHelperService } from 'src/shared/services/terceros/terceros-helper.service';
+import { OikosService } from 'src/shared/services/oikos/oikos.service';
 
 const {
   PLANTILLAS,
-  TERCEROS_SERVICE,
-  OIKOS_SERVICE,
   logoUDistritalOCI,
   contactoOCI,
-  ID_DEPENDENCIA_OCI,
   CARGO
 } = environment;
 
 @Injectable()
 export class PlantillaSolicitudInformacionService {
   constructor(
-    private readonly httpService: HttpService,
     private readonly plantillasMidService: PlantillasMidService,
     private readonly auditoriaCrudService: AuditoriaCrudService,
     private readonly parametrosService: ParametrosService,
-    private readonly auditoriaService: AuditoriaService
+    private readonly auditoriaService: AuditoriaService,
+    private readonly tercerosService: TercerosHelperService,
+    private readonly oikosService: OikosService,
   ) {}
 
   async get(idAuditoria: string) {
@@ -48,7 +46,7 @@ export class PlantillaSolicitudInformacionService {
         this.parametrosService.get('parametro', auditoriaPadre.vigencia_id, null).then(data => data.Data),
         this.parametrosService.get('parametro', auditoriaPadre.tipo_evaluacion_id, null).then(data => data.Data),
         this.obtenerNombresAuditores(auditoria._id),
-        this.obtenerJefeOci()
+        this.tercerosService.getJefeOCI()
       ]);
 
     const infoParaPlantilla = {
@@ -86,7 +84,7 @@ export class PlantillaSolicitudInformacionService {
     const nombres = await Promise.all(
       auditores.map(async (auditor) => {
         try {
-          const tercero = await this.traerTercero(auditor.auditor_id);
+          const tercero = await this.tercerosService.getTerceroById(auditor.auditor_id);
           return tercero?.NombreCompleto
             ? capitalize(tercero.NombreCompleto)
             : null;
@@ -109,67 +107,12 @@ export class PlantillaSolicitudInformacionService {
     return unirListaNombres(nombres);
   }
 
-  private async traerTercero(terceroId: number) {
-    const url = `${TERCEROS_SERVICE}/tercero/${terceroId}`;
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data;
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos de terceros',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  private async obtenerTerceroVinculado(idCargo: number, idDependencia: number | null) {
-    if (idDependencia == null) {
-      return null;
-    }
-
-      try {
-          // const datosPersona = await this.auditoriaService.traerTerceroVinculado(idDependencia, idCargo);
-          // return datosPersona;
-      } catch (error) {
-          throw new HttpException(
-              'Error al obtener los datos del tercero vinculado',
-              HttpStatus.INTERNAL_SERVER_ERROR,
-          );
-      }
-  }
-
   private obtenerDependenciaPrincipal(dependenciaId: number | number[]): number | null {
-  if (Array.isArray(dependenciaId)) {
-    return dependenciaId.length > 0 ? dependenciaId[0] : null;
-  }
-
-  return typeof dependenciaId === 'number' ? dependenciaId : null;
-  }
-  
-  private async obtenerDependencia(idDependencia: string) {
-    const url = `${OIKOS_SERVICE}dependencia/${idDependencia}`;
-    try {
-        const response = await lastValueFrom(this.httpService.get(url));
-        return response.data;
-    } catch (error) {
-        throw new HttpException(
-            'Error al obtener los datos de la dependencia',
-            HttpStatus.INTERNAL_SERVER_ERROR,
-        );
+    if (Array.isArray(dependenciaId)) {
+      return dependenciaId.length > 0 ? dependenciaId[0] : null;
     }
-  }
 
-  private async obtenerJefeOci() {
-    const url = `${TERCEROS_SERVICE}vinculacion?query=DependenciaId:${ID_DEPENDENCIA_OCI},CargoId:${CARGO.JEFE_DEPENDENCIA_ID},Activo:true`;
-    try {
-        const response = await lastValueFrom(this.httpService.get(url)); 
-        return response.data[0].TerceroPrincipalId.NombreCompleto;
-    } catch (error) {
-        throw new HttpException(
-            'Error al obtener los datos de terceros',
-            HttpStatus.INTERNAL_SERVER_ERROR,
-        );
-    }
+    return typeof dependenciaId === 'number' ? dependenciaId : null;
   }
 
   private async obtenergrupoDependencias(dependencias: any): Promise<any> {
@@ -178,8 +121,8 @@ export class PlantillaSolicitudInformacionService {
     try {
       if (Array.isArray(dependencias)) {
         for (const idDependencia of dependencias) {
-          const dependencia = await this.obtenerDependencia(idDependencia);
-          const responsableDependencia = await this.obtenerTerceroVinculado(environment.CARGO.JEFE_DEPENDENCIA_ID, idDependencia);
+          const dependencia = await this.oikosService.traerData('dependencia', idDependencia, null).then(data => data.Data);
+          const responsableDependencia = await this.tercerosService.getTerceroVinculado(idDependencia, CARGO.JEFE_DEPENDENCIA_ID);
 
           respuestaDependencias.push({
             nombre: dependencia.Nombre,
@@ -187,8 +130,8 @@ export class PlantillaSolicitudInformacionService {
           });
         }
       } else {
-        const dependencia = await this.obtenerDependencia(dependencias);
-        const responsableDependencia = await this.obtenerTerceroVinculado(environment.CARGO.JEFE_DEPENDENCIA_ID, dependencias);
+        const dependencia = await this.oikosService.traerData('dependencia', dependencias, null).then(data => data.Data);
+        const responsableDependencia = await this.tercerosService.getTerceroVinculado(dependencias, CARGO.JEFE_DEPENDENCIA_ID);
 
         respuestaDependencias.push({
           nombre: dependencia.Nombre,

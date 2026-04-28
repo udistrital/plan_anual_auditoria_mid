@@ -2,31 +2,31 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import * as moment from 'moment';
 import 'moment/locale/es';
 import { environment } from 'src/config/configuration';
-import { lastValueFrom } from 'rxjs';
-import { HttpService } from '@nestjs/axios';
 import { capitalize, unirListaNombres } from 'src/utils/texto.utils';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
 import { PlantillasMidService } from 'src/shared/services/plantillas-mid/plantillas-mid.service';
 import { ParametrosService } from 'src/shared/services/parametros/parametros.service';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
+import { TercerosHelperService } from 'src/shared/services/terceros/terceros-helper.service';
+import { OikosService } from 'src/shared/services/oikos/oikos.service';
 
 
 const {
     PLANTILLAS,
-    TERCEROS_SERVICE,
-    OIKOS_SERVICE,
     logoUDistrital,
-    logoSIGUD
+    logoSIGUD,
+    CARGO
 } = environment;
 
 @Injectable()
 export class PlantillaProgramaAuditoriaService {
     constructor(
-        private readonly httpService: HttpService,
         private readonly auditoriaService: AuditoriaService,
         private readonly auditoriaCrudService: AuditoriaCrudService,
         private readonly plantillasMidService: PlantillasMidService,
         private readonly parametrosService: ParametrosService,
+        private readonly tercerosService: TercerosHelperService,
+        private readonly oikosService: OikosService,
     ) {}
 
     async get(idAuditoria: string) {
@@ -46,9 +46,9 @@ export class PlantillaProgramaAuditoriaService {
             this.auditoriaCrudService.traerDataCrud('actividad', null, { query: `auditoria_id:${auditoria._id},activo:true`, limit: 0}).then(data => data.Data),
             this.parametrosService.get('parametro', auditoriaPadre.macroproceso_id, null).then(data => data.Data),
             this.parametrosService.get('parametro', auditoriaPadre.proceso_id, null).then(data => data.Data),
-            this.obtenerDependencia(dependenciaPrincipal),
-            this.obtenerTerceroVinculado(environment.CARGO.JEFE_DEPENDENCIA_ID, dependenciaPrincipal),
-            this.obtenerTerceroVinculado(environment.CARGO.ASISTENTE_DEPENDENCIA_ID, dependenciaPrincipal),
+            this.oikosService.traerData('dependencia', dependenciaPrincipal, null).then(data => data.Data),
+            this.tercerosService.getTerceroVinculado(dependenciaPrincipal, CARGO.JEFE_DEPENDENCIA_ID),
+            this.tercerosService.getTerceroVinculado(dependenciaPrincipal, CARGO.ASISTENTE_DEPENDENCIA_ID),
             this.obtenerNombresAuditores(auditoria._id)
         ]);
 
@@ -111,7 +111,7 @@ export class PlantillaProgramaAuditoriaService {
         const nombres = await Promise.all(
             auditores.map(async (auditor) => {
                 try {
-                    const tercero = await this.traerTercero(auditor.auditor_id);
+                    const tercero = await this.tercerosService.getTerceroById(auditor.auditor_id);
                     return tercero?.NombreCompleto
                         ? capitalize(tercero.NombreCompleto)
                         : null;
@@ -132,52 +132,6 @@ export class PlantillaProgramaAuditoriaService {
         }
 
         return unirListaNombres(nombres);
-    }
-
-    private async traerTercero(terceroId: string) {
-        const url = `${TERCEROS_SERVICE}tercero/${terceroId}`;
-        try {
-            const response = await lastValueFrom(this.httpService.get(url));
-            return response.data;
-        } catch (error) {
-            throw new HttpException(
-                'Error al obtener los datos de terceros',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
-        }
-    }
-
-    private async obtenerDependencia(idDependencia: number | null) {
-        if (idDependencia == null) {
-            return { Nombre: 'No definido' };
-        }
-
-        const url = `${OIKOS_SERVICE}dependencia/${idDependencia}`;
-        try {
-            const response = await lastValueFrom(this.httpService.get(url));
-            return response.data;
-        } catch (error) {
-            throw new HttpException(
-                'Error al obtener los datos de la dependencia',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
-        }
-    }
-
-    private async obtenerTerceroVinculado(idCargo: number, idDependencia: number | null) {
-        if (idDependencia == null) {
-            return null;
-        }
-
-        try {
-            // const datosPersona = await this.auditoriaService.traerTerceroVinculado(idDependencia, idCargo);
-            // return datosPersona;
-        } catch (error) {
-            throw new HttpException(
-                'Error al obtener los datos del tercero vinculado',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
-        }
     }
 
     private obtenerDependenciaPrincipal(dependenciaId: number | number[]): number | null {

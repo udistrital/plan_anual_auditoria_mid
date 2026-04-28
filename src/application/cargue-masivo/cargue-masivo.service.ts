@@ -1,16 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { environment } from 'src/config/configuration';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
 import { setupValidationDomains, descargarAuditorias, AuditoriaExcel } from 'src/shared/utils/auditoriasExcel.utils';
 import {
   base64ToArrayBuffer,
   arrayBufferToBase64,
 } from 'src/shared/utils/base64.utils';
+import { ConfigService } from '@nestjs/config';
+import { HttpService } from '@nestjs/axios';
 
 const {
-  PLAN_AUDITORIA_CRUD_SERVICE,
-  TIPO_EVALUACION,
   TIPO_PARAMETRO,
   MESES,
 } = environment;
@@ -42,6 +42,8 @@ interface Parametro {
 export class CargueMasivoService {
   constructor(
     private readonly dominiosService: DominiosService,
+    private readonly configService: ConfigService,
+    private readonly httpService: HttpService,
   ) {}
 
   /**
@@ -107,9 +109,9 @@ export class CargueMasivoService {
   async prepararHeadersValidacion(): Promise<{ [key: string]: string[] }> {
     // Types of parameters to load from the Parametros API.
     const tiposDeParametros = [
-      { nombre: 'Tipo de Evaluación', id: environment.TIPO_PARAMETRO.TIPO_EVALUACION },
-      { nombre: 'Macroproceso', id: environment.TIPO_PARAMETRO.MACROPROCESO },
-      { nombre: 'Proceso', id: environment.TIPO_PARAMETRO.PROCESO },
+      { nombre: 'Tipo de Evaluación', id: TIPO_PARAMETRO.TIPO_EVALUACION },
+      { nombre: 'Macroproceso', id: TIPO_PARAMETRO.MACROPROCESO },
+      { nombre: 'Proceso', id: TIPO_PARAMETRO.PROCESO },
     ]
 
     // Load options for each parameter type and for Dependencias.
@@ -127,7 +129,7 @@ export class CargueMasivoService {
   async crearEstructura(base64data: string, complemento: Object): Promise<any> {
     return {
       base64data,
-      service: PLAN_AUDITORIA_CRUD_SERVICE,
+      service: this.configService.get<string>('PLAN_AUDITORIA_CRUD_SERVICE'),
       endpoint: 'auditoria-gestion',
       complement: complemento,
       structure: {
@@ -219,7 +221,7 @@ export class CargueMasivoService {
 
     const estructura = {
       base64data,
-      service: environment.PLAN_AUDITORIA_CRUD_SERVICE,
+      service: this.configService.get<string>('PLAN_AUDITORIA_CRUD_SERVICE'),
       endpoint: 'actividad',
       complement: complemento,
       structure: {
@@ -236,6 +238,20 @@ export class CargueMasivoService {
     };
 
     return estructura;
+  }
+
+  async enviar(data: any) {
+    const url = `${this.configService.get<string>('CARGUE_MASIVO_SERVERLESS_MID')}registro-datos-archivo`
+    try {
+      const response = await lastValueFrom(this.httpService.post(url, data));
+      return response.data;
+    } catch (error: any) {
+      throw new HttpException(
+        'Error al obtener los datos del servicio externo',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        error
+      );
+    }
   }
 
   /**

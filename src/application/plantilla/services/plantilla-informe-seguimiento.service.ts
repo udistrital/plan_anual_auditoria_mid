@@ -1,29 +1,26 @@
-import { HttpService } from '@nestjs/axios';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { lastValueFrom } from 'rxjs';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
 import { environment } from 'src/config/configuration';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
 import { ParametrosService } from 'src/shared/services/parametros/parametros.service';
 import { PlantillasMidService } from 'src/shared/services/plantillas-mid/plantillas-mid.service';
+import { TercerosHelperService } from 'src/shared/services/terceros/terceros-helper.service';
 
 const {
     PLANTILLAS,
-    TERCEROS_SERVICE,
     TIPO_EVALUACION,
     ESTADOS_INFORME_AUDITORIA_PRELIMINAR,
-    ID_DEPENDENCIA_OCI,
     CARGO
 } = environment;
 
 @Injectable()
 export class PlantillaInformeSeguimientoService {
     constructor(
-        private readonly httpService: HttpService,
         private readonly plantillasMidService: PlantillasMidService,
         private readonly auditoriaCrudService: AuditoriaCrudService,
         private readonly parametrosService: ParametrosService,
-        private readonly auditoriaService: AuditoriaService
+        private readonly auditoriaService: AuditoriaService,
+        private readonly tercerosService: TercerosHelperService,
     ) {}
 
     async get(idAuditoria: string) {
@@ -44,7 +41,7 @@ export class PlantillaInformeSeguimientoService {
                 this.parametrosService.get('parametro', auditoria.macroproceso, null).then(data => data.Data),
                 this.parametrosService.get('parametro', auditoria.lider_id, null).then(data => data.Data),
                 this.parametrosService.get('parametro', auditoria.responsable_id, null).then(data => data.Data),
-                this.obtenerJefeOci(),
+                this.tercerosService.getJefeOCI(),
                 this.obtenerAuditorResponsable(auditoria._id)
             ]);
 
@@ -145,43 +142,17 @@ export class PlantillaInformeSeguimientoService {
             case 0:
                 return 'Sin auditor asignado.';
             case 1:
-                const tercero = await this.obtenerTercero(auditores[0].auditor_id);
+                const tercero = await this.tercerosService.getTerceroById(auditores[0].auditor_id);
                 return tercero.NombreCompleto;
             default:
                 const auditorLider = auditores.find(a => a.auditor_lider == true);
                 if (auditorLider) {
-                    const tercero = await this.obtenerTercero(auditorLider.auditor_id);
+                    const tercero = await this.tercerosService.getTerceroById(auditorLider.auditor_id);
                     return tercero.NombreCompleto;
                 } else {
-                    const tercero = await this.obtenerTercero(auditores[0].auditor_id);
+                    const tercero = await this.tercerosService.getTerceroById(auditores[0].auditor_id);
                     return tercero.NombreCompleto;
                 }
-        }
-    }
-
-    private async obtenerTercero(terceroId: string) {
-        const url = `${TERCEROS_SERVICE}/tercero/${terceroId}`;
-        try {
-            const response = await lastValueFrom(this.httpService.get(url));
-            return response.data;
-        } catch (error) {
-            throw new HttpException(
-                'Error al obtener los datos de terceros',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
-        }
-    }
-
-    private async obtenerJefeOci() {
-        const url = `${TERCEROS_SERVICE}vinculacion?query=DependenciaId:${ID_DEPENDENCIA_OCI},CargoId:${CARGO.JEFE_DEPENDENCIA_ID},Activo:true`;
-        try {
-            const response = await lastValueFrom(this.httpService.get(url));
-            return response.data[0].TerceroPrincipalId.NombreCompleto;
-        } catch (error) {
-            throw new HttpException(
-                'Error al obtener los datos de terceros',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
         }
     }
 }

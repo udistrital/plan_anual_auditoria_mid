@@ -24,8 +24,6 @@ export class CargueMasivoController {
     private readonly auditoriaPadreService: AuditoriaPadreService,
   ) {}
 
-  private cargueMasivoUrl = `${environment.CARGUE_MASIVO_SERVERLESS_MID}registro-datos-archivo`;
-
   @Get('auditorias/plantilla')
   @ApiOperation({ summary: 'Descargar plantilla de auditorías' })
   @ApiResponse({ status: 500, description: 'Error interno.',  })
@@ -143,8 +141,8 @@ export class CargueMasivoController {
         base64data,
         complemento,
       );
-      const response = await axios.post(this.cargueMasivoUrl, estructura);
-      return response.data;
+      const response = await this.cargueMasivoService.enviar(estructura);
+      return response;
     } catch (error) {
       console.error('Error en el MID:', error);
       if (axios.isAxiosError(error) && error.response) {
@@ -156,6 +154,7 @@ export class CargueMasivoController {
       throw new HttpException(
         'Error procesando la solicitud',
         HttpStatus.INTERNAL_SERVER_ERROR,
+        error
       );
     }
   }
@@ -187,8 +186,8 @@ export class CargueMasivoController {
           base64data,
           complemento,
         );
-      const response = await axios.post(this.cargueMasivoUrl, estructura);
-      return response.data;
+      const response = await this.cargueMasivoService.enviar(estructura);
+      return response;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         throw new HttpException(

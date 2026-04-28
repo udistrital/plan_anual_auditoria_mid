@@ -25,7 +25,7 @@ export class OikosService {
    * @param queryParams - Parámetros de búsqueda de la consulta.
    * @returns Datos obtenidos del Servicio.
    */
-  async traerData(endpoint: string, id: string | null, queryParams: any) {
+  async traerData(endpoint: string, id: number | null, queryParams: any) {
     let url = `${this.configService.get<string>('OIKOS_SERVICE')}${endpoint}${id ? '/'+id : ''}` 
 
     if (queryParams) {
