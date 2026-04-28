@@ -1,16 +1,12 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { lastValueFrom } from 'rxjs';
-import { environment } from 'src/config/configuration';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
-
-const { TERCEROS_SERVICE } = environment;
+import { TercerosHelperService } from 'src/shared/services/terceros/terceros-helper.service';
 
 @Injectable()
 export class AuditorService {
   constructor(
-    private readonly httpService: HttpService,
-    private readonly auditoriaCrudService: AuditoriaCrudService
+    private readonly auditoriaCrudService: AuditoriaCrudService,
+    private readonly tercerosHelper: TercerosHelperService,
   ) {}
 
   async getAll(queryParams: any) {
@@ -25,30 +21,19 @@ export class AuditorService {
     return data;
   }
 
-  private async traerTercero(documento: string) {
-    const url = `${TERCEROS_SERVICE}/tercero/${documento}`;
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data;
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
   private async reemplazarCampos(data: any) {
     const procesarElemento = async (elemento: any) => {
       if (elemento?.auditor_id) {
-        const tercero = await this.traerTercero(elemento.auditor_id);
-        this.reemplazar(tercero, elemento, 'auditor_id');
+        const tercero = await this.tercerosHelper.getTerceroById(elemento.auditor_id);
+        elemento.auditor_nombre = tercero?.NombreCompleto || null;
       }
+  
       if (elemento?.asignado_por_id) {
-        const asignadoPor = await this.traerTercero(elemento.asignado_por_id);
-        this.reemplazar(asignadoPor, elemento, 'asignado_por_id');
+        const tercero = await this.tercerosHelper.getTerceroById(elemento.asignado_por_id);
+        elemento.asignado_por_nombre = tercero?.NombreCompleto || null;
       }
     };
+  
     if (Array.isArray(data?.Data)) {
       for (const elemento of data.Data) {
         await procesarElemento(elemento);
@@ -56,6 +41,7 @@ export class AuditorService {
     } else if (typeof data?.Data === 'object' && data.Data !== null) {
       await procesarElemento(data.Data);
     }
+  
     return data;
   }
 

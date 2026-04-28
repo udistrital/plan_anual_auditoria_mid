@@ -252,8 +252,8 @@ export class PlantillaInformeAuditoriaService {
     }
 
       try {
-          const datosPersona = await this.auditoriaService.traerTerceroVinculado(idDependencia, idCargo);
-          return datosPersona;
+        //   const datosPersona = await this.auditoriaService.traerTerceroVinculado(idDependencia, idCargo);
+        //   return datosPersona;
       } catch (error) {
           throw new HttpException(
               'Error al obtener los datos del tercero vinculado',
