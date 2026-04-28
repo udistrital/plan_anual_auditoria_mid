@@ -1,60 +1,41 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
+import { Injectable } from '@nestjs/common';
 import { environment } from 'src/config/configuration';
-import { lastValueFrom } from 'rxjs';
 import * as moment from 'moment';
 import 'moment/locale/es';
-import { PlantillaUtilsService } from '../../../utils/plantilla.utils';
+import { PlantillasMidService } from 'src/shared/services/plantillas-mid/plantillas-mid.service';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
+import { ParametrosService } from 'src/shared/services/parametros/parametros.service';
+import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
 
 const {
-  PLAN_AUDITORIA_CRUD_SERVICE,
   PLANTILLAS,
-  PARAMETROS_SERVICE
 } = environment;
 
 @Injectable()
 export class PlantillaPlanTrabajoService {
   constructor(
-    private readonly httpService: HttpService,
-    private readonly plantillaUtils: PlantillaUtilsService,
+    private readonly plantillasMidService: PlantillasMidService,
+    private readonly auditoriaCrudService: AuditoriaCrudService,
+    private readonly parametrosService: ParametrosService,
+    private readonly auditoriaService: AuditoriaService
   ) {}
 
   async get(idAuditoria: string) {
-    const auditoria = await this.obtenerAuditoria(idAuditoria);
-    const infoParaPlantilla = await this.organizarData(auditoria);
+    const auditoria = await this.auditoriaService.getOne(idAuditoria);
+    const params = { query: `auditoria_id:${idAuditoria},activo:true`, limit: 0}
+    const actividades = await this.auditoriaCrudService.traerDataCrud('actividad', null, params)
+    const infoParaPlantilla = await this.organizarData({ auditoria: auditoria.Data, actividadesAuditoria: actividades.Data});
     const baseRenderizado =
-      await this.plantillaUtils.renderizarPlantilla(infoParaPlantilla);
+      await this.plantillasMidService.post('/v1/plantilla/renderizar', infoParaPlantilla);
     return baseRenderizado;
-  }
-
-  private async obtenerAuditoria(idAuditoria: string) {
-    let urlAuditoria = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria/${idAuditoria}`;
-    let urlActividades = `${PLAN_AUDITORIA_CRUD_SERVICE}actividad?query=auditoria_id:${idAuditoria},activo:true&limit=0`;
-    try {
-      const respuestaAuditoria = await lastValueFrom(
-        this.httpService.get(urlAuditoria),
-      );
-      const respuestaActividades = await lastValueFrom(
-        this.httpService.get(urlActividades),
-      );
-      return {
-        auditoria: respuestaAuditoria.data.Data,
-        actividadesAuditoria: respuestaActividades.data.Data,
-      };
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo ',
-        error,
-      );
-    }
   }
 
   private async organizarData(data: any) {
     const auditoria = data.auditoria;
     const [macroproceso, lider, responsable] = await Promise.all([
-      this.traerParametros(auditoria.macroproceso),
-      this.traerParametros(auditoria.lider_id),
-      this.traerParametros(auditoria.responsable_id),
+      this.parametrosService.get('parametro', auditoria.macroproceso, null).then(data => data.Data),
+      this.parametrosService.get('parametro', auditoria.lider_id, null).then(data => data.Data),
+      this.parametrosService.get('parametro', auditoria.responsable_id, null).then(data => data.Data),
     ]);
     const actividades = this.organizarActividades(data.actividadesAuditoria);
     const infoParaPlantilla = {
@@ -89,16 +70,4 @@ export class PlantillaPlanTrabajoService {
     }));
   }
 
-  private async traerParametros(idParam: string) {
-    const url = `${PARAMETROS_SERVICE}/parametro?query=Id:${idParam}&fields=Nombre`;
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data.Data[0];
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
 }

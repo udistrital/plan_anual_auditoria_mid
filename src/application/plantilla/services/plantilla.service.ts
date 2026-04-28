@@ -1,29 +1,23 @@
-import { Injectable, HttpException } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
+import { Injectable } from '@nestjs/common';
 import { environment } from 'src/config/configuration';
 import { lastValueFrom } from 'rxjs';
 import { jsonPlantillaDto, PlantillaDto } from '../dto/plantilla.dto';
 import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
 import { Dominio } from 'src/shared/utils/dominios/dominio.model';
+import { PlantillasMidService } from 'src/shared/services/plantillas-mid/plantillas-mid.service';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
 
 const {
-  PLAN_AUDITORIA_CRUD_SERVICE,
   PLANTILLAS,
   MESES,
-  PLANTILLAS_MID_SERVICE,
 } = environment;
-
-/** Interface representing a parameter with an ID and a name. */
-interface Parametro {
-  Id: number;
-  Nombre: string;
-}
 
 @Injectable()
 export class PlantillaService {
   constructor(
-    private readonly httpService: HttpService,
     private readonly dominiosService: DominiosService,
+    private readonly plantillasMidService: PlantillasMidService,
+    private readonly auditoriaCrudService: AuditoriaCrudService,
   ) {}
   async getOne(id: string, conEspeciales: boolean, auditoriaPadre: boolean) {
     let data = await this.traerDataCrud(id, auditoriaPadre);
@@ -31,32 +25,21 @@ export class PlantillaService {
       data = await this.anadirDataEspeciales(data, auditoriaPadre);
 
     const baseJson = await this.organizarData(data);
-    const baseRenderizado = await this.renderizar(baseJson);
+    const baseRenderizado = await this.plantillasMidService.post('/v1/plantilla/renderizar', baseJson)
     return baseRenderizado;
   }
 
   private async traerDataCrud(id: string, auditoriaPadre: boolean) {
-    let urlPlanAuditoria = `${PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${id}`;
-    let endpointAuditoria = auditoriaPadre ? 'auditoria-padre' : 'auditoria';
-    let urlAuditioria = `${PLAN_AUDITORIA_CRUD_SERVICE}${endpointAuditoria}?query=plan_auditoria_id:${id},` +
-      `activo:true&fields=titulo,macroproceso_id,proceso_id,dependencia_id,cronograma_id,cantidad_auditorias&limit=0`;
-    try {
-      const responsePlanAuditoria = await lastValueFrom(
-        this.httpService.get(urlPlanAuditoria),
-      );
-      let dataPlanAuditoria = responsePlanAuditoria.data;
-      const responseAuditoria = await lastValueFrom(
-        this.httpService.get(urlAuditioria),
-      );
-      let dataAuditoria = responseAuditoria.data;
+    const dataPlanAuditoria = await this.auditoriaCrudService.traerDataCrud('plan-auditoria', id, null);
 
-      return { dataPlanAuditoria, dataAuditoria };
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo ',
-        error,
-      );
+    const endpointAuditoria = auditoriaPadre ? 'auditoria-padre' : 'auditoria';
+    const params = {
+      query: `plan_auditoria_id:${id},activo:true`,
+      fields: 'titulo,macroproceso_id,proceso_id,dependencia_id,cronograma_id,cantidad_auditorias',
+      limit: 0,
     }
+    const dataAuditoria = await this.auditoriaCrudService.traerDataCrud(endpointAuditoria, null, params)
+    return { dataPlanAuditoria, dataAuditoria };
   }
 
   /**
@@ -67,23 +50,16 @@ export class PlantillaService {
    */
   private async anadirDataEspeciales(data: any, auditoriaPadre: boolean) {
     const vigenciaId = data.dataPlanAuditoria.Data?.vigencia_id;
-    let endpointAuditoria = auditoriaPadre ? 'auditoria-padre' : 'auditoria';
-    const urlAuditioria = `${PLAN_AUDITORIA_CRUD_SERVICE}${endpointAuditoria}?query=vigencia_id:${vigenciaId},` +
-      `plan_auditoria_id__isnull:true,activo:true&fields=titulo,macroproceso_id,proceso_id,dependencia_id,cronograma_id,cantidad_auditorias&limit=0`;
+    const endpointAuditoria = auditoriaPadre ? 'auditoria-padre' : 'auditoria';
 
-    try {
-      const responseAuditoriaEspecial = await lastValueFrom(
-        this.httpService.get(urlAuditioria),
-      );
-      let dataAuditoriaEspecial = responseAuditoriaEspecial.data;
-
-      return { ...data, dataAuditoriaEspecial };
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos de auditoría especial del servicio externo ',
-        error,
-      );
+    const params = {
+      query: `vigencia_id:${vigenciaId},plan_auditoria_id__isnull:true,activo:true`,
+      fields: 'titulo,macroproceso_id,proceso_id,dependencia_id,cronograma_id,cantidad_auditorias',
+      limit: 0,
     }
+    const dataAuditoriaEspecial = await this.auditoriaCrudService.traerDataCrud(endpointAuditoria, null, params);
+
+    return { ...data, dataAuditoriaEspecial };
   }
 
   private async organizarData(data: any) {
@@ -209,19 +185,6 @@ export class PlantillaService {
     return [...auditoriasOrdenadas, ...restantes];
   }
 
-  private async renderizar(data: jsonPlantillaDto) {
-    let urlPlanAuditoria = `${PLANTILLAS_MID_SERVICE}/v1/plantilla/renderizar`;
-    try {
-      const response = await lastValueFrom(
-        this.httpService.post(urlPlanAuditoria, data),
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Error al enviar data:', error);
-      throw new Error('No se pudo enviar el plan');
-    }
-  }
-
   /**
    * Obtains the name of a parameter given its ID by searching through the provided Dominio object.
    * @param parametroId The ID of the parameter to find.
@@ -251,7 +214,7 @@ export class PlantillaService {
       
       return parametro.Nombre;
     }
-    catch (error) {
+    catch (error: any) {
       const newError = new Error("Failed to get parametro's name");
       newError.stack += "\nCaused by: " + error.stack;
       throw newError;

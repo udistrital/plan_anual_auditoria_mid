@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { Observable, map, catchError } from "rxjs";
+import { Observable, map, catchError, from } from "rxjs";
 import { ParametrosService } from "src/shared/services/parametros/parametros.service";
 import { OikosService } from "src/shared/services/oikos/oikos.service";
 import { environment } from "src/config/configuration";
@@ -35,9 +35,14 @@ export class DominiosService {
    * @throws An error if the fetch operation fails or if the response is not in the expected format (See {@link Parametro}).
    */
   getParametros(tipoParametroId: number): Observable<Dominio> {
-    const endpoint = `parametro?query=Activo:true,TipoParametroId:${tipoParametroId}&fields=Id,Nombre&limit=0`;
+    const params = {
+      query: `Activo:true,TipoParametroId:${tipoParametroId}`,
+      fields: 'Id,Nombre',
+      limit: 0
+    };
+
     try {
-      return this.parametrosService.get(endpoint).pipe(
+      return from(this.parametrosService.get('parametro', null, params)).pipe(
         map((response: any) => {
           if (!response)
             throw new Error('No response received from Parametros service');

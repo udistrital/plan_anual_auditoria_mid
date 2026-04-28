@@ -3,12 +3,11 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
 import { environment } from 'src/config/configuration';
-import { PlantillaUtilsService } from 'src/utils/plantilla.utils';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
+import { PlantillasMidService } from 'src/shared/services/plantillas-mid/plantillas-mid.service';
 
 const {
-    PLAN_AUDITORIA_CRUD_SERVICE,
     PLANTILLAS,
-    // PARAMETROS_SERVICE,
     TERCEROS_SERVICE,
     TIPO_EVALUACION,
     ESTADOS_INFORME_AUDITORIA_PRELIMINAR,
@@ -21,14 +20,15 @@ const {
 export class PlantillaInformeAuditoriaService {
     constructor(
         private readonly httpService: HttpService,
-        private readonly plantillaUtils: PlantillaUtilsService,
-        private readonly auditoriaService: AuditoriaService,
+        private readonly plantillasMidService: PlantillasMidService,
+        private readonly auditoriaCrudService: AuditoriaCrudService,
+        private readonly auditoriaService: AuditoriaService
     ) { }
 
     async get(idAuditoria: string) {
         const auditoriaRespuesta = await this.auditoriaService.getOne(idAuditoria);
         const infoParaPlantilla = await this.organizarData({ auditoria: auditoriaRespuesta?.Data || {} });
-        return await this.plantillaUtils.renderizarPlantilla(infoParaPlantilla);
+        return await this.plantillasMidService.post('/v1/plantilla/renderizar', infoParaPlantilla);
     }
 
     private async organizarData(dataAuditoria: any) {
@@ -43,8 +43,6 @@ export class PlantillaInformeAuditoriaService {
                 throw new Error('No se encontró el informe asociado a la auditoría');
             }
             
-            const auditoriaPadreRespuesta = await this.auditoriaService.getAll({query: `_id:${auditoria.auditoria_padre_id}`});
-            const auditoriaPadre = auditoriaPadreRespuesta.Data[0];
             const temas = await this.obtenerTemasInforme(informe._id);
             const temasReestructurados = await this.reestructurarTemas(temas);
             const [anio, mes, dia] = informe.fecha_emision.split('T')[0].split('-');
@@ -52,7 +50,7 @@ export class PlantillaInformeAuditoriaService {
                 this.generarTituloInforme(auditoria._id, auditoria.tipo_evaluacion_id, auditoria.titulo),
                 this.obtenerJefeOci(),
                 this.obtenerAuditorResponsable(auditoria._id),
-                this.obtenergrupoDependencias(auditoriaPadre.dependencia_id)
+                this.obtenergrupoDependencias(auditoria.dependencia_id)
             ]);
 
             const infoParaPlantilla = {
@@ -107,32 +105,22 @@ export class PlantillaInformeAuditoriaService {
     }
 
     private async obtenerInformeAuditoria(idAuditoria: string) {
-        const urlInforme = `${PLAN_AUDITORIA_CRUD_SERVICE}informe?query=auditoria_id:${idAuditoria},activo:true&fields=_id,fecha_emision,muestra,aspecto_general,informe_final,observacion_conclusion,nota&limit=1`;
-        try {
-            const respuestaInforme = await lastValueFrom(this.httpService.get(urlInforme));
-            return respuestaInforme.data.Data[0];
-        } catch (error) {
-            throw new HttpException(
-                'Error al obtener los datos del servicio externo ',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
-        }
+        const params = {
+            query: `auditoria_id:${idAuditoria},activo:true`,
+            limit: 1
+        };
+        const respuestaInforme = await this.auditoriaCrudService.traerDataCrud('informe', null, params);
+        return respuestaInforme.Data[0];
     }
 
 
     private async obtenerTemasInforme(idInforme: string) {
-        const urlTemas = `${PLAN_AUDITORIA_CRUD_SERVICE}tema?query=informe_id:${idInforme},activo:true`;
-        try {
-            const respuestaTemas = await lastValueFrom(
-                this.httpService.get(urlTemas),
-            );
-            return respuestaTemas.data.Data || [];
-        } catch (error) {
-            throw new HttpException(
-                'Error al obtener los datos del servicio externo ',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
-        }
+        const params = {
+            query: `informe_id:${idInforme},activo:true`,
+            limit: 0
+        };
+        const respuestaTemas = await this.auditoriaCrudService.traerDataCrud('tema', null, params);
+        return respuestaTemas.Data;
     }
 
     private async generarTituloInforme(idAuditoria: string, tipo_evaluacion_id: number, auditoriaTitulo: string) {
@@ -141,27 +129,17 @@ export class PlantillaInformeAuditoriaService {
                 ? "Auditoria Interna"
                 : "Auditoria de Seguimiento";
 
-        const estado_id = await this.consultarEstadoAuditoria(idAuditoria);
+        const params = {
+            query: `auditoria_id:${idAuditoria},activo:true,actual:true`,
+            limit: 1,
+        }
+        const estado_id = await this.auditoriaCrudService.traerDataCrud('auditoria-estado', null, params).then(data => data.Data);
 
         const sufijo = ESTADOS_INFORME_AUDITORIA_PRELIMINAR.includes(estado_id)
             ? "Preliminar"
             : "Final";
 
         return `${tipo}: ${auditoriaTitulo} - ${sufijo}`;
-    }
-
-    private async consultarEstadoAuditoria(idAuditoria: string) {
-        const urlEstadoAuditoria = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria-estado?query=auditoria_id:${idAuditoria},activo:true,actual:true&fields=estado_id&limit=1`;
-
-        try {
-            const respuestaEstado = await lastValueFrom(this.httpService.get(urlEstadoAuditoria));
-            return respuestaEstado.data.Data[0].estado_id;
-        } catch (error) {
-            throw new HttpException(
-                'Error al obtener el estado de la auditoria',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
-        }
     }
 
     private async reestructurarTemas(temas: any[]) {
@@ -174,21 +152,9 @@ export class PlantillaInformeAuditoriaService {
         }));
     }
 
-    // private async traerParametros(idParam: string) {
-    //     const url = `${PARAMETROS_SERVICE}/parametro?query=Id:${idParam}&fields=Nombre`;
-    //     try {
-    //         const response = await lastValueFrom(this.httpService.get(url));
-    //         return response.data.Data[0];
-    //     } catch (error) {
-    //         throw new HttpException(
-    //             'Error al obtener los datos del servicio externo',
-    //             HttpStatus.INTERNAL_SERVER_ERROR,
-    //         );
-    //     }
-    // }
-
-    private async obtenerAuditorResponsable(auditorId: string): Promise<string> {
-        const auditores = (await this.obtenerAuditores(auditorId)) || [];
+    private async obtenerAuditorResponsable(auditoriaId: string): Promise<string> {
+        const params = { query: `auditoria_id:${auditoriaId},activo:true`, limit: 0 }
+        const auditores = await this.auditoriaCrudService.traerDataCrud('auditor', null, params).then(data => data.Data);
         switch (auditores.length) {
             case 0:
                 return 'Sin auditor asignado.';
@@ -204,19 +170,6 @@ export class PlantillaInformeAuditoriaService {
                     const tercero = await this.obtenerTercero(auditores[0].auditor_id);
                     return tercero?.NombreCompleto || 'Sin auditor asignado.';
                 }
-        }
-    }
-
-    private async obtenerAuditores(auditoriaId: string) {
-        const url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditor?query=auditoria_id:${auditoriaId},activo:true&limit=0`;
-        try {
-            const response = await lastValueFrom(this.httpService.get(url));
-            return response.data.Data;
-        } catch (error) {
-            throw new HttpException(
-                'Error al obtener los datos de terceros',
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            );
         }
     }
 

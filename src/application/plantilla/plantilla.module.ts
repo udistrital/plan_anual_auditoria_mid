@@ -1,9 +1,7 @@
 import { Module } from '@nestjs/common';
 import { PlantillaController } from './plantilla.controller';
 import { PlantillaService } from './services/plantilla.service';
-import { HttpModule } from '@nestjs/axios';
 import { PlantillaPlanTrabajoService } from './services/plantilla-plan-trabajo.service';
-import { PlantillaUtilsService } from '../../utils/plantilla.utils';
 import { PlantillaSolicitudInformacionService } from './services/plantilla-solicitud-informacion.service';
 import { PlantillaCartaPresentacionService } from './services/plantilla-carta-presentacion.service';
 import { PlantillaProgramaAuditoriaService } from './services/plantilla-programa-auditoria.service';
@@ -11,16 +9,24 @@ import { PlantillaInformeSeguimientoService } from './services/plantilla-informe
 import { PlantillaInformeAuditoriaService } from './services/plantilla-informe-auditoria.service';
 import { DominiosModule } from 'src/shared/utils/dominios/dominios.module';
 import { AuditoriaModule } from '../auditoria/auditoria.module';
+import { PlantillasMidModule } from 'src/shared/services/plantillas-mid/plantillas-mid.module';
+import { AuditoriaCrudModule } from 'src/shared/services/auditoria-crud/auditoria-crud.module';
+import { ParametrosModule } from 'src/shared/services/parametros/parametros.module';
 
 @Module({
-  imports: [HttpModule, DominiosModule, AuditoriaModule],
+  imports: [
+    DominiosModule,
+    AuditoriaModule,
+    PlantillasMidModule,
+    AuditoriaCrudModule,
+    ParametrosModule
+  ],
   controllers: [PlantillaController],
   providers: [
     PlantillaCartaPresentacionService,
     PlantillaService,
     PlantillaSolicitudInformacionService,
     PlantillaPlanTrabajoService,
-    PlantillaUtilsService,
     PlantillaProgramaAuditoriaService,
     PlantillaInformeSeguimientoService,
     PlantillaInformeAuditoriaService,

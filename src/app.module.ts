@@ -14,6 +14,7 @@ import { InformeModule } from './informe/informe.module';
 import { AuditoriaEstadoModule } from './auditoria-estado/auditoria-estado.module';
 import { AuditoriaCrudModule } from './shared/services/auditoria-crud/auditoria-crud.module';
 import { AuditadoModule } from './auditado/auditado.module';
+import { LoggerModule } from 'nestjs-pino';
 import { env } from './config/configuration';
 
 @Module({
@@ -34,6 +35,7 @@ import { env } from './config/configuration';
     }),
     InformeModule,
     AuditadoModule,
+    LoggerModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [AppService],

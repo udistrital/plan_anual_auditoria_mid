@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { PlantillaUtilsService } from '../../../utils/plantilla.utils';
 import { environment } from 'src/config/configuration';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
+import { PlantillasMidService } from 'src/shared/services/plantillas-mid/plantillas-mid.service';
 
 interface CartaRenderizada {
   dependencia_id: number | null;
@@ -12,7 +12,7 @@ interface CartaRenderizada {
 @Injectable()
 export class PlantillaCartaPresentacionService {
   constructor(
-    private readonly plantillaUtils: PlantillaUtilsService,
+    private readonly plantillasMidService: PlantillasMidService,
     private readonly auditoriaService: AuditoriaService,
   ) {}
 
@@ -41,7 +41,7 @@ export class PlantillaCartaPresentacionService {
           dependenciaNombre,
         );
         const baseRenderizado =
-          await this.plantillaUtils.renderizarPlantilla(infoParaPlantilla);
+          await this.plantillasMidService.post('/v1/plantilla/renderizar', infoParaPlantilla);
 
         return {
           dependencia_id: dependenciaId,
