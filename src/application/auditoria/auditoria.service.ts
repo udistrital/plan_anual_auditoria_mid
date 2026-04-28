@@ -7,11 +7,11 @@ import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
 import { Dominio } from 'src/shared/utils/dominios/dominio.model';
 import { unirListaNombresConComas } from 'src/utils/texto.utils';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
+import { TercerosHelperService } from 'src/shared/services/terceros/terceros-helper.service';
 
 const {
   PLAN_AUDITORIA_CRUD_SERVICE,
   TIPO_PARAMETRO,
-  TERCEROS_SERVICE,
 } = environment;
 
 @Injectable()
@@ -30,9 +30,12 @@ export class AuditoriaService {
     private readonly auditorService: AuditorService,
     private readonly auditoriaCrudService: AuditoriaCrudService,
     private readonly dominiosService: DominiosService,
+    private readonly tercerosHelper: TercerosHelperService,
   ) {}
 
   async getAll(queryParams: any) {
+    queryParams.query = queryParams.query || '';
+
     const queryEstado = queryParams.query
         ? queryParams.query.split(',').filter((param: string) => param.startsWith('estado_id:'))[0]
         : undefined;
@@ -86,6 +89,8 @@ export class AuditoriaService {
   }
 
   async getByAuditor(personaId: string, queryParams: any) {
+    queryParams.query = queryParams.query || '';
+
     const queryEstado = queryParams.query
         ? queryParams.query.split(',').filter((param: string) => param.startsWith('estado_id:'))[0]
         : '';
@@ -266,20 +271,16 @@ export class AuditoriaService {
     personaId: number,
     cargoId: number,
   ): Promise<number[]> {
-    const url = `${TERCEROS_SERVICE}vinculacion?query=TerceroPrincipalId:${personaId},Activo:true,CargoId:${cargoId}&fields=DependenciaId`;
     try {
-      const response = await lastValueFrom(this.httpService.get(url));
-
-      if (!response.data || response.data.length === 0) {
-        return [];
-      }
-      return response.data
-        .map((v: any) => v.DependenciaId)
-        .filter((id: any) => id != null);
+      return await this.tercerosHelper.getDependenciasByPersona(
+        personaId,
+        cargoId,
+      );
     } catch (error) {
       throw new HttpException(
         'Error al obtener las dependencias del usuario',
         HttpStatus.INTERNAL_SERVER_ERROR,
+        error,
       );
     }
   }
@@ -314,35 +315,23 @@ export class AuditoriaService {
 
   async getDatosTerceros(dependencia_id: number) {
     const [jefe_dep, asistente_dep] = await Promise.all([
-      this.traerTerceroVinculado(dependencia_id, environment.CARGO.JEFE_DEPENDENCIA_ID),
-      this.traerTerceroVinculado(dependencia_id, environment.CARGO.ASISTENTE_DEPENDENCIA_ID),
+      this.tercerosHelper.getTerceroVinculado(
+        dependencia_id,
+        environment.CARGO.JEFE_DEPENDENCIA_ID,
+      ),
+      this.tercerosHelper.getTerceroVinculado(
+        dependencia_id,
+        environment.CARGO.ASISTENTE_DEPENDENCIA_ID,
+      ),
     ]);
-
+  
     return {
-      dependencia_id: dependencia_id,
+      dependencia_id,
       jefe_nombre: jefe_dep?.NombreCompleto,
       jefe_correo: jefe_dep?.UsuarioWSO2,
       asistente_nombre: asistente_dep?.NombreCompleto,
       asistente_correo: asistente_dep?.UsuarioWSO2,
     };
-  }
-
-  async traerTerceroVinculado(
-    dependenciaId: number,
-    cargoId: number,
-  ): Promise<any> {
-    const url = `${TERCEROS_SERVICE}vinculacion?order=desc&sortby=Id&fields=TerceroPrincipalId&`
-      +`query=Activo:true,DependenciaId:${dependenciaId},CargoId:${cargoId}`;
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data[0]?.TerceroPrincipalId;
-    } catch (error) {
-      throw new HttpException(
-        'Error al traer el tercero vinculado',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        error,
-      );
-    }
   }
 
   private async enriquecerAuditorias(auditorias: any[], incluirAuditores = true) {
@@ -434,8 +423,14 @@ private async identificarCampo(data: any) {
     if ('dependencia_id' in firstElement) {
       observables['dependencia_id'] = this.dominiosService.getDependencias();
       if (!Array.isArray(data.Data)) {
-        if (Array.isArray(firstElement.dependencia_id)) {
-          for (const dep_id of firstElement.dependencia_id) {
+        const dependencias = Array.isArray(firstElement.dependencia_id)
+          ? firstElement.dependencia_id
+          : firstElement.dependencia_id != null
+            ? [firstElement.dependencia_id]
+            : [];
+      
+        for (const dep_id of dependencias) {
+          if (dep_id != null) {
             const datos = await this.getDatosTerceros(dep_id);
             this.datosTerceros.push(datos);
           }
