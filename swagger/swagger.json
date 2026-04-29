@@ -854,36 +854,6 @@
         "tags": [
           "Informe"
         ]
-      },
-      "put": {
-        "description": "Actualiza los datos de un informe existente",
-        "operationId": "InformeController_update",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "ID del informe",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Informe actualizado exitosamente"
-          },
-          "400": {
-            "description": "Datos de entrada inválidos"
-          },
-          "404": {
-            "description": "Informe no encontrado"
-          }
-        },
-        "summary": "Actualizar un informe",
-        "tags": [
-          "Informe"
-        ]
       }
     },
     "/informe": {

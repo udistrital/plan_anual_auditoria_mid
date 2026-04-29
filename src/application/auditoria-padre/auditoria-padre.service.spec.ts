@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuditoriaPadreService } from './auditoria-padre.service';
 import { HttpService } from '@nestjs/axios';
 import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
-import { AuditoriaOrdenadaService } from 'src/shared/services/auditoria-ordenada/auditoria-ordenada.service';
+import { AuditoriaOrdenadaService } from 'src/shared/services/auditoria-ordenada.service';
 import { of, throwError } from 'rxjs';
 import { HttpException, HttpStatus } from '@nestjs/common';
 

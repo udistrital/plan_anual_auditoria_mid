@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
 
 @Injectable()
 export class ActividadService {

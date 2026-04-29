@@ -1,11 +1,15 @@
+import { HttpService } from "@nestjs/axios";
 import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { map, catchError, Observable, of } from "rxjs";
-import { GestorDocumentalService } from "src/shared/services/gestor-documental/gestor-documental.service";
 
 @Injectable()
 export class NuxeoService {
 
-  constructor(private readonly gestorDocumentalService: GestorDocumentalService) {}
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly configService: ConfigService
+  ) {}
 
   /**
    * Retrieves a file URL from the Gestor Documental API based on the provided UUID. If the response does not contain a file or if an error occurs, it returns an empty string.
@@ -16,8 +20,10 @@ export class NuxeoService {
   obtenerPorUUID(uuid: string): Observable<string> {
     const methodName = 'obtenerPorUUID';
     const endpoint = `document/${uuid}`;
+    const url = `${this.configService.get<string>('GESTOR_DOCUMENTAL_SERVICE')}/document/${uuid}`
     try {
-      return this.gestorDocumentalService.get(endpoint).pipe(
+      return this.httpService.get(url).pipe(
+        map(res => res.data),
         map(res => {
           if (!res || !res.file)
             throw new Error('La respuesta no tiene el formato esperado.');

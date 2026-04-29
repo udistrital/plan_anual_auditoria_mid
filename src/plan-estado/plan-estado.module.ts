@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
-import { HttpModule } from '@nestjs/axios';
 import { PlanEstadoService } from './plan-estado.service';
 import { PlanEstadoController } from './plan-estado.controller';
-import { AuditoriaCrudModule } from 'src/shared/services/auditoria-crud/auditoria-crud.module';
+import { ServicesModule } from 'src/shared/services/services.module';
 
 @Module({
-  imports: [HttpModule, AuditoriaCrudModule],
+  imports: [ServicesModule],
   controllers: [PlanEstadoController],
   providers: [PlanEstadoService],
 })

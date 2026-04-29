@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { Observable, map, catchError, from } from "rxjs";
-import { ParametrosService } from "src/shared/services/parametros/parametros.service";
-import { OikosService } from "src/shared/services/oikos/oikos.service";
+import { ParametrosService } from "src/shared/services/parametros.service";
+import { OikosService } from "src/shared/services/oikos.service";
 import { environment } from "src/config/configuration";
 import { Parametro, Dominio } from "./dominio.model";
 import { DOMINIOS_CONFIG } from "./dominios.config";

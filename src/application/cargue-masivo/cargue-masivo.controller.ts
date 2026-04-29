@@ -11,7 +11,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiQuery, ApiParam } from 
 import { CargueMasivoService } from './cargue-masivo.service';
 import axios from 'axios';
 import { environment } from 'src/config/configuration';
-import { NuxeoService } from 'src/shared/utils/nuxeo/nuxeo.service';
+import { NuxeoService } from 'src/shared/services/nuxeo.service';
 import { AuditoriaPadreService } from '../auditoria-padre/auditoria-padre.service';
 import { firstValueFrom } from 'rxjs';
 

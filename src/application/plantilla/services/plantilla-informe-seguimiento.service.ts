@@ -1,10 +1,10 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
 import { environment } from 'src/config/configuration';
-import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
-import { ParametrosService } from 'src/shared/services/parametros/parametros.service';
-import { PlantillasMidService } from 'src/shared/services/plantillas-mid/plantillas-mid.service';
-import { TercerosHelperService } from 'src/shared/services/terceros/terceros-helper.service';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
+import { ParametrosService } from 'src/shared/services/parametros.service';
+import { PlantillasMidService } from 'src/shared/services/plantillas-mid.service';
+import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
 
 const {
     PLANTILLAS,

@@ -93,7 +93,7 @@ export class TercerosHelperService {
 
         return dependencias;
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('[TercerosHelper] Error obteniendo dependencias:', {
         personaId,
         cargoId,

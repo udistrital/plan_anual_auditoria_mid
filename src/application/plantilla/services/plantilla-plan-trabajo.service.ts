@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { environment } from 'src/config/configuration';
 import * as moment from 'moment';
 import 'moment/locale/es';
-import { PlantillasMidService } from 'src/shared/services/plantillas-mid/plantillas-mid.service';
-import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
-import { ParametrosService } from 'src/shared/services/parametros/parametros.service';
+import { PlantillasMidService } from 'src/shared/services/plantillas-mid.service';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
+import { ParametrosService } from 'src/shared/services/parametros.service';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
 
 const {

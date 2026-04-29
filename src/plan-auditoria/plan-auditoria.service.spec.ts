@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PlanAuditoriaService } from './plan-auditoria.service';
 import { HttpService } from '@nestjs/axios';
-import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
 
 describe('PlanAuditoriaService', () => {
   let service: PlanAuditoriaService;

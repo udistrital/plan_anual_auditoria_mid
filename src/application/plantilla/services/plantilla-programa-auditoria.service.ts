@@ -4,11 +4,11 @@ import 'moment/locale/es';
 import { environment } from 'src/config/configuration';
 import { capitalize, unirListaNombres } from 'src/utils/texto.utils';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
-import { PlantillasMidService } from 'src/shared/services/plantillas-mid/plantillas-mid.service';
-import { ParametrosService } from 'src/shared/services/parametros/parametros.service';
-import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
-import { TercerosHelperService } from 'src/shared/services/terceros/terceros-helper.service';
-import { OikosService } from 'src/shared/services/oikos/oikos.service';
+import { PlantillasMidService } from 'src/shared/services/plantillas-mid.service';
+import { ParametrosService } from 'src/shared/services/parametros.service';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
+import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
+import { OikosService } from 'src/shared/services/oikos.service';
 
 
 const {

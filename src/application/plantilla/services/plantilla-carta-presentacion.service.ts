@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { environment } from 'src/config/configuration';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
-import { PlantillasMidService } from 'src/shared/services/plantillas-mid/plantillas-mid.service';
+import { PlantillasMidService } from 'src/shared/services/plantillas-mid.service';
 
 interface CartaRenderizada {
   dependencia_id: number | null;

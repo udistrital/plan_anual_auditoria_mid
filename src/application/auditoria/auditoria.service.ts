@@ -1,13 +1,12 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
 import { lastValueFrom, forkJoin } from 'rxjs';
 import { environment } from 'src/config/configuration';
 import { AuditorService } from '../../auditor/auditor.service';
 import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
 import { Dominio } from 'src/shared/utils/dominios/dominio.model';
 import { unirListaNombresConComas } from 'src/utils/texto.utils';
-import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
-import { TercerosHelperService } from 'src/shared/services/terceros/terceros-helper.service';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
+import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
 
 const {
   TIPO_PARAMETRO,
@@ -25,7 +24,6 @@ export class AuditoriaService {
   private estados: { Id: number; Nombre: string }[] = [];
 
   constructor(
-    private readonly httpService: HttpService,
     private readonly auditorService: AuditorService,
     private readonly auditoriaCrudService: AuditoriaCrudService,
     private readonly dominiosService: DominiosService,
@@ -161,7 +159,7 @@ export class AuditoriaService {
   }
 
   async getByDependencia(personaId: number, cargoId: number, queryParams: any) {
-    const dependenciaIds = await this.getDependenciasByPersona(
+    const dependenciaIds = await this.tercerosHelper.getDependenciasByPersona(
       personaId,
       cargoId,
     );
@@ -245,7 +243,7 @@ export class AuditoriaService {
           Array.isArray(a.dependencia_id) ? a.dependencia_id : a.dependencia_id != null ? [a.dependencia_id] : []
         )
       ));
-      const dependenciaNombres = await this.getDependenciaNombres(todosDepIds);
+      const dependenciaNombres = this.getDependenciaNombres(todosDepIds);
 
       await this.enriquecerAuditorias(data.Data, false);
 
@@ -266,36 +264,14 @@ export class AuditoriaService {
     return data;
   }
 
-  private async getDependenciasByPersona(
-    personaId: number,
-    cargoId: number,
-  ): Promise<number[]> {
-    try {
-      return await this.tercerosHelper.getDependenciasByPersona(
-        personaId,
-        cargoId,
-      );
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener las dependencias del usuario',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        error,
-      );
-    }
-  }
-
-  private async getDependenciaNombres(
+  private getDependenciaNombres(
     dependenciaIds: number[],
-  ): Promise<Map<number, string>> {
-    const dependencias = await lastValueFrom(
-      this.dominiosService.getDependencias()
-    );
+  ): Map<number, string> {
 
     const nombresMap = new Map<number, string>();
-    dependenciaIds.forEach(id => {
-      const dep = dependencias.parametros.find(d => d.Id === id);
+    this.dependencias.forEach(dep => {
       if (dep?.Nombre) {
-        nombresMap.set(id, dep.Nombre);
+        nombresMap.set(dep.id, dep.Nombre);
       }
     });
 

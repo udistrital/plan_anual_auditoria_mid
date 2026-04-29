@@ -1,13 +1,12 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
 import { lastValueFrom, forkJoin } from 'rxjs';
 import { environment } from 'src/config/configuration';
 import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
 import { Dominio } from 'src/shared/utils/dominios/dominio.model';
 import { unirListaNombresConComas } from 'src/utils/texto.utils';
-import { AuditoriaOrdenadaService } from 'src/shared/services/auditoria-ordenada/auditoria-ordenada.service';
+import { AuditoriaOrdenadaService } from 'src/shared/services/auditoria-ordenada.service';
 import { aplicarOrdenamiento } from '../../shared/utils/auditoria-ordenamiento.utils';
-import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
 
 const { TIPO_PARAMETRO } = environment;
 
@@ -22,7 +21,6 @@ export class AuditoriaPadreService {
   private estados: { Id: number; Nombre: string }[] = [];
 
   constructor(
-    private readonly httpService: HttpService,
     private readonly dominiosService: DominiosService,
     private readonly auditoriaOrdenadaService: AuditoriaOrdenadaService,
     private readonly auditoriaCrudService: AuditoriaCrudService,
@@ -166,7 +164,7 @@ export class AuditoriaPadreService {
         id,
         queryParams,
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error en AuditoriaPadreService.traerDataCrud:', error?.response?.data || error.message);
       throw new HttpException(
         'Error al obtener los datos del servicio externo (auditoria-padre)',

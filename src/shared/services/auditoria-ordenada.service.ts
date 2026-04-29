@@ -1,12 +1,9 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { lastValueFrom } from 'rxjs';
-import { environment } from 'src/config/configuration';
 import {
   ordenarAuditoriasPorPlan,
   aplicarOrdenamiento,
-} from '../../utils/auditoria-ordenamiento.utils';
-import { AuditoriaCrudService } from '../auditoria-crud/auditoria-crud.service';
+} from '../utils/auditoria-ordenamiento.utils';
+import { AuditoriaCrudService } from './auditoria-crud.service';
 
 
 /**

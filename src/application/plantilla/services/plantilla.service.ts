@@ -4,8 +4,8 @@ import { lastValueFrom } from 'rxjs';
 import { jsonPlantillaDto, PlantillaDto } from '../dto/plantilla.dto';
 import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
 import { Dominio } from 'src/shared/utils/dominios/dominio.model';
-import { PlantillasMidService } from 'src/shared/services/plantillas-mid/plantillas-mid.service';
-import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
+import { PlantillasMidService } from 'src/shared/services/plantillas-mid.service';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
 
 const {
   PLANTILLAS,

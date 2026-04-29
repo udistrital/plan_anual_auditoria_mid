@@ -3,7 +3,7 @@ import { firstValueFrom, of, throwError } from "rxjs";
 import { DominiosModule } from "./dominios.module";
 import { DominiosService } from "./dominios.service";
 import { ParametrosService } from "src/shared/services/parametros/parametros.service";
-import { OikosService } from "src/shared/services/oikos/oikos.service";
+import { OikosService } from "src/shared/services/oikos.service";
 import { environment } from "src/config/configuration";
 import { ParametrosModule } from "src/shared/services/parametros/parametros.module";
 import { OikosModule } from "src/shared/services/oikos/oikos.module";

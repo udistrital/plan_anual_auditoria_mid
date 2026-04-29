@@ -3,7 +3,7 @@ import { HttpService } from "@nestjs/axios";
 import { lastValueFrom } from "rxjs";
 import { ConfigService } from "@nestjs/config";
 
-/** Service for interacting with the Parametros API, providing methods for making GET and POST requests to specified endpoints. */
+/** Service for interacting with the Parametros API, providing methods for making GET requests to specified endpoints. */
 @Injectable()
 export class ParametrosService {
 

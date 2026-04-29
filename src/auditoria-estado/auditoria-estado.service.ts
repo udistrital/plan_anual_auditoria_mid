@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { environment } from 'src/config/configuration';
 import { reemplazar, reemplazarCampoRol } from 'src/utils/campo.utils';
-import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
-import { TercerosHelperService } from 'src/shared/services/terceros/terceros-helper.service';
-import { ParametrosService } from 'src/shared/services/parametros/parametros.service';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
+import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
+import { ParametrosService } from 'src/shared/services/parametros.service';
 
 const {
   TIPO_PARAMETRO,

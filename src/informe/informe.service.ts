@@ -1,6 +1,6 @@
 import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { lastValueFrom, forkJoin, of, catchError, from } from 'rxjs';
-import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
 
 @Injectable()
