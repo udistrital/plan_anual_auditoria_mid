@@ -17,8 +17,8 @@ export const env = () => ({
 const environmentConf = () => {
   const envConfig = process.env.NODE_ENV === 'production' ? productionConfig : developmentConfig;
   return ({
-    ...envConfig,
     ...defaultConfig,
+    ...envConfig,
   });
 }
 

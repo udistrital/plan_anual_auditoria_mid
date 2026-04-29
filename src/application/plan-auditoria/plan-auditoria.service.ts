@@ -22,6 +22,7 @@ export class PlanAuditoriaService {
   ) {}
 
   async getAll(queryParams: any) {
+    console.log('Environment variables:', PLAN_ESTADO)
     const data = await this.auditoriaCrudService.traerDataCrud('plan-auditoria', null, queryParams);
     await this.enriquecerPlan(data.Data)
     if (await this.identificarCampo(data)) {

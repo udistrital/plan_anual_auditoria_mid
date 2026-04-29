@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuditoriaService } from './auditoria.service';
 import { HttpService } from '@nestjs/axios';
-import { AuditorService } from '../../auditor/auditor.service';
+import { AuditorService } from '../auditor/auditor.service';
 import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
 import { of, throwError } from 'rxjs';

@@ -34,8 +34,6 @@ export class TercerosHelperService {
         tercero = response;
       }
   
-      console.log('[TercerosHelper] Tercero normalizado:', tercero);
-  
       return tercero;
   
     } catch (error) {
@@ -83,13 +81,6 @@ export class TercerosHelperService {
         const dependencias = (response || [])
         .map((v: any) => v.DependenciaId)
         .filter((id: any) => id != null);
-
-        console.log('[TercerosHelper] Dependencias obtenidas:', {
-        personaId,
-        cargoId,
-        rawResponse: response,
-        dependencias,
-        });
 
         return dependencias;
 

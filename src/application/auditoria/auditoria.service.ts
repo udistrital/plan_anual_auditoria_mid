@@ -1,7 +1,7 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { lastValueFrom, forkJoin } from 'rxjs';
 import { environment } from 'src/config/configuration';
-import { AuditorService } from '../../auditor/auditor.service';
+import { AuditorService } from '../auditor/auditor.service';
 import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
 import { Dominio } from 'src/shared/utils/dominios/dominio.model';
 import { unirListaNombresConComas } from 'src/utils/texto.utils';
