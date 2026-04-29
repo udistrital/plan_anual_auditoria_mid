@@ -1,12 +1,10 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { lastValueFrom } from 'rxjs';
+import { Injectable } from '@nestjs/common';
 import { environment } from 'src/config/configuration';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
+import { TercerosHelperService } from 'src/shared/services/terceros/terceros-helper.service';
+import { ParametrosService } from 'src/shared/services/parametros/parametros.service';
 
 const {
-  TERCEROS_SERVICE,
-  PARAMETROS_SERVICE,
   TIPO_PARAMETRO,
   PLAN_ESTADO,
   AUDITORIA_PADRE_ESTADO,
@@ -18,8 +16,9 @@ export class PlanAuditoriaService {
   private estados: any[] = [];
 
   constructor(
-    private readonly httpService: HttpService,
-    private readonly auditoriaCrudService: AuditoriaCrudService 
+    private readonly auditoriaCrudService: AuditoriaCrudService,
+    private readonly tercerosService: TercerosHelperService,
+    private readonly parametrosService: ParametrosService,
   ) {}
 
   async getAll(queryParams: any) {
@@ -39,52 +38,33 @@ export class PlanAuditoriaService {
     return data;
   }
 
-  private async traerTercero(documento: string) {
-    const url = `${TERCEROS_SERVICE}/tercero/${documento}`;
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data;
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
   private async identificarCampo(data: any) {
     let validacion = false;
     try {
       const firstElement = Array.isArray(data.Data) ? data.Data[0] : data.Data;
+      const queryParams = {
+        query: ``,
+        fields: 'Id,Nombre',
+        limit: 0,
+      }
       if ('vigencia_id' in firstElement) {
-        let param = await this.traerParametros(TIPO_PARAMETRO.VIGENCIA);
+        const query = { ...queryParams, query: `TipoParametroId:${TIPO_PARAMETRO.VIGENCIA}` }
+        const param = await this.parametrosService.get('parametro', null, query).then(data => data.Data);
         this.vigencias.push(...param);
         validacion = true;
       }
       if ('estado' in firstElement && firstElement.estado !== null) {
         const estadoId = firstElement.estado.estado_id;
         if (estadoId) {
-          let paramEstado = await this.traerParametros(TIPO_PARAMETRO.PLAN_ESTADO);
-          this.estados.push(...paramEstado);
+          const query = { ...queryParams, query: `TipoParametroId:${TIPO_PARAMETRO.PLAN_ESTADO}` }
+          const estado = await this.parametrosService.get('parametro', null, query).then(data => data.Data);
+          this.estados.push(...estado);
         }
         validacion = true;
       }
       return validacion;
     } catch (error) {
       console.warn('Error en identificarCampo:', error);
-    }
-  }
-
-  private async traerParametros(idParam: number) {
-    const url = `${PARAMETROS_SERVICE}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre&limit=0`;
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data.Data;
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
     }
   }
 
@@ -96,7 +76,7 @@ export class PlanAuditoriaService {
             this.traerEstadoPorPlan(plan._id),
             this.traerMotivosRechazo(plan._id, PLAN_ESTADO.RECHAZADO),
             this.tieneModificaciones(plan.auditorias),
-            plan.creado_por_id ? this.traerTercero(plan.creado_por_id) : null,
+            plan.creado_por_id ? this.tercerosService.getTerceroById(plan.creado_por_id) : null,
           ]);
 
           if (estado?.actual) plan.estado = estado;

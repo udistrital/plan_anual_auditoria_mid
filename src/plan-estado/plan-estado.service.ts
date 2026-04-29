@@ -1,13 +1,11 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { lastValueFrom } from 'rxjs';
+import { Injectable } from '@nestjs/common';
 import { environment } from 'src/config/configuration';
 import { reemplazar, reemplazarCampoRol } from 'src/utils/campo.utils';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
+import { TercerosHelperService } from 'src/shared/services/terceros/terceros-helper.service';
+import { ParametrosService } from 'src/shared/services/parametros/parametros.service';
 
 const {
-  PARAMETROS_SERVICE,
-  TERCEROS_SERVICE,
   TIPO_PARAMETRO,
   ETIQUETAS_ROL,
 } = environment;
@@ -17,8 +15,9 @@ export class PlanEstadoService {
   private estados: any[] = [];
 
   constructor(
-    private readonly httpService: HttpService,
-    private readonly auditoriaCrudService: AuditoriaCrudService
+    private readonly auditoriaCrudService: AuditoriaCrudService,
+    private readonly tercerosService: TercerosHelperService,
+    private readonly parametrosService: ParametrosService,
   ) {}
 
   async getAll(queryParams: any) {
@@ -42,26 +41,18 @@ export class PlanEstadoService {
     try {
       const firstElement = Array.isArray(data.Data) ? data.Data[0] : data.Data;
       if ('estado_id' in firstElement) {
-        let param = await this.traerParametros(TIPO_PARAMETRO.PLAN_ESTADO);
+        const queryParams = {
+          query: `TipoParametroId:${TIPO_PARAMETRO.PLAN_ESTADO}`,
+          fields: 'Id,Nombre',
+          limit: 0,
+        }
+        let param = await this.parametrosService.get('parametro', null, queryParams).then(data => data.Data);
         this.estados.push(...param);
         validacion = true;
       }
       return validacion;
     } catch (error) {
       console.error(error);
-    }
-  }
-
-  private async traerParametros(idParam: number) {
-    const url = `${PARAMETROS_SERVICE}/parametro?query=TipoParametroId:${idParam}&fields=Id,Nombre`;
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data.Data;
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
     }
   }
 
@@ -96,8 +87,12 @@ export class PlanEstadoService {
 
   private async reemplazarCampoUsuario(element: any) {
     try {
-      const usuario = await this.traerUsuario(element.usuario_id);
-      element.usuario = usuario;
+      const usuario = await this.tercerosService.getTerceroById(element.usuario_id);
+      element.usuario = {
+        id: usuario.Id,
+        nombre: usuario.NombreCompleto.replace(/(^|\s)\p{L}/gu, (letra) =>
+          letra.toUpperCase(),
+        )};
       delete element.usuario_id;
     } catch (error) {
       console.warn(
@@ -109,20 +104,4 @@ export class PlanEstadoService {
     }
   }
 
-  private async traerUsuario(idUsuario: string) {
-    const url = `${TERCEROS_SERVICE}/tercero/${idUsuario}`;
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      const data = response.data;
-      return {
-        id: data.Id,
-        nombre: data.NombreCompleto.replace(/(^|\s)\p{L}/gu, (letra) =>
-          letra.toUpperCase(),
-        ),
-      };
-    } catch (error) {
-      console.warn(`No se pudo obtener el usuario con ID: ${idUsuario}`, error);
-      return { id: idUsuario, nombre: null };
-    }
-  }
 }

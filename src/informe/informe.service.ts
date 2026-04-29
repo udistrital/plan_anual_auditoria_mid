@@ -1,60 +1,51 @@
 import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { lastValueFrom, forkJoin, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
-import { environment } from 'src/config/configuration';
-
-const { PLAN_AUDITORIA_CRUD_SERVICE } = environment;
+import { lastValueFrom, forkJoin, of, catchError, from } from 'rxjs';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
+import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
 
 @Injectable()
 export class InformeService {
   private readonly logger = new Logger(InformeService.name);
 
-  constructor(private readonly httpService: HttpService) {}
+  constructor(
+    private readonly auditoriaCrudService: AuditoriaCrudService,
+    private readonly auditoriaService: AuditoriaService,
+  ) {}
 
   async getInformeCompleto(id: string) {
     try {
       this.logger.log(`Consultando informe completo con ID: ${id}`);
 
       // Obtener informe base del CRUD
-      const informeBase = await lastValueFrom(
-        this.httpService.get(`${PLAN_AUDITORIA_CRUD_SERVICE}informe/${id}`).pipe(
-          map(res => res.data.Data),
-          catchError(() => {
-            throw new HttpException(
-              `Informe con ID ${id} no encontrado`,
-              HttpStatus.NOT_FOUND
-            );
-          })
-        )
-      );
+      const informeBase = await this.auditoriaCrudService.traerDataCrud('informe', id, null).then(data => data.Data)
+        .catch((error) => {
+          this.logger.warn(`No se pudo obtener el informe: ${error.message}`);
+          throw new HttpException(
+            `Informe con ID ${id} no encontrado`,
+            HttpStatus.NOT_FOUND
+          );
+        }); 
 
       // Orquestar llamadas paralelas para complementar datos
       const complementos$ = forkJoin({
-        auditoria: this.httpService
-          .get(`${PLAN_AUDITORIA_CRUD_SERVICE}auditoria/${informeBase.auditoria_id}`)
+        auditoria: from(this.auditoriaService.getOne(informeBase.auditoria_id).then(data => data.Data))
           .pipe(
-            map(res => res.data.Data),
             catchError((error) => {
               this.logger.warn(`No se pudo obtener auditoría: ${error.message}`);
               return of(null);
             })
           ),
 
-        hallazgos: this.httpService
-          .get(`${PLAN_AUDITORIA_CRUD_SERVICE}informe/${id}/hallazgos`)
+        hallazgos: from(this.auditoriaCrudService.traerDataCrud(`informe/${id}/hallazgos`, null, null).then(data => data.Data))
           .pipe(
-            map(res => res.data.Data),
             catchError((error) => {
               this.logger.warn(`No se pudieron obtener hallazgos: ${error.message}`);
               return of([]);
             })
           ),
 
-        temas: this.httpService
-          .get(`${PLAN_AUDITORIA_CRUD_SERVICE}tema?query=informe_id:${id},activo:true`)
+        temas: from(this.auditoriaCrudService.traerDataCrud('tema', null, { query: `informe_id:${id},activo:true`}).then(data => data.Data))
           .pipe(
-            map(res => res.data.Data),
             catchError((error) => {
               this.logger.warn(`No se pudieron obtener temas: ${error.message}`);
               return of([]);
@@ -73,46 +64,29 @@ export class InformeService {
       this.logger.log(`Informe ${id} consultado exitosamente con datos complementarios`);
       return informeCompleto;
 
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof HttpException) {
         throw error;
       }
       this.logger.error(`Error al obtener informe completo: ${error.message}`, error.stack);
       throw new HttpException(
         'Error al obtener el informe completo',
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        error
       );
     }
   }
 
   async getAll(queryParams: any) {
     try {
-      const queryString = new URLSearchParams(queryParams).toString();
-      const url = `${PLAN_AUDITORIA_CRUD_SERVICE}informe?${queryString}`;
-
-      const response = await lastValueFrom(
-        this.httpService.get(url).pipe(
-          map(res => res.data),
-          catchError(() => {
-            throw new HttpException(
-              'Error al obtener informes',
-              HttpStatus.INTERNAL_SERVER_ERROR
-            );
-          })
-        )
-      );
+      const response = await this.auditoriaCrudService.traerDataCrud('informe', null, queryParams);
 
       // Complementar cada informe con datos básicos de auditoría y estado
       if (response.Data && Array.isArray(response.Data)) {
         const informesConComplementos = await Promise.all(
           response.Data.map(async (informe: any) => {
             const complementos$ = forkJoin({
-              auditoria: this.httpService
-                .get(`${PLAN_AUDITORIA_CRUD_SERVICE}auditoria/${informe.auditoria_id}`)
-                .pipe(
-                  map(res => res.data.Data),
-                  catchError(() => of(null))
-                )
+              auditoria: from(this.auditoriaService.getOne(informe.auditoria_id).then(data => data.Data))
             });
 
             const extras = await lastValueFrom(complementos$);
@@ -125,7 +99,7 @@ export class InformeService {
 
       return response;
 
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof HttpException) {
         throw error;
       }
@@ -150,44 +124,13 @@ export class InformeService {
 
       return await this.getAll(queryParams);
 
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(
         `Error al consultar informes por auditoría: ${error.message}`,
         error.stack
       );
       throw new HttpException(
         'Error al consultar informes por auditoría',
-        HttpStatus.INTERNAL_SERVER_ERROR
-      );
-    }
-  }
-
-  async update(id: string, body: any) {
-    try {
-      this.logger.log(`Actualizando informe con ID: ${id}`);
-
-      const response = await lastValueFrom(
-        this.httpService.put(`${PLAN_AUDITORIA_CRUD_SERVICE}informe/${id}`, body).pipe(
-          map(res => res.data),
-          catchError((error) => {
-            throw new HttpException(
-              error.response?.data?.Message || 'Error al actualizar informe',
-              error.response?.status || HttpStatus.BAD_REQUEST
-            );
-          })
-        )
-      );
-
-      this.logger.log(`Informe ${id} actualizado exitosamente`);
-      return response;
-
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      this.logger.error(`Error al actualizar informe: ${error.message}`, error.stack);
-      throw new HttpException(
-        'Error al actualizar informe',
         HttpStatus.INTERNAL_SERVER_ERROR
       );
     }

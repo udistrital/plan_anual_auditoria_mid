@@ -1,11 +1,7 @@
 import {
   Controller,
   Get,
-  Post,
-  Put,
-  Delete,
   Param,
-  Body,
   HttpStatus,
   Res,
   Query,
@@ -82,29 +78,6 @@ export class InformeController {
         Status: HttpStatus.NOT_FOUND,
         Message: 'Error al obtener informes de la auditoría',
         Data: error.message
-      });
-    }
-  }
-
-  @Put(':id')
-  @ApiOperation({ 
-    summary: 'Actualizar un informe',
-    description: 'Actualiza los datos de un informe existente'
-  })
-  @ApiParam({ name: 'id', type: 'string', description: 'ID del informe' })
-  @ApiResponse({ status: 200, description: 'Informe actualizado exitosamente' })
-  @ApiResponse({ status: 400, description: 'Datos de entrada inválidos' })
-  @ApiResponse({ status: 404, description: 'Informe no encontrado' })
-  async update(@Res() res: any, @Param('id') id: string, @Body() body: any) {
-    try {
-      const data = await this.informeService.update(id, body);
-      res.status(HttpStatus.OK).json(data);
-    } catch (error) {
-      res.status(error.status || HttpStatus.BAD_REQUEST).json({
-        Success: false,
-        Status: error.status || HttpStatus.BAD_REQUEST,
-        Message: error.message || 'Error en servicio Put: datos incorrectos o inválidos',
-        Data: null
       });
     }
   }
