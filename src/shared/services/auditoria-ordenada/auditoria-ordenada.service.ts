@@ -6,8 +6,8 @@ import {
   ordenarAuditoriasPorPlan,
   aplicarOrdenamiento,
 } from '../../utils/auditoria-ordenamiento.utils';
+import { AuditoriaCrudService } from '../auditoria-crud/auditoria-crud.service';
 
-const { PLAN_AUDITORIA_CRUD_SERVICE } = environment;
 
 /**
  * Servicio compartido para obtener auditorías ordenadas.
@@ -15,7 +15,9 @@ const { PLAN_AUDITORIA_CRUD_SERVICE } = environment;
  */
 @Injectable()
 export class AuditoriaOrdenadaService {
-  constructor(private readonly httpService: HttpService) {}
+  constructor(
+    private readonly auditoriaCrudService: AuditoriaCrudService,
+  ) {}
 
   /**
    * Obtiene auditorías ordenadas según el plan.
@@ -57,12 +59,35 @@ export class AuditoriaOrdenadaService {
     return resultado;
   }
 
-  private async obtenerAuditoriasDeCrud(planId: string, tipo: string = 'auditoria'): Promise<any[]> {
-    const url = `${PLAN_AUDITORIA_CRUD_SERVICE}${tipo}?query=plan_auditoria_id:${planId},activo:true&limit=0`;
+  /**
+     * Obtiene auditorías desde el CRUD usando el servicio centralizado.
+     * @param planId - ID del plan
+     * @param tipo - Endpoint ('auditoria' o 'auditoria-padre')
+     * @returns Lista de auditorías
+     */
+  private async obtenerAuditoriasDeCrud(
+    planId: string,
+    tipo: string = 'auditoria',
+  ): Promise<any[]> {
     try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data?.Data || [];
+      const queryParams = {
+        query: `plan_auditoria_id:${planId},activo:true`,
+        limit: 0,
+      };
+
+      console.log('📡 Consultando auditorías:', tipo, queryParams);
+
+      const response = await this.auditoriaCrudService.traerDataCrud(
+        tipo,
+        null,
+        queryParams,
+      );
+
+      console.log('✅ Auditorías obtenidas:', response?.Data?.length);
+
+      return response?.Data || [];
     } catch (error) {
+      console.error('❌ Error al obtener auditorías:', error?.message);
       throw new HttpException(
         'Error al obtener auditorías',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -70,12 +95,26 @@ export class AuditoriaOrdenadaService {
     }
   }
 
+  /**
+   * Obtiene el plan de auditoría desde el CRUD.
+   * @param planId - ID del plan
+   * @returns Plan de auditoría
+   */
   private async obtenerPlan(planId: string): Promise<any> {
-    const url = `${PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${planId}`;
     try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data?.Data;
+      console.log('📡 Consultando plan:', planId);
+
+      const response = await this.auditoriaCrudService.traerDataCrud(
+        'plan-auditoria',
+        planId,
+        null,
+      );
+
+      console.log('✅ Plan obtenido');
+
+      return response?.Data;
     } catch (error) {
+      console.error('❌ Error al obtener plan:', error?.message);
       throw new HttpException(
         'Error al obtener el plan',
         HttpStatus.INTERNAL_SERVER_ERROR,

@@ -10,7 +10,6 @@ import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditor
 import { TercerosHelperService } from 'src/shared/services/terceros/terceros-helper.service';
 
 const {
-  PLAN_AUDITORIA_CRUD_SERVICE,
   TIPO_PARAMETRO,
 } = environment;
 
@@ -557,38 +556,44 @@ private async identificarCampo(data: any) {
         HttpStatus.BAD_REQUEST,
       );
     }
-
+  
     try {
-      // 1. Eliminar lógicamente la auditoría
-      const deleteUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria/${auditoriaId}`;
-      await lastValueFrom(this.httpService.delete(deleteUrl));
-
-      // 2. Obtener el plan de auditoría actual
-      const getPlanUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${planAuditoriaId}`;
-      const planResponse = await lastValueFrom(this.httpService.get(getPlanUrl));
-      const plan = planResponse.data.Data;
-
-      // 3. Filtrar las auditorías para eliminar la auditoría borrada
+      // 1. Eliminar auditoría
+      await this.auditoriaCrudService.delete('auditoria', auditoriaId);
+  
+      // 2. Obtener plan
+      const planResponse = await this.auditoriaCrudService.traerDataCrud(
+        'plan-auditoria',
+        planAuditoriaId,
+        null
+      );
+  
+      const plan = planResponse.Data;
+  
+      // 3. Filtrar auditorías
       const auditoriasActualizadas = plan.auditorias.filter(
         (id: string) => id !== auditoriaId,
       );
-
-      // 4. Actualizar el plan de auditoría
-      const putPlanUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${planAuditoriaId}`;
-      await lastValueFrom(
-        this.httpService.put(putPlanUrl, { auditorias: auditoriasActualizadas }),
+  
+      // 4. Actualizar plan
+      await this.auditoriaCrudService.put(
+        'plan-auditoria',
+        planAuditoriaId,
+        { auditorias: auditoriasActualizadas }
       );
-
+  
       return {
         Success: true,
         Status: 200,
         Message: 'Auditoría eliminada exitosamente',
         Data: null,
       };
+  
     } catch (error: any) {
+      console.error('[DELETE AUDITORIA ERROR]', error);
       throw new HttpException(
-        error.response?.data?.message || 'Error al eliminar la auditoría',
-        error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
+        error.message || 'Error al eliminar la auditoría',
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }

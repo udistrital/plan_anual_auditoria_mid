@@ -1,35 +1,81 @@
-import { HttpService } from '@nestjs/axios';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { lastValueFrom } from 'rxjs';
-import { environment } from 'src/config/configuration';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
 import { TercerosHelperService } from 'src/shared/services/terceros/terceros-helper.service';
-
-const {
-    PLAN_AUDITORIA_CRUD_SERVICE,
-} = environment;
 
 @Injectable()
 export class AuditadoService {
+  constructor(
+    private readonly auditoriaCrudService: AuditoriaCrudService,
+    private readonly tercerosHelper: TercerosHelperService,
+  ) {}
 
-    constructor(
-        private readonly httpService: HttpService,
-        private readonly tercerosHelper: TercerosHelperService,
-    ) {}
+  async filtrarDocumentosPorDependencia(
+    personaId: number,
+    auditoriaId: string,
+    cargoId: number,
+    tipoDocumentoId?: string,
+  ) {
+    try {
+      // 1. Construir filtros
+      const queryParams = {
+        query: `referencia_id:${auditoriaId},activo:true`,
+        limit: 0,
+      };
 
-    async filtrarDocumentosPorDependencia(personaId: number, auditoriaId: string, cargoId: number, tipoDocumentoId?: string) {
-        const documentosUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}documento?query=referencia_id:${auditoriaId},activo:true`;
-        const tiposDocumentosArray = tipoDocumentoId ? tipoDocumentoId.split(',').map(id => parseInt(id, 10)) : [];
-        const dependenciasAuditado = await this.tercerosHelper.getDependenciasByPersona(personaId, cargoId);
+      // 2. Tipos de documento
+      const tiposDocumentosArray = tipoDocumentoId
+        ? tipoDocumentoId.split(',').map((id) => parseInt(id, 10))
+        : [];
 
-        const response = await lastValueFrom(this.httpService.get(documentosUrl));
-        const documentosFiltrados = response.data.Data.filter((documento: any) => {
-            const tipoDocumentoEncontrados = tiposDocumentosArray.length === 0 || tiposDocumentosArray.includes(documento.tipo_id);
-            const dependenciaDocumentosEncontrados = dependenciasAuditado.includes(documento.metadatos?.dependencia_id) || documento.metadatos == undefined;
-            const firmaDocumentosEncontrados = documento.metadatos?.firmado == true || documento.metadatos?.firmado == false;
-            return tipoDocumentoEncontrados && dependenciaDocumentosEncontrados || firmaDocumentosEncontrados;
-        });
+      // 3. Obtener dependencias desde helper
+      const dependenciasAuditado =
+        await this.tercerosHelper.getDependenciasByPersona(
+          personaId,
+          cargoId,
+        );
 
-        return documentosFiltrados;
+      console.log('dependenciasAuditado:', dependenciasAuditado);
+
+      // 4. Obtener documentos desde CRUD service
+      const response = await this.auditoriaCrudService.traerDataCrud(
+        'documento',
+        null,
+        queryParams,
+      );
+
+      const documentos = response?.Data || [];
+
+      console.log('documentos obtenidos:', documentos.length);
+
+      // 5. Filtrar documentos
+      const documentosFiltrados = documentos.filter((documento: any) => {
+        const tipoDocumentoOk =
+          tiposDocumentosArray.length === 0 ||
+          tiposDocumentosArray.includes(documento.tipo_id);
+
+        const dependenciaOk =
+          !documento.metadatos ||
+          dependenciasAuditado.includes(
+            documento.metadatos?.dependencia_id,
+          );
+
+        const firmaOk =
+          documento.metadatos?.firmado === true ||
+          documento.metadatos?.firmado === false;
+
+        return (tipoDocumentoOk && dependenciaOk) || firmaOk;
+      });
+
+      console.log('documentos filtrados:', documentosFiltrados.length);
+
+      return documentosFiltrados;
+    } catch (error) {
+      console.error('Error en filtrarDocumentosPorDependencia:', error);
+
+      throw new HttpException(
+        'Error al filtrar documentos',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
-
+  }
 }
