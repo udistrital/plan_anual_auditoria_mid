@@ -72,16 +72,18 @@ export class PlanAuditoriaService {
     if (Array.isArray(Data)) {
       await Promise.all(
         Data.map(async (plan: any) => {
-          const [estado, tieneRechazos, tieneModificaciones, tercero] = await Promise.all([
+          const [estado, tieneRechazos, tieneModificaciones, tieneObservaciones, tercero] = await Promise.all([
             this.traerEstadoPorPlan(plan._id),
             this.traerMotivosRechazo(plan._id, PLAN_ESTADO.RECHAZADO),
             this.tieneModificaciones(plan.auditorias),
+            this.tieneObservacionesEnvio(plan._id, PLAN_ESTADO.EN_REVISION_JEFE_ID),
             plan.creado_por_id ? this.tercerosService.getTerceroById(plan.creado_por_id) : null,
           ]);
 
           if (estado?.actual) plan.estado = estado;
           plan.tiene_rechazos = tieneRechazos;
           plan.tiene_modificaciones = tieneModificaciones;
+          plan.tiene_observaciones = tieneObservaciones;
           if (tercero) plan.creado_por_nombre = tercero.NombreCompleto ?? null;
         }),
       );
@@ -91,6 +93,18 @@ export class PlanAuditoriaService {
         Data.estado = estado;
       }
     }
+  }
+
+  private async tieneObservacionesEnvio(planAuditoriaId: string, estadoId: number): Promise<boolean> {
+    const queryParams = {
+      query: `plan_auditoria_id:${planAuditoriaId},estado_id:${estadoId},activo:true`,
+      limit: 0,
+      fields: '_id,observacion',
+    };
+    const data = await this.auditoriaCrudService.traerDataCrud('estado', null, queryParams);
+    return (data?.Data ?? []).some(
+      (estado: any) => estado.observacion && estado.observacion.trim() !== ''
+    );
   }
 
   private async traerMotivosRechazo(planAuditoriaId: string, estadoId: number) {

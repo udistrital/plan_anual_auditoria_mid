@@ -145,17 +145,9 @@ export class PlantillaService {
       }
     });
 
-    const macroproceso = data.macroproceso_id == null
-                          ? 'No definido'
-                          : this.getParametroName(data.macroproceso_id, dominios.macroproceso);
-
-    const proceso = data.proceso_id == null
-                    ? 'No definido'
-                    : this.getParametroName(data.proceso_id, dominios.proceso);
-
-    const dependencia = data.dependencia_id == null
-              ? 'No definido'
-              : this.getParametroName(data.dependencia_id, dominios.dependencia);
+    const macroproceso = this.resolverNombres(data.macroproceso_id, dominios.macroproceso);
+    const proceso = this.resolverNombres(data.proceso_id, dominios.proceso);
+    const dependencia = this.resolverNombres(data.dependencia_id, dominios.dependencia);
 
     return {
       actividad: data.titulo || 'No definido',
@@ -183,6 +175,12 @@ export class PlantillaService {
     );
 
     return [...auditoriasOrdenadas, ...restantes];
+  }
+
+  private resolverNombres(id: number | number[] | null, dominio: Dominio): string {
+    if (id == null) return 'No definido';
+    const ids = Array.isArray(id) ? id : [id];
+    return ids.map((i) => this.getParametroName(i, dominio)).join(', ');
   }
 
   /**

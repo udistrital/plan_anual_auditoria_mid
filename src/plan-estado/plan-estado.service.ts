@@ -20,8 +20,29 @@ export class PlanEstadoService {
     private readonly parametrosService: ParametrosService,
   ) {}
 
+  private normalizarQueryEstados(queryParams: any): any {
+    if (!queryParams?.query) return queryParams;
+
+    const queryStr: string = queryParams.query;
+    const estadoIdRegex = /estado_id:([^\s,]+)/;
+    const match = queryStr.match(estadoIdRegex);
+
+    if (!match) return queryParams;
+
+    const valores = match[1];
+    if (!valores.includes('|')) return queryParams;
+
+    const queryNormalizado = queryStr.replace(
+      estadoIdRegex,
+      `estado_id__in:${valores}`,
+    );
+
+    return { ...queryParams, query: queryNormalizado };
+  }
+
   async getAll(queryParams: any) {
-    const data = await this.auditoriaCrudService.traerDataCrud('estado', null, queryParams);
+    const normalizedParams = this.normalizarQueryEstados(queryParams);
+    const data = await this.auditoriaCrudService.traerDataCrud('estado', null, normalizedParams);
     if (await this.identificarCampo(data)) {
       await this.reemplazarCampos(data);
     }

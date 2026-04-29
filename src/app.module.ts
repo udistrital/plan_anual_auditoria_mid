@@ -12,10 +12,10 @@ import { PlanEstadoModule } from './plan-estado/plan-estado.module';
 import { AuditorModule } from './auditor/auditor.module';
 import { InformeModule } from './informe/informe.module';
 import { AuditoriaEstadoModule } from './auditoria-estado/auditoria-estado.module';
-import { AuditoriaCrudModule } from './shared/services/auditoria-crud/auditoria-crud.module';
 import { AuditadoModule } from './auditado/auditado.module';
 import { LoggerModule } from 'nestjs-pino';
 import { env } from './config/configuration';
+import { ServicesModule } from './shared/services/services.module';
 
 @Module({
   imports: [
@@ -28,7 +28,6 @@ import { env } from './config/configuration';
     PlanAuditoriaModule,
     PlanEstadoModule,
     PlantillaModule,
-    AuditoriaCrudModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [env]
@@ -36,6 +35,7 @@ import { env } from './config/configuration';
     InformeModule,
     AuditadoModule,
     LoggerModule.forRoot(),
+    ServicesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
