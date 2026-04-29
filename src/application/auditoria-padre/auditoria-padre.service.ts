@@ -7,8 +7,9 @@ import { Dominio } from 'src/shared/utils/dominios/dominio.model';
 import { unirListaNombresConComas } from 'src/utils/texto.utils';
 import { AuditoriaOrdenadaService } from 'src/shared/services/auditoria-ordenada/auditoria-ordenada.service';
 import { aplicarOrdenamiento } from '../../shared/utils/auditoria-ordenamiento.utils';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
 
-const { PLAN_AUDITORIA_CRUD_SERVICE, TIPO_PARAMETRO } = environment;
+const { TIPO_PARAMETRO } = environment;
 
 @Injectable()
 export class AuditoriaPadreService {
@@ -24,6 +25,7 @@ export class AuditoriaPadreService {
     private readonly httpService: HttpService,
     private readonly dominiosService: DominiosService,
     private readonly auditoriaOrdenadaService: AuditoriaOrdenadaService,
+    private readonly auditoriaCrudService: AuditoriaCrudService,
   ) {}
 
   async getAll(queryParams: any) {
@@ -83,7 +85,10 @@ export class AuditoriaPadreService {
     return data;
   }
 
-  async deleteAuditoriaPadre(auditoriaPadreId: string, planAuditoriaId: string) {
+  async deleteAuditoriaPadre(
+    auditoriaPadreId: string,
+    planAuditoriaId: string,
+  ) {
     if (!planAuditoriaId) {
       throw new HttpException(
         'El parámetro "plan_auditoria_id" es obligatorio.',
@@ -92,20 +97,31 @@ export class AuditoriaPadreService {
     }
 
     try {
-      const deleteUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria-padre/${auditoriaPadreId}`;
-      await lastValueFrom(this.httpService.delete(deleteUrl));
+      // 1. eliminar auditoría padre
+      await this.auditoriaCrudService.delete(
+        'auditoria-padre',
+        auditoriaPadreId,
+      );
 
-      const getPlanUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${planAuditoriaId}`;
-      const planResponse = await lastValueFrom(this.httpService.get(getPlanUrl));
-      const plan = planResponse.data.Data;
+      // 2. obtener plan
+      const planResponse = await this.auditoriaCrudService.traerDataCrud(
+        'plan-auditoria',
+        planAuditoriaId,
+        null,
+      );
 
+      const plan = planResponse.Data;
+
+      // 3. filtrar ids
       const auditoriasPadreActualizadas = (plan.auditorias || []).filter(
         (id: string) => id !== auditoriaPadreId,
       );
 
-      const putPlanUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${planAuditoriaId}`;
-      await lastValueFrom(
-        this.httpService.put(putPlanUrl, { auditorias: auditoriasPadreActualizadas }),
+      // 4. actualizar plan
+      await this.auditoriaCrudService.put(
+        'plan-auditoria',
+        planAuditoriaId,
+        { auditorias: auditoriasPadreActualizadas },
       );
 
       return {
@@ -114,10 +130,13 @@ export class AuditoriaPadreService {
         Message: 'Auditoría padre eliminada exitosamente',
         Data: null,
       };
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error en deleteAuditoriaPadre:', error);
+
       throw new HttpException(
-        error.response?.data?.message || 'Error al eliminar la auditoría padre',
-        error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
+        error?.response?.data?.message ||
+          'Error al eliminar la auditoría padre',
+        error?.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -141,20 +160,16 @@ export class AuditoriaPadreService {
   }
 
   private async traerDataCrud(id: string | null, queryParams: any) {
-    let url = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria-padre/`;
-    if (id != null && id != undefined) {
-      url = url + `${id}`;
-    }
-    if (queryParams) {
-      const queryString = new URLSearchParams(queryParams).toString();
-      url += `?${queryString}`;
-    }
     try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data;
+      return await this.auditoriaCrudService.traerDataCrud(
+        'auditoria-padre',
+        id,
+        queryParams,
+      );
     } catch (error) {
+      console.error('Error en AuditoriaPadreService.traerDataCrud:', error?.response?.data || error.message);
       throw new HttpException(
-        'Error al obtener los datos del servicio externo',
+        'Error al obtener los datos del servicio externo (auditoria-padre)',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
