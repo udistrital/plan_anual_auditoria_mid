@@ -9,6 +9,7 @@ import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service
 import { ParametrosService } from 'src/shared/services/parametros.service';
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
 import { OikosService } from 'src/shared/services/oikos.service';
+import { LoggerService } from 'src/shared/services/logger.service';
 
 const { PLANTILLAS, logoUDistritalOCI, contactoOCI, CARGO } = environment;
 
@@ -21,6 +22,7 @@ export class PlantillaSolicitudInformacionService {
     private readonly auditoriaService: AuditoriaService,
     private readonly tercerosService: TercerosHelperService,
     private readonly oikosService: OikosService,
+    private readonly logger: LoggerService,
   ) {}
 
   async get(idAuditoria: string) {
@@ -101,9 +103,9 @@ export class PlantillaSolicitudInformacionService {
             ? capitalize(tercero.NombreCompleto)
             : null;
         } catch (error) {
-          console.error(
-            `Error al obtener tercero ${auditor.auditor_id}:`,
+          this.logger.error(
             error,
+            `Error al obtener tercero ${auditor.auditor_id}:`,
           );
           return null;
         }
@@ -136,8 +138,7 @@ export class PlantillaSolicitudInformacionService {
       if (Array.isArray(dependencias)) {
         for (const idDependencia of dependencias) {
           const dependencia = await this.oikosService
-            .traerData('dependencia', idDependencia, null)
-            .then((data) => data.Data);
+            .traerData('dependencia', idDependencia, null);
           const responsableDependencia =
             await this.tercerosService.getTerceroVinculado(
               idDependencia,
@@ -153,8 +154,7 @@ export class PlantillaSolicitudInformacionService {
         }
       } else {
         const dependencia = await this.oikosService
-          .traerData('dependencia', dependencias, null)
-          .then((data) => data.Data);
+          .traerData('dependencia', dependencias, null);
         const responsableDependencia =
           await this.tercerosService.getTerceroVinculado(
             dependencias,
@@ -170,9 +170,11 @@ export class PlantillaSolicitudInformacionService {
       }
       return respuestaDependencias;
     } catch (error) {
+      this.logger.error(error, `Error al consultar el grupo de dependencias:`);
       throw new HttpException(
         'Error al consultar el grupo de dependencias',
         HttpStatus.INTERNAL_SERVER_ERROR,
+        error
       );
     }
   }

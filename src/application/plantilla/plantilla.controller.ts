@@ -1,9 +1,11 @@
 import {
   Controller,
   Get,
+  HttpStatus,
   NotFoundException,
   Param,
   Query,
+  Res,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -53,6 +55,7 @@ export class PlantillaController {
   })
   @ApiResponse({ status: 200, description: 'Plantilla encontrada.' })
   async getById(
+    @Res() res: any,
     @Param('id') id: string,
     @Query('conEspeciales') conEspeciales?: string,
     @Query('auditoria-padre') auditoriaPadre?: string,
@@ -61,11 +64,23 @@ export class PlantillaController {
 
     if (auditoriaPadre == null) auditoriaPadre = 'false';
 
-    return this.plantillaService.getOne(
-      id,
-      conEspeciales === 'true',
-      auditoriaPadre === 'true',
-    );
+    try {
+      const data = await this.plantillaService.getOne(
+        id,
+        conEspeciales === 'true',
+        auditoriaPadre === 'true',
+      );
+      res.status(HttpStatus.OK).json(data);
+    } catch (error: any) {
+
+      res.status(HttpStatus.NOT_FOUND).json({
+        Success: false,
+        Status: HttpStatus.NOT_FOUND,
+        Message:
+          'Error en servicio Plantillas',
+        Data: error.message,
+      });
+    }
   }
 
   @Get('/:tipo/:idAuditoria')

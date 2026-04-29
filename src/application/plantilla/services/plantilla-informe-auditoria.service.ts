@@ -223,8 +223,7 @@ export class PlantillaInformeAuditoriaService {
       if (Array.isArray(dependencias)) {
         for (const idDependencia of dependencias) {
           const dependencia = await this.oikosService
-            .traerData('dependencia', idDependencia, null)
-            .then((data) => data.Data);
+            .traerData('dependencia', idDependencia, null);
           const liderDependencia =
             await this.tercerosService.getTerceroVinculado(
               idDependencia,
@@ -248,8 +247,7 @@ export class PlantillaInformeAuditoriaService {
         }
       } else {
         const dependencia = await this.oikosService
-          .traerData('dependencia', dependencias, null)
-          .then((data) => data.Data);
+          .traerData('dependencia', dependencias, null);
         const liderDependencia = await this.tercerosService.getTerceroVinculado(
           dependencias,
           CARGO.JEFE_DEPENDENCIA_ID,

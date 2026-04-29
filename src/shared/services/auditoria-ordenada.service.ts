@@ -83,11 +83,12 @@ export class AuditoriaOrdenadaService {
       console.log('✅ Auditorías obtenidas:', response?.Data?.length);
 
       return response?.Data || [];
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error al obtener auditorías:', error?.message);
       throw new HttpException(
         'Error al obtener auditorías',
         HttpStatus.INTERNAL_SERVER_ERROR,
+        error
       );
     }
   }
@@ -110,11 +111,12 @@ export class AuditoriaOrdenadaService {
       console.log('✅ Plan obtenido');
 
       return response?.Data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error al obtener plan:', error?.message);
       throw new HttpException(
         'Error al obtener el plan',
         HttpStatus.INTERNAL_SERVER_ERROR,
+        error
       );
     }
   }

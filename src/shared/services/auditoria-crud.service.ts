@@ -43,6 +43,7 @@ export class AuditoriaCrudService {
       throw new HttpException(
         'Error al obtener los datos del servicio externo',
         HttpStatus.INTERNAL_SERVER_ERROR,
+        error
       );
     }
   }
@@ -69,6 +70,7 @@ export class AuditoriaCrudService {
       throw new HttpException(
         'Error al crear el recurso',
         HttpStatus.INTERNAL_SERVER_ERROR,
+        error
       );
     }
   }
@@ -103,6 +105,7 @@ export class AuditoriaCrudService {
       throw new HttpException(
         'Error al actualizar el recurso',
         HttpStatus.INTERNAL_SERVER_ERROR,
+        error
       );
     }
   }
@@ -135,6 +138,7 @@ export class AuditoriaCrudService {
       throw new HttpException(
         'Error al eliminar el recurso',
         HttpStatus.INTERNAL_SERVER_ERROR,
+        error
       );
     }
   }

@@ -62,8 +62,7 @@ export class PlantillaProgramaAuditoriaService {
           .get('parametro', auditoriaPadre.proceso_id, null)
           .then((data) => data.Data),
         this.oikosService
-          .traerData('dependencia', dependenciaPrincipal, null)
-          .then((data) => data.Data),
+          .traerData('dependencia', dependenciaPrincipal, null),
         this.tercerosService.getTerceroVinculado(
           dependenciaPrincipal,
           CARGO.JEFE_DEPENDENCIA_ID,

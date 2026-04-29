@@ -19,6 +19,18 @@ import { ServicesModule } from './shared/services/services.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [env],
+    }),
+    LoggerModule.forRoot({
+      pinoHttp: {
+        transport: process.env.NODE_ENV === 'production' ? undefined : {
+          target: 'pino-pretty',
+          options: { colorize: true }
+        },
+      }
+    }),
     ActividadModule,
     AuditoriaEstadoModule,
     AuditoriaModule,
@@ -28,13 +40,8 @@ import { ServicesModule } from './shared/services/services.module';
     PlanAuditoriaModule,
     PlanEstadoModule,
     PlantillaModule,
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [env],
-    }),
     InformeModule,
     AuditadoModule,
-    LoggerModule.forRoot(),
     ServicesModule,
   ],
   controllers: [AppController],

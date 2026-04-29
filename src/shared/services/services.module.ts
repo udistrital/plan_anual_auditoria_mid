@@ -8,6 +8,7 @@ import { PlantillasMidService } from './plantillas-mid.service';
 import { ParametrosService } from './parametros.service';
 import { OikosService } from './oikos.service';
 import { NuxeoService } from './nuxeo.service';
+import { LoggerService } from './logger.service';
 
 @Module({
   imports: [HttpModule],
@@ -20,6 +21,7 @@ import { NuxeoService } from './nuxeo.service';
     ParametrosService,
     OikosService,
     NuxeoService,
+    LoggerService,
   ],
   exports: [
     AuditoriaCrudService,
@@ -30,6 +32,7 @@ import { NuxeoService } from './nuxeo.service';
     ParametrosService,
     OikosService,
     NuxeoService,
+    LoggerService,
   ],
 })
 export class ServicesModule {}
