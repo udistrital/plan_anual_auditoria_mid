@@ -15,11 +15,14 @@ export const env = () => ({
 });
 
 const environmentConf = () => {
-  const envConfig = process.env.NODE_ENV === 'production' ? productionConfig : developmentConfig;
-  return ({
+  const envConfig =
+    process.env.NODE_ENV === 'production'
+      ? productionConfig
+      : developmentConfig;
+  return {
     ...defaultConfig,
     ...envConfig,
-  });
-}
+  };
+};
 
 export const environment = environmentConf();

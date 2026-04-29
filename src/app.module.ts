@@ -30,7 +30,7 @@ import { ServicesModule } from './shared/services/services.module';
     PlantillaModule,
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [env]
+      load: [env],
     }),
     InformeModule,
     AuditadoModule,

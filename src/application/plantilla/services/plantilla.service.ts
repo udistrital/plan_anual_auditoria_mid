@@ -7,10 +7,7 @@ import { Dominio } from 'src/shared/utils/dominios/dominio.model';
 import { PlantillasMidService } from 'src/shared/services/plantillas-mid.service';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
 
-const {
-  PLANTILLAS,
-  MESES,
-} = environment;
+const { PLANTILLAS, MESES } = environment;
 
 @Injectable()
 export class PlantillaService {
@@ -25,20 +22,32 @@ export class PlantillaService {
       data = await this.anadirDataEspeciales(data, auditoriaPadre);
 
     const baseJson = await this.organizarData(data);
-    const baseRenderizado = await this.plantillasMidService.post('/v1/plantilla/renderizar', baseJson)
+    const baseRenderizado = await this.plantillasMidService.post(
+      '/v1/plantilla/renderizar',
+      baseJson,
+    );
     return baseRenderizado;
   }
 
   private async traerDataCrud(id: string, auditoriaPadre: boolean) {
-    const dataPlanAuditoria = await this.auditoriaCrudService.traerDataCrud('plan-auditoria', id, null);
+    const dataPlanAuditoria = await this.auditoriaCrudService.traerDataCrud(
+      'plan-auditoria',
+      id,
+      null,
+    );
 
     const endpointAuditoria = auditoriaPadre ? 'auditoria-padre' : 'auditoria';
     const params = {
       query: `plan_auditoria_id:${id},activo:true`,
-      fields: 'titulo,macroproceso_id,proceso_id,dependencia_id,cronograma_id,cantidad_auditorias',
+      fields:
+        'titulo,macroproceso_id,proceso_id,dependencia_id,cronograma_id,cantidad_auditorias',
       limit: 0,
-    }
-    const dataAuditoria = await this.auditoriaCrudService.traerDataCrud(endpointAuditoria, null, params)
+    };
+    const dataAuditoria = await this.auditoriaCrudService.traerDataCrud(
+      endpointAuditoria,
+      null,
+      params,
+    );
     return { dataPlanAuditoria, dataAuditoria };
   }
 
@@ -54,10 +63,15 @@ export class PlantillaService {
 
     const params = {
       query: `vigencia_id:${vigenciaId},plan_auditoria_id__isnull:true,activo:true`,
-      fields: 'titulo,macroproceso_id,proceso_id,dependencia_id,cronograma_id,cantidad_auditorias',
+      fields:
+        'titulo,macroproceso_id,proceso_id,dependencia_id,cronograma_id,cantidad_auditorias',
       limit: 0,
-    }
-    const dataAuditoriaEspecial = await this.auditoriaCrudService.traerDataCrud(endpointAuditoria, null, params);
+    };
+    const dataAuditoriaEspecial = await this.auditoriaCrudService.traerDataCrud(
+      endpointAuditoria,
+      null,
+      params,
+    );
 
     return { ...data, dataAuditoriaEspecial };
   }
@@ -73,27 +87,42 @@ export class PlantillaService {
     );
 
     const dominios: { [key: string]: Dominio } = {};
-    dominios.macroproceso = await lastValueFrom(this.dominiosService.getParametros(environment.TIPO_PARAMETRO.MACROPROCESO));
-    dominios.proceso = await lastValueFrom(this.dominiosService.getParametros(environment.TIPO_PARAMETRO.PROCESO));
-    dominios.dependencia = await lastValueFrom(this.dominiosService.getDependencias());
+    dominios.macroproceso = await lastValueFrom(
+      this.dominiosService.getParametros(
+        environment.TIPO_PARAMETRO.MACROPROCESO,
+      ),
+    );
+    dominios.proceso = await lastValueFrom(
+      this.dominiosService.getParametros(environment.TIPO_PARAMETRO.PROCESO),
+    );
+    dominios.dependencia = await lastValueFrom(
+      this.dominiosService.getDependencias(),
+    );
 
     const items: Promise<PlantillaDto[]> = Array.isArray(auditorias)
-      ? Promise.all(auditoriasOrdenadas.map((auditoria: any) =>
-          this.organizarItems(auditoria, dominios),
-        ))
+      ? Promise.all(
+          auditoriasOrdenadas.map((auditoria: any) =>
+            this.organizarItems(auditoria, dominios),
+          ),
+        )
       : Promise.resolve([]);
 
     const auditoriasEspeciales = data.dataAuditoriaEspecial?.Data || [];
-    const auditoriasEspecialesOrden = data.dataPlanAuditoria?.Data?.auditorias_especiales || [];
+    const auditoriasEspecialesOrden =
+      data.dataPlanAuditoria?.Data?.auditorias_especiales || [];
     const auditoriasEspecialesOrdenadas = this.ordenarAuditorias(
       auditoriasEspeciales,
       auditoriasEspecialesOrden,
     );
 
-    const especiales: Promise<PlantillaDto[]> = Array.isArray(auditoriasEspeciales)
-      ? Promise.all(auditoriasEspecialesOrdenadas.map((auditoria: any) =>
-          this.organizarItems(auditoria, dominios),
-        ))
+    const especiales: Promise<PlantillaDto[]> = Array.isArray(
+      auditoriasEspeciales,
+    )
+      ? Promise.all(
+          auditoriasEspecialesOrdenadas.map((auditoria: any) =>
+            this.organizarItems(auditoria, dominios),
+          ),
+        )
       : Promise.resolve([]);
 
     json.plantilla_id = PLANTILLAS.PLAN_ANUAL_AUDITORIA;
@@ -108,11 +137,17 @@ export class PlantillaService {
       especiales: await especiales,
     };
 
-    console.debug('JSON generado para renderizar:', JSON.stringify(json, null, 2));
+    console.debug(
+      'JSON generado para renderizar:',
+      JSON.stringify(json, null, 2),
+    );
     return json;
   }
 
-  private async organizarItems(data: any, dominios: { [key: string]: Dominio }): Promise<PlantillaDto> {
+  private async organizarItems(
+    data: any,
+    dominios: { [key: string]: Dominio },
+  ): Promise<PlantillaDto> {
     const idMesMap = {
       [MESES.ENERO]: 'enero',
       [MESES.FEBRERO]: 'febrero',
@@ -145,9 +180,15 @@ export class PlantillaService {
       }
     });
 
-    const macroproceso = this.resolverNombres(data.macroproceso_id, dominios.macroproceso);
+    const macroproceso = this.resolverNombres(
+      data.macroproceso_id,
+      dominios.macroproceso,
+    );
     const proceso = this.resolverNombres(data.proceso_id, dominios.proceso);
-    const dependencia = this.resolverNombres(data.dependencia_id, dominios.dependencia);
+    const dependencia = this.resolverNombres(
+      data.dependencia_id,
+      dominios.dependencia,
+    );
 
     return {
       actividad: data.titulo || 'No definido',
@@ -177,7 +218,10 @@ export class PlantillaService {
     return [...auditoriasOrdenadas, ...restantes];
   }
 
-  private resolverNombres(id: number | number[] | null, dominio: Dominio): string {
+  private resolverNombres(
+    id: number | number[] | null,
+    dominio: Dominio,
+  ): string {
     if (id == null) return 'No definido';
     const ids = Array.isArray(id) ? id : [id];
     return ids.map((i) => this.getParametroName(i, dominio)).join(', ');
@@ -191,7 +235,10 @@ export class PlantillaService {
    * @returns "?error" if the parameter with the given ID is not found in the Dominio.
    * @throws An error if there is an issue during the search process.
    */
-  private getParametroName(parametroId: number | number[], dominio: Dominio): string {
+  private getParametroName(
+    parametroId: number | number[],
+    dominio: Dominio,
+  ): string {
     const parametros = dominio.parametros;
 
     try {
@@ -206,17 +253,17 @@ export class PlantillaService {
 
       const parametro = parametros.find((p) => p.Id === parametroId);
       if (!parametro) {
-        console.error(`Parametro with ID ${parametroId} not found in dominio ${dominio.nombre}`);
-        return "?error";
+        console.error(
+          `Parametro with ID ${parametroId} not found in dominio ${dominio.nombre}`,
+        );
+        return '?error';
       }
-      
+
       return parametro.Nombre;
-    }
-    catch (error: any) {
+    } catch (error: any) {
       const newError = new Error("Failed to get parametro's name");
-      newError.stack += "\nCaused by: " + error.stack;
+      newError.stack += '\nCaused by: ' + error.stack;
       throw newError;
     }
   }
-
 }

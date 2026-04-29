@@ -7,7 +7,14 @@ import {
   Get,
   Param,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiQuery, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiQuery,
+  ApiParam,
+} from '@nestjs/swagger';
 import { CargueMasivoService } from './cargue-masivo.service';
 import axios from 'axios';
 import { environment } from 'src/config/configuration';
@@ -26,7 +33,7 @@ export class CargueMasivoController {
 
   @Get('auditorias/plantilla')
   @ApiOperation({ summary: 'Descargar plantilla de auditorías' })
-  @ApiResponse({ status: 500, description: 'Error interno.',  })
+  @ApiResponse({ status: 500, description: 'Error interno.' })
   @ApiResponse({
     status: 200,
     description: 'Plantilla descargada exitosamente.',
@@ -48,11 +55,11 @@ export class CargueMasivoController {
     try {
       const response = await firstValueFrom(
         this.nuxeoService.obtenerPorUUID(
-          environment.PLANTILLA_CARGUE_MASIVO_AUDITORIAS
-        )
+          environment.PLANTILLA_CARGUE_MASIVO_AUDITORIAS,
+        ),
       );
       const plantillaConValidaciones =
-          await this.cargueMasivoService.agregarValidaciones(response);
+        await this.cargueMasivoService.agregarValidaciones(response);
       return { base64: plantillaConValidaciones };
     } catch (error) {
       console.error('Error al descargar la plantilla:', error);
@@ -66,7 +73,11 @@ export class CargueMasivoController {
   @Get('auditorias/plan/:planId')
   @ApiOperation({ summary: 'Descargar auditorías en formato Excel' })
   @ApiResponse({ status: 500, description: 'Error interno.' })
-  @ApiParam({ name: 'planId', required: true, description: 'ID del plan de auditoría.' })
+  @ApiParam({
+    name: 'planId',
+    required: true,
+    description: 'ID del plan de auditoría.',
+  })
   @ApiResponse({
     status: 200,
     description: 'Archivo de auditorías descargado exitosamente.',
@@ -85,15 +96,17 @@ export class CargueMasivoController {
     },
   })
   async descargarAuditoriasExcel(
-    @Param('planId') planId: string
+    @Param('planId') planId: string,
   ): Promise<{ base64: string }> {
     try {
       // TODO: In the future, the ordenadas method will be modularized to avoid dependency on the auditoriaService
-      const ordenadas = await this.auditoriaPadreService.getAuditoriasOrdenadas({ query: `plan_auditoria_id:${planId}` });
+      const ordenadas = await this.auditoriaPadreService.getAuditoriasOrdenadas(
+        { query: `plan_auditoria_id:${planId}` },
+      );
       const plantillaResponse = await firstValueFrom(
         this.nuxeoService.obtenerPorUUID(
-          environment.PLANTILLA_CARGUE_MASIVO_AUDITORIAS
-        )
+          environment.PLANTILLA_CARGUE_MASIVO_AUDITORIAS,
+        ),
       );
       if (!ordenadas || !ordenadas.Data)
         throw new HttpException(
@@ -101,9 +114,10 @@ export class CargueMasivoController {
           HttpStatus.NOT_FOUND,
         );
 
-      const tablaExportada = await this.cargueMasivoService.exportarAuditoriasExcel(
+      const tablaExportada =
+        await this.cargueMasivoService.exportarAuditoriasExcel(
           ordenadas.Data,
-          plantillaResponse
+          plantillaResponse,
         );
       return { base64: tablaExportada };
     } catch (error) {
@@ -154,7 +168,7 @@ export class CargueMasivoController {
       throw new HttpException(
         'Error procesando la solicitud',
         HttpStatus.INTERNAL_SERVER_ERROR,
-        error
+        error,
       );
     }
   }

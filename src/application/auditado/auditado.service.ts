@@ -29,10 +29,7 @@ export class AuditadoService {
 
       // 3. Obtener dependencias desde helper
       const dependenciasAuditado =
-        await this.tercerosHelper.getDependenciasByPersona(
-          personaId,
-          cargoId,
-        );
+        await this.tercerosHelper.getDependenciasByPersona(personaId, cargoId);
 
       console.log('dependenciasAuditado:', dependenciasAuditado);
 
@@ -55,9 +52,7 @@ export class AuditadoService {
 
         const dependenciaOk =
           !documento.metadatos ||
-          dependenciasAuditado.includes(
-            documento.metadatos?.dependencia_id,
-          );
+          dependenciasAuditado.includes(documento.metadatos?.dependencia_id);
 
         const firmaOk =
           documento.metadatos?.firmado === true ||

@@ -40,7 +40,9 @@ describe('AuditoriaCrudService', () => {
     const response = await service.traerDataCrud(endpoint, null, null);
 
     expect(response).toEqual(mockResponse);
-    expect(httpServiceMock.get).toHaveBeenCalledWith(expect.stringContaining(endpoint));
+    expect(httpServiceMock.get).toHaveBeenCalledWith(
+      expect.stringContaining(endpoint),
+    );
   });
 
   it('should build URL with id and query params', async () => {
@@ -62,7 +64,9 @@ describe('AuditoriaCrudService', () => {
     const mockError = new Error('Request failed');
     httpServiceMock.get.mockReturnValue(throwError(() => mockError));
 
-    await expect(service.traerDataCrud(endpoint, null, null)).rejects.toMatchObject({
+    await expect(
+      service.traerDataCrud(endpoint, null, null),
+    ).rejects.toMatchObject({
       response: 'Error al obtener los datos del servicio externo',
       status: HttpStatus.INTERNAL_SERVER_ERROR,
     });

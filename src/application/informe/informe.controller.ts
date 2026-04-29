@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  HttpStatus,
-  Res,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Param, HttpStatus, Res, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { InformeService } from './informe.service';
 
@@ -15,12 +8,19 @@ export class InformeController {
   constructor(private readonly informeService: InformeService) {}
 
   @Get(':id')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Obtener informe consolidado para edición',
-    description: 'Retorna el informe con auditoría hallazgos y temas'
+    description: 'Retorna el informe con auditoría hallazgos y temas',
   })
-  @ApiParam({ name: 'id', type: 'string', description: 'ID del informe (MongoDB ObjectId)' })
-  @ApiResponse({ status: 200, description: 'Informe obtenido exitosamente con datos complementarios' })
+  @ApiParam({
+    name: 'id',
+    type: 'string',
+    description: 'ID del informe (MongoDB ObjectId)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Informe obtenido exitosamente con datos complementarios',
+  })
   @ApiResponse({ status: 404, description: 'Informe no encontrado' })
   async getById(@Res() res: any, @Param('id') id: string) {
     try {
@@ -29,22 +29,23 @@ export class InformeController {
         Success: true,
         Status: HttpStatus.OK,
         Message: 'Peticion Exitosa',
-        Data: data
+        Data: data,
       });
     } catch (error) {
       res.status(error.status || HttpStatus.INTERNAL_SERVER_ERROR).json({
         Success: false,
         Status: error.status || HttpStatus.INTERNAL_SERVER_ERROR,
         Message: error.message || 'Error al obtener el informe',
-        Data: null
+        Data: null,
       });
     }
   }
 
   @Get()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Obtener todos los informes',
-    description: 'Lista informes con filtros opcionales y datos complementarios básicos'
+    description:
+      'Lista informes con filtros opcionales y datos complementarios básicos',
   })
   @ApiResponse({ status: 200, description: 'Informes obtenidos exitosamente' })
   async getAll(@Res() res: any, @Query() queryParams: any) {
@@ -56,19 +57,29 @@ export class InformeController {
         Success: false,
         Status: HttpStatus.NOT_FOUND,
         Message: 'Error en servicio GetAll: sin datos o parámetro inválido',
-        Data: error.message
+        Data: error.message,
       });
     }
   }
 
   @Get('auditoria/:auditoriaId')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Obtener informes por auditoría',
-    description: 'Lista todos los informes activos de una auditoría específica'
+    description: 'Lista todos los informes activos de una auditoría específica',
   })
-  @ApiParam({ name: 'auditoriaId', type: 'string', description: 'ID de la auditoría' })
-  @ApiResponse({ status: 200, description: 'Informes de la auditoría obtenidos' })
-  async getByAuditoria(@Res() res: any, @Param('auditoriaId') auditoriaId: string) {
+  @ApiParam({
+    name: 'auditoriaId',
+    type: 'string',
+    description: 'ID de la auditoría',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Informes de la auditoría obtenidos',
+  })
+  async getByAuditoria(
+    @Res() res: any,
+    @Param('auditoriaId') auditoriaId: string,
+  ) {
     try {
       const data = await this.informeService.getByAuditoria(auditoriaId);
       res.status(HttpStatus.OK).json(data);
@@ -77,9 +88,8 @@ export class InformeController {
         Success: false,
         Status: HttpStatus.NOT_FOUND,
         Message: 'Error al obtener informes de la auditoría',
-        Data: error.message
+        Data: error.message,
       });
     }
   }
-
 }

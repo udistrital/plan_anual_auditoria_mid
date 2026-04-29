@@ -7,9 +7,7 @@ import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service
 import { ParametrosService } from 'src/shared/services/parametros.service';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
 
-const {
-  PLANTILLAS,
-} = environment;
+const { PLANTILLAS } = environment;
 
 @Injectable()
 export class PlantillaPlanTrabajoService {
@@ -17,25 +15,43 @@ export class PlantillaPlanTrabajoService {
     private readonly plantillasMidService: PlantillasMidService,
     private readonly auditoriaCrudService: AuditoriaCrudService,
     private readonly parametrosService: ParametrosService,
-    private readonly auditoriaService: AuditoriaService
+    private readonly auditoriaService: AuditoriaService,
   ) {}
 
   async get(idAuditoria: string) {
     const auditoria = await this.auditoriaService.getOne(idAuditoria);
-    const params = { query: `auditoria_id:${idAuditoria},activo:true`, limit: 0}
-    const actividades = await this.auditoriaCrudService.traerDataCrud('actividad', null, params)
-    const infoParaPlantilla = await this.organizarData({ auditoria: auditoria.Data, actividadesAuditoria: actividades.Data});
-    const baseRenderizado =
-      await this.plantillasMidService.post('/v1/plantilla/renderizar', infoParaPlantilla);
+    const params = {
+      query: `auditoria_id:${idAuditoria},activo:true`,
+      limit: 0,
+    };
+    const actividades = await this.auditoriaCrudService.traerDataCrud(
+      'actividad',
+      null,
+      params,
+    );
+    const infoParaPlantilla = await this.organizarData({
+      auditoria: auditoria.Data,
+      actividadesAuditoria: actividades.Data,
+    });
+    const baseRenderizado = await this.plantillasMidService.post(
+      '/v1/plantilla/renderizar',
+      infoParaPlantilla,
+    );
     return baseRenderizado;
   }
 
   private async organizarData(data: any) {
     const auditoria = data.auditoria;
     const [macroproceso, lider, responsable] = await Promise.all([
-      this.parametrosService.get('parametro', auditoria.macroproceso, null).then(data => data.Data),
-      this.parametrosService.get('parametro', auditoria.lider_id, null).then(data => data.Data),
-      this.parametrosService.get('parametro', auditoria.responsable_id, null).then(data => data.Data),
+      this.parametrosService
+        .get('parametro', auditoria.macroproceso, null)
+        .then((data) => data.Data),
+      this.parametrosService
+        .get('parametro', auditoria.lider_id, null)
+        .then((data) => data.Data),
+      this.parametrosService
+        .get('parametro', auditoria.responsable_id, null)
+        .then((data) => data.Data),
     ]);
     const actividades = this.organizarActividades(data.actividadesAuditoria);
     const infoParaPlantilla = {
@@ -69,5 +85,4 @@ export class PlantillaPlanTrabajoService {
       fechaFinal: moment(actividad.fecha_fin).format('DD/MM/YYYY'),
     }));
   }
-
 }

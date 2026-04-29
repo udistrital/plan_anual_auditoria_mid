@@ -19,7 +19,10 @@ describe('AppController', () => {
 
   describe('root', () => {
     it('should return health check payload', () => {
-      expect(appController.healthCheck()).toEqual({ Status: 'ok', checkCount: 0 });
+      expect(appController.healthCheck()).toEqual({
+        Status: 'ok',
+        checkCount: 0,
+      });
     });
   });
 });

@@ -9,6 +9,6 @@ import { AuditoriaPadreModule } from '../auditoria-padre/auditoria-padre.module'
 @Module({
   imports: [HttpModule, ServicesModule, DominiosModule, AuditoriaPadreModule],
   controllers: [CargueMasivoController],
-  providers: [CargueMasivoService]
+  providers: [CargueMasivoService],
 })
 export class CargueMasivoModule {}

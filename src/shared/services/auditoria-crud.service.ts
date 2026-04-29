@@ -9,9 +9,11 @@ export class AuditoriaCrudService {
 
   constructor(
     private readonly httpService: HttpService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
   ) {
-    this.baseUrl = this.configService.get<string>('PLAN_AUDITORIA_CRUD_SERVICE');
+    this.baseUrl = this.configService.get<string>(
+      'PLAN_AUDITORIA_CRUD_SERVICE',
+    );
   }
 
   /**
@@ -55,9 +57,7 @@ export class AuditoriaCrudService {
     const url = `${this.baseUrl}${endpoint}`;
 
     try {
-      const response = await lastValueFrom(
-        this.httpService.post(url, data),
-      );
+      const response = await lastValueFrom(this.httpService.post(url, data));
       return response.data;
     } catch (error: any) {
       console.error('Error en create:', {
@@ -91,9 +91,7 @@ export class AuditoriaCrudService {
     const url = `${this.baseUrl}${endpoint}/${id}`;
 
     try {
-      const response = await lastValueFrom(
-        this.httpService.put(url, data),
-      );
+      const response = await lastValueFrom(this.httpService.put(url, data));
       return response.data;
     } catch (error: any) {
       console.error('Error en update:', {
@@ -126,9 +124,7 @@ export class AuditoriaCrudService {
     const url = `${this.baseUrl}${endpoint}/${id}`;
 
     try {
-      const response = await lastValueFrom(
-        this.httpService.delete(url),
-      );
+      const response = await lastValueFrom(this.httpService.delete(url));
       return response.data;
     } catch (error: any) {
       console.error('Error en delete:', {

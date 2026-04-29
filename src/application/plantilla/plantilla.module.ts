@@ -12,11 +12,7 @@ import { AuditoriaModule } from '../auditoria/auditoria.module';
 import { ServicesModule } from 'src/shared/services/services.module';
 
 @Module({
-  imports: [
-    DominiosModule,
-    AuditoriaModule,
-    ServicesModule,
-  ],
+  imports: [DominiosModule, AuditoriaModule, ServicesModule],
   controllers: [PlantillaController],
   providers: [
     PlantillaCartaPresentacionService,

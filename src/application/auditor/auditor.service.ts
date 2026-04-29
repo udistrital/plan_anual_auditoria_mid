@@ -10,13 +10,21 @@ export class AuditorService {
   ) {}
 
   async getAll(queryParams: any) {
-    let data = await this.auditoriaCrudService.traerDataCrud('auditor', null, queryParams);
+    const data = await this.auditoriaCrudService.traerDataCrud(
+      'auditor',
+      null,
+      queryParams,
+    );
     await this.reemplazarCampos(data);
     return data;
   }
 
   async getOne(id: string) {
-    const data = await this.auditoriaCrudService.traerDataCrud('auditor', id, null);
+    const data = await this.auditoriaCrudService.traerDataCrud(
+      'auditor',
+      id,
+      null,
+    );
     await this.reemplazarCampos(data);
     return data;
   }
@@ -24,16 +32,20 @@ export class AuditorService {
   private async reemplazarCampos(data: any) {
     const procesarElemento = async (elemento: any) => {
       if (elemento?.auditor_id) {
-        const tercero = await this.tercerosHelper.getTerceroById(elemento.auditor_id);
+        const tercero = await this.tercerosHelper.getTerceroById(
+          elemento.auditor_id,
+        );
         elemento.auditor_nombre = tercero?.NombreCompleto || null;
       }
-  
+
       if (elemento?.asignado_por_id) {
-        const tercero = await this.tercerosHelper.getTerceroById(elemento.asignado_por_id);
+        const tercero = await this.tercerosHelper.getTerceroById(
+          elemento.asignado_por_id,
+        );
         elemento.asignado_por_nombre = tercero?.NombreCompleto || null;
       }
     };
-  
+
     if (Array.isArray(data?.Data)) {
       for (const elemento of data.Data) {
         await procesarElemento(elemento);
@@ -41,7 +53,7 @@ export class AuditorService {
     } else if (typeof data?.Data === 'object' && data.Data !== null) {
       await procesarElemento(data.Data);
     }
-  
+
     return data;
   }
 

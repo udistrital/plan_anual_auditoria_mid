@@ -10,11 +10,7 @@ interface CartaRenderizada {
   base64: string;
 }
 
-const {
-  CARGO,
-  logoUDistrital,
-  logoSIGUD
-} = environment;
+const { CARGO, logoUDistrital, logoSIGUD } = environment;
 
 @Injectable()
 export class PlantillaCartaPresentacionService {
@@ -44,14 +40,20 @@ export class PlantillaCartaPresentacionService {
         const dependenciaNombre = String(
           nombresDependencias[index] || `Dependencia ${index + 1}`,
         );
-        const jefeDependencia = dependenciaId ? await this.tercerosHelper.getTerceroVinculado(dependenciaId, CARGO.JEFE_DEPENDENCIA_ID).then(jefe => jefe?.NombreCompleto) : 'No se encontró al jefe de la dependencia';
+        const jefeDependencia = dependenciaId
+          ? await this.tercerosHelper
+              .getTerceroVinculado(dependenciaId, CARGO.JEFE_DEPENDENCIA_ID)
+              .then((jefe) => jefe?.NombreCompleto)
+          : 'No se encontró al jefe de la dependencia';
         const infoParaPlantilla = await this.organizarData(
           auditoria,
           dependenciaNombre,
           jefeDependencia,
         );
-        const baseRenderizado =
-          await this.plantillasMidService.post('/v1/plantilla/renderizar', infoParaPlantilla);
+        const baseRenderizado = await this.plantillasMidService.post(
+          '/v1/plantilla/renderizar',
+          infoParaPlantilla,
+        );
 
         return {
           dependencia_id: dependenciaId,
@@ -69,7 +71,11 @@ export class PlantillaCartaPresentacionService {
     };
   }
 
-  private async organizarData(auditoria: any, dependenciaNombre: string, jefeDependencia: string) {
+  private async organizarData(
+    auditoria: any,
+    dependenciaNombre: string,
+    jefeDependencia: string,
+  ) {
     const fechaInicio = auditoria?.fecha_inicio
       ? new Date(auditoria.fecha_inicio)
       : new Date();
@@ -89,7 +95,7 @@ export class PlantillaCartaPresentacionService {
         anio: fechaInicio.getFullYear(),
         objetivo: auditoria.objetivo,
         dependencia: dependenciaNombre,
-        jefe_dependencia: jefeDependencia
+        jefe_dependencia: jefeDependencia,
       },
     };
     return infoParaPlantilla;
@@ -103,7 +109,10 @@ export class PlantillaCartaPresentacionService {
       return dependenciasNombre;
     }
 
-    if (typeof dependenciasNombre === 'string' && dependenciasNombre.length > 0) {
+    if (
+      typeof dependenciasNombre === 'string' &&
+      dependenciasNombre.length > 0
+    ) {
       return [dependenciasNombre];
     }
 

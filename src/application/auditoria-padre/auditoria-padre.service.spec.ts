@@ -49,7 +49,9 @@ describe('AuditoriaPadreService', () => {
     service = module.get<AuditoriaPadreService>(AuditoriaPadreService);
     httpService = module.get<HttpService>(HttpService);
     dominiosService = module.get<DominiosService>(DominiosService);
-    auditoriaOrdenadaService = module.get<AuditoriaOrdenadaService>(AuditoriaOrdenadaService);
+    auditoriaOrdenadaService = module.get<AuditoriaOrdenadaService>(
+      AuditoriaOrdenadaService,
+    );
   });
 
   afterEach(() => {
@@ -109,43 +111,50 @@ describe('AuditoriaPadreService', () => {
       expect(result.Message).toContain('eliminada exitosamente');
       expect(httpService.delete).toHaveBeenCalled();
       expect(httpService.get).toHaveBeenCalled();
-      expect(httpService.put).toHaveBeenCalledWith(
-        expect.any(String),
-        { auditorias: ['456', '789'] },
-      );
+      expect(httpService.put).toHaveBeenCalledWith(expect.any(String), {
+        auditorias: ['456', '789'],
+      });
     });
 
     it('should throw error if planId is missing', async () => {
-      await expect(service.deleteAuditoriaPadre('123', null)).rejects.toThrow(HttpException);
+      await expect(service.deleteAuditoriaPadre('123', null)).rejects.toThrow(
+        HttpException,
+      );
     });
 
     it('should throw error on delete failure', async () => {
-      mockHttpService.delete.mockReturnValue(throwError(() => new Error('Delete error')));
+      mockHttpService.delete.mockReturnValue(
+        throwError(() => new Error('Delete error')),
+      );
 
-      await expect(service.deleteAuditoriaPadre('123', 'plan-id')).rejects.toThrow(HttpException);
+      await expect(
+        service.deleteAuditoriaPadre('123', 'plan-id'),
+      ).rejects.toThrow(HttpException);
     });
   });
 
   describe('getAuditoriasOrdenadas', () => {
     it('should return ordered auditorias padre', async () => {
       const mockAuditorias = [{ _id: '1', nombre: 'Test' }];
-      mockAuditoriaOrdenadaService.getAuditoriasOrdenadas.mockResolvedValue(mockAuditorias);
+      mockAuditoriaOrdenadaService.getAuditoriasOrdenadas.mockResolvedValue(
+        mockAuditorias,
+      );
 
-      const result = await service.getAuditoriasOrdenadas({ plan_auditoria_id: '1' });
+      const result = await service.getAuditoriasOrdenadas({
+        plan_auditoria_id: '1',
+      });
 
       expect(result.Data).toEqual(mockAuditorias);
       expect(result.Success).toBe(true);
-      expect(auditoriaOrdenadaService.getAuditoriasOrdenadas).toHaveBeenCalledWith(
-        '1',
-        undefined,
-        undefined,
-        {},
-        'auditoria-padre',
-      );
+      expect(
+        auditoriaOrdenadaService.getAuditoriasOrdenadas,
+      ).toHaveBeenCalledWith('1', undefined, undefined, {}, 'auditoria-padre');
     });
 
     it('should throw error if plan_auditoria_id is missing', async () => {
-      await expect(service.getAuditoriasOrdenadas({})).rejects.toThrow(HttpException);
+      await expect(service.getAuditoriasOrdenadas({})).rejects.toThrow(
+        HttpException,
+      );
     });
 
     it('should apply ordering when orderBy is provided', async () => {
@@ -153,7 +162,9 @@ describe('AuditoriaPadreService', () => {
         { _id: '1', nombre: 'B' },
         { _id: '2', nombre: 'A' },
       ];
-      mockAuditoriaOrdenadaService.getAuditoriasOrdenadas.mockResolvedValue(mockAuditorias);
+      mockAuditoriaOrdenadaService.getAuditoriasOrdenadas.mockResolvedValue(
+        mockAuditorias,
+      );
 
       const result = await service.getAuditoriasOrdenadas({
         plan_auditoria_id: '1',
@@ -166,14 +177,18 @@ describe('AuditoriaPadreService', () => {
 
     it('should extract filters from query params', async () => {
       const mockAuditorias = [{ _id: '1' }];
-      mockAuditoriaOrdenadaService.getAuditoriasOrdenadas.mockResolvedValue(mockAuditorias);
+      mockAuditoriaOrdenadaService.getAuditoriasOrdenadas.mockResolvedValue(
+        mockAuditorias,
+      );
 
       await service.getAuditoriasOrdenadas({
         plan_auditoria_id: '1',
         query: 'tipo_evaluacion_id:5',
       });
 
-      expect(auditoriaOrdenadaService.getAuditoriasOrdenadas).toHaveBeenCalledWith(
+      expect(
+        auditoriaOrdenadaService.getAuditoriasOrdenadas,
+      ).toHaveBeenCalledWith(
         '1',
         undefined,
         undefined,

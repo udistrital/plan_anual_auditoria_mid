@@ -58,7 +58,9 @@ describe('AuditoriaPadreController', () => {
     });
 
     it('should handle errors', async () => {
-      mockAuditoriaPadreService.getAll.mockRejectedValue(new Error('Test error'));
+      mockAuditoriaPadreService.getAll.mockRejectedValue(
+        new Error('Test error'),
+      );
 
       const res = mockResponse();
       await controller.getAll(res, {});
@@ -81,7 +83,12 @@ describe('AuditoriaPadreController', () => {
 
   describe('delete', () => {
     it('should delete auditoria padre', async () => {
-      const result = { Success: true, Status: 200, Message: 'Eliminada', Data: null };
+      const result = {
+        Success: true,
+        Status: 200,
+        Message: 'Eliminada',
+        Data: null,
+      };
       mockAuditoriaPadreService.deleteAuditoriaPadre.mockResolvedValue(result);
 
       const res = mockResponse();
@@ -107,7 +114,9 @@ describe('AuditoriaPadreController', () => {
   describe('getAuditoriasOrdenadas', () => {
     it('should return ordered auditorias padre', async () => {
       const result = { Data: [], Success: true, Status: 200 };
-      mockAuditoriaPadreService.getAuditoriasOrdenadas.mockResolvedValue(result);
+      mockAuditoriaPadreService.getAuditoriasOrdenadas.mockResolvedValue(
+        result,
+      );
 
       const res = mockResponse();
       await controller.getAuditoriasOrdenadas(res, { plan_auditoria_id: '1' });

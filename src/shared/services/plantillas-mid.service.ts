@@ -5,10 +5,9 @@ import { lastValueFrom } from 'rxjs';
 
 @Injectable()
 export class PlantillasMidService {
-
   constructor(
     private readonly httpService: HttpService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
   ) {}
 
   async post(endpoint: string, data: any) {
@@ -21,7 +20,7 @@ export class PlantillasMidService {
       throw new HttpException(
         'Error al obtener los datos del servicio externo',
         HttpStatus.INTERNAL_SERVER_ERROR,
-        error
+        error,
       );
     }
   }

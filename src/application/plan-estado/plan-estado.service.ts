@@ -5,10 +5,7 @@ import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
 import { ParametrosService } from 'src/shared/services/parametros.service';
 
-const {
-  TIPO_PARAMETRO,
-  ETIQUETAS_ROL,
-} = environment;
+const { TIPO_PARAMETRO, ETIQUETAS_ROL } = environment;
 
 @Injectable()
 export class PlanEstadoService {
@@ -42,7 +39,11 @@ export class PlanEstadoService {
 
   async getAll(queryParams: any) {
     const normalizedParams = this.normalizarQueryEstados(queryParams);
-    const data = await this.auditoriaCrudService.traerDataCrud('estado', null, normalizedParams);
+    const data = await this.auditoriaCrudService.traerDataCrud(
+      'estado',
+      null,
+      normalizedParams,
+    );
     if (await this.identificarCampo(data)) {
       await this.reemplazarCampos(data);
     }
@@ -50,7 +51,11 @@ export class PlanEstadoService {
   }
 
   async getOne(id: string) {
-    const data = await this.auditoriaCrudService.traerDataCrud('estado', id, null);
+    const data = await this.auditoriaCrudService.traerDataCrud(
+      'estado',
+      id,
+      null,
+    );
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
     }
@@ -66,8 +71,10 @@ export class PlanEstadoService {
           query: `TipoParametroId:${TIPO_PARAMETRO.PLAN_ESTADO}`,
           fields: 'Id,Nombre',
           limit: 0,
-        }
-        let param = await this.parametrosService.get('parametro', null, queryParams).then(data => data.Data);
+        };
+        const param = await this.parametrosService
+          .get('parametro', null, queryParams)
+          .then((data) => data.Data);
         this.estados.push(...param);
         validacion = true;
       }
@@ -108,12 +115,15 @@ export class PlanEstadoService {
 
   private async reemplazarCampoUsuario(element: any) {
     try {
-      const usuario = await this.tercerosService.getTerceroById(element.usuario_id);
+      const usuario = await this.tercerosService.getTerceroById(
+        element.usuario_id,
+      );
       element.usuario = {
         id: usuario.Id,
         nombre: usuario.NombreCompleto.replace(/(^|\s)\p{L}/gu, (letra) =>
           letra.toUpperCase(),
-        )};
+        ),
+      };
       delete element.usuario_id;
     } catch (error) {
       console.warn(
@@ -124,5 +134,4 @@ export class PlanEstadoService {
       delete element.usuario_id;
     }
   }
-
 }

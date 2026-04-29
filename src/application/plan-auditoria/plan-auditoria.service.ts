@@ -4,11 +4,7 @@ import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
 import { ParametrosService } from 'src/shared/services/parametros.service';
 
-const {
-  TIPO_PARAMETRO,
-  PLAN_ESTADO,
-  AUDITORIA_PADRE_ESTADO,
-} = environment;
+const { TIPO_PARAMETRO, PLAN_ESTADO, AUDITORIA_PADRE_ESTADO } = environment;
 
 @Injectable()
 export class PlanAuditoriaService {
@@ -22,9 +18,13 @@ export class PlanAuditoriaService {
   ) {}
 
   async getAll(queryParams: any) {
-    console.log('Environment variables:', PLAN_ESTADO)
-    const data = await this.auditoriaCrudService.traerDataCrud('plan-auditoria', null, queryParams);
-    await this.enriquecerPlan(data.Data)
+    console.log('Environment variables:', PLAN_ESTADO);
+    const data = await this.auditoriaCrudService.traerDataCrud(
+      'plan-auditoria',
+      null,
+      queryParams,
+    );
+    await this.enriquecerPlan(data.Data);
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
     }
@@ -32,7 +32,11 @@ export class PlanAuditoriaService {
   }
 
   async getOne(id: string) {
-    const data = await this.auditoriaCrudService.traerDataCrud('plan-auditoria', id, null);
+    const data = await this.auditoriaCrudService.traerDataCrud(
+      'plan-auditoria',
+      id,
+      null,
+    );
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
     }
@@ -47,18 +51,28 @@ export class PlanAuditoriaService {
         query: ``,
         fields: 'Id,Nombre',
         limit: 0,
-      }
+      };
       if ('vigencia_id' in firstElement) {
-        const query = { ...queryParams, query: `TipoParametroId:${TIPO_PARAMETRO.VIGENCIA}` }
-        const param = await this.parametrosService.get('parametro', null, query).then(data => data.Data);
+        const query = {
+          ...queryParams,
+          query: `TipoParametroId:${TIPO_PARAMETRO.VIGENCIA}`,
+        };
+        const param = await this.parametrosService
+          .get('parametro', null, query)
+          .then((data) => data.Data);
         this.vigencias.push(...param);
         validacion = true;
       }
       if ('estado' in firstElement && firstElement.estado !== null) {
         const estadoId = firstElement.estado.estado_id;
         if (estadoId) {
-          const query = { ...queryParams, query: `TipoParametroId:${TIPO_PARAMETRO.PLAN_ESTADO}` }
-          const estado = await this.parametrosService.get('parametro', null, query).then(data => data.Data);
+          const query = {
+            ...queryParams,
+            query: `TipoParametroId:${TIPO_PARAMETRO.PLAN_ESTADO}`,
+          };
+          const estado = await this.parametrosService
+            .get('parametro', null, query)
+            .then((data) => data.Data);
           this.estados.push(...estado);
         }
         validacion = true;
@@ -73,12 +87,23 @@ export class PlanAuditoriaService {
     if (Array.isArray(Data)) {
       await Promise.all(
         Data.map(async (plan: any) => {
-          const [estado, tieneRechazos, tieneModificaciones, tieneObservaciones, tercero] = await Promise.all([
+          const [
+            estado,
+            tieneRechazos,
+            tieneModificaciones,
+            tieneObservaciones,
+            tercero,
+          ] = await Promise.all([
             this.traerEstadoPorPlan(plan._id),
             this.traerMotivosRechazo(plan._id, PLAN_ESTADO.RECHAZADO),
             this.tieneModificaciones(plan.auditorias),
-            this.tieneObservacionesEnvio(plan._id, PLAN_ESTADO.EN_REVISION_JEFE_ID),
-            plan.creado_por_id ? this.tercerosService.getTerceroById(plan.creado_por_id) : null,
+            this.tieneObservacionesEnvio(
+              plan._id,
+              PLAN_ESTADO.EN_REVISION_JEFE_ID,
+            ),
+            plan.creado_por_id
+              ? this.tercerosService.getTerceroById(plan.creado_por_id)
+              : null,
           ]);
 
           if (estado?.actual) plan.estado = estado;
@@ -96,15 +121,22 @@ export class PlanAuditoriaService {
     }
   }
 
-  private async tieneObservacionesEnvio(planAuditoriaId: string, estadoId: number): Promise<boolean> {
+  private async tieneObservacionesEnvio(
+    planAuditoriaId: string,
+    estadoId: number,
+  ): Promise<boolean> {
     const queryParams = {
       query: `plan_auditoria_id:${planAuditoriaId},estado_id:${estadoId},activo:true`,
       limit: 0,
       fields: '_id,observacion',
     };
-    const data = await this.auditoriaCrudService.traerDataCrud('estado', null, queryParams);
+    const data = await this.auditoriaCrudService.traerDataCrud(
+      'estado',
+      null,
+      queryParams,
+    );
     return (data?.Data ?? []).some(
-      (estado: any) => estado.observacion && estado.observacion.trim() !== ''
+      (estado: any) => estado.observacion && estado.observacion.trim() !== '',
     );
   }
 
@@ -113,8 +145,12 @@ export class PlanAuditoriaService {
       query: `plan_auditoria_id:${planAuditoriaId},estado_id:${estadoId},activo:true`,
       limit: 1,
       fields: '_id',
-    }
-    const data = await this.auditoriaCrudService.traerDataCrud('estado', null, queryParams);
+    };
+    const data = await this.auditoriaCrudService.traerDataCrud(
+      'estado',
+      null,
+      queryParams,
+    );
     return data?.MetaData?.Count > 0;
   }
 
@@ -123,17 +159,25 @@ export class PlanAuditoriaService {
       query: `estado_id:${AUDITORIA_PADRE_ESTADO.CON_MODIFICACION_EXTEMPORANEA_ID},auditoria_padre_id__in:${auditorias.join('|')}`,
       limit: 0,
       fields: '_id',
-    }
-    const data = await this.auditoriaCrudService.traerDataCrud('auditoria-padre-estado', null, queryParams);
+    };
+    const data = await this.auditoriaCrudService.traerDataCrud(
+      'auditoria-padre-estado',
+      null,
+      queryParams,
+    );
     return data?.MetaData?.Count > 0;
   }
 
   private async traerEstadoPorPlan(planAuditoriaId: string) {
     const queryParams = {
       query: `plan_auditoria_id:${planAuditoriaId},actual:true`,
-    }
-    const data = await this.auditoriaCrudService.traerDataCrud('estado', null, queryParams);
-    if ( data && data.Data && data.Data.length > 0 ) {
+    };
+    const data = await this.auditoriaCrudService.traerDataCrud(
+      'estado',
+      null,
+      queryParams,
+    );
+    if (data && data.Data && data.Data.length > 0) {
       return data.Data[0];
     }
     return null;

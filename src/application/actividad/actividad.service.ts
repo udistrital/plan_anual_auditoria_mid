@@ -12,7 +12,11 @@ export class ActividadService {
   constructor(private readonly auditoriaCrudService: AuditoriaCrudService) {}
 
   async getAll(queryParams: any) {
-    const data = await this.auditoriaCrudService.traerDataCrud('actividad', null, queryParams);
+    const data = await this.auditoriaCrudService.traerDataCrud(
+      'actividad',
+      null,
+      queryParams,
+    );
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
     }
@@ -20,7 +24,11 @@ export class ActividadService {
   }
 
   async getOne(id: string) {
-    const data = await this.auditoriaCrudService.traerDataCrud('actividad', id, null);
+    const data = await this.auditoriaCrudService.traerDataCrud(
+      'actividad',
+      id,
+      null,
+    );
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
     }

@@ -11,7 +11,9 @@ import { AuditoriaEstadoService } from './auditoria-estado.service';
 @ApiTags('Auditoria Estado')
 @Controller('auditoria-estado')
 export class AuditoriaEstadoController {
-  constructor(private readonly auditoriaEstadoService: AuditoriaEstadoService) {}
+  constructor(
+    private readonly auditoriaEstadoService: AuditoriaEstadoService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Obtiene todos los estados de auditorías.' })

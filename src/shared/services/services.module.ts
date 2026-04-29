@@ -10,26 +10,26 @@ import { OikosService } from './oikos.service';
 import { NuxeoService } from './nuxeo.service';
 
 @Module({
-    imports: [HttpModule],
-    providers: [
-        AuditoriaCrudService,
-        AuditoriaOrdenadaService,
-        TercerosService,
-        TercerosHelperService,
-        PlantillasMidService,
-        ParametrosService,
-        OikosService,
-        NuxeoService,
-    ],
-    exports: [
-        AuditoriaCrudService,
-        AuditoriaOrdenadaService,
-        TercerosService,
-        TercerosHelperService,
-        PlantillasMidService,
-        ParametrosService,
-        OikosService,
-        NuxeoService,
-    ]
+  imports: [HttpModule],
+  providers: [
+    AuditoriaCrudService,
+    AuditoriaOrdenadaService,
+    TercerosService,
+    TercerosHelperService,
+    PlantillasMidService,
+    ParametrosService,
+    OikosService,
+    NuxeoService,
+  ],
+  exports: [
+    AuditoriaCrudService,
+    AuditoriaOrdenadaService,
+    TercerosService,
+    TercerosHelperService,
+    PlantillasMidService,
+    ParametrosService,
+    OikosService,
+    NuxeoService,
+  ],
 })
 export class ServicesModule {}

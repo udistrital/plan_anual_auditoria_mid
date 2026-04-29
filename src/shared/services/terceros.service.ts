@@ -5,12 +5,12 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class TercerosService {
-    constructor(
-      private readonly httpService: HttpService,
-      private readonly configService: ConfigService
-    ) {}
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly configService: ConfigService,
+  ) {}
 
-    /**
+  /**
    * Obtiene datos del Servicio de acuerdo con el endpoint suministrado.
    * @param endpoint - Endpoint del Servicio.
    * @param id - Identificador opcional del recurso a consultar.
@@ -18,7 +18,7 @@ export class TercerosService {
    * @returns Datos obtenidos del Servicio.
    */
   async traerData(endpoint: string, id: string | null, queryParams: any) {
-    let url = `${this.configService.get<string>('TERCEROS_SERVICE')}${endpoint}${id ? '/'+id : ''}` 
+    let url = `${this.configService.get<string>('TERCEROS_SERVICE')}${endpoint}${id ? '/' + id : ''}`;
 
     if (queryParams) {
       const queryString = new URLSearchParams(queryParams).toString();
@@ -31,9 +31,8 @@ export class TercerosService {
       throw new HttpException(
         'Error al obtener los datos del servicio externo',
         HttpStatus.INTERNAL_SERVER_ERROR,
-        error
+        error,
       );
     }
   }
-
 }

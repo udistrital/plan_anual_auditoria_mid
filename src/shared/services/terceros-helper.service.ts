@@ -13,17 +13,16 @@ export class TercerosHelperService {
       console.warn('[TercerosHelper] terceroId vacío');
       return null;
     }
-  
+
     try {
-  
       const response = await this.tercerosService.traerData(
         'tercero',
         terceroId,
         null,
       );
-  
+
       let tercero = null;
-  
+
       if (Array.isArray(response)) {
         tercero = response[0];
       } else if (response?.Data && Array.isArray(response.Data)) {
@@ -33,9 +32,8 @@ export class TercerosHelperService {
       } else {
         tercero = response;
       }
-  
+
       return tercero;
-  
     } catch (error) {
       console.error('[TercerosHelper] Error obteniendo tercero:', error);
       throw new Error('Error al obtener tercero');
@@ -46,52 +44,49 @@ export class TercerosHelperService {
     dependenciaId: number,
     cargoId: number,
   ): Promise<any> {
-  
     if (!dependenciaId || !cargoId) {
       return null;
     }
-  
-    const response = await this.tercerosService.traerData(
-      'vinculacion',
-      null,
-      {
-        query: `Activo:true,DependenciaId:${dependenciaId},CargoId:${cargoId}`,
-        fields: 'TerceroPrincipalId',
-        sortby: 'Id',
-        order: 'desc',
-      },
-    );
-  
+
+    const response = await this.tercerosService.traerData('vinculacion', null, {
+      query: `Activo:true,DependenciaId:${dependenciaId},CargoId:${cargoId}`,
+      fields: 'TerceroPrincipalId',
+      sortby: 'Id',
+      order: 'desc',
+    });
+
     return response?.[0]?.TerceroPrincipalId || null;
   }
 
-  async getDependenciasByPersona(personaId: number, cargoId: number): Promise<number[]> {
+  async getDependenciasByPersona(
+    personaId: number,
+    cargoId: number,
+  ): Promise<number[]> {
     if (!personaId || !cargoId) return [];
 
     try {
-        const response = await this.tercerosService.traerData(
+      const response = await this.tercerosService.traerData(
         'vinculacion',
         null,
         {
-            query: `TerceroPrincipalId:${personaId},Activo:true,CargoId:${cargoId}`,
-            fields: 'DependenciaId',
+          query: `TerceroPrincipalId:${personaId},Activo:true,CargoId:${cargoId}`,
+          fields: 'DependenciaId',
         },
-        );
+      );
 
-        const dependencias = (response || [])
+      const dependencias = (response || [])
         .map((v: any) => v.DependenciaId)
         .filter((id: any) => id != null);
 
-        return dependencias;
-
+      return dependencias;
     } catch (error: any) {
-        console.error('[TercerosHelper] Error obteniendo dependencias:', {
+      console.error('[TercerosHelper] Error obteniendo dependencias:', {
         personaId,
         cargoId,
         error: error?.message || error,
-        });
+      });
 
-        return [];
+      return [];
     }
   }
 
@@ -116,13 +111,11 @@ export class TercerosHelperService {
     let auditorSeleccionado = auditores[0];
 
     if (auditores.length > 1) {
-      const lider = auditores.find(a => a.auditor_lider);
+      const lider = auditores.find((a) => a.auditor_lider);
       if (lider) auditorSeleccionado = lider;
     }
 
-    const tercero = await this.getTerceroById(
-      auditorSeleccionado.auditor_id,
-    );
+    const tercero = await this.getTerceroById(auditorSeleccionado.auditor_id);
 
     return tercero?.NombreCompleto || 'Sin auditor asignado.';
   }

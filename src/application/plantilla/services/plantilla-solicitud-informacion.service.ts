@@ -10,12 +10,7 @@ import { ParametrosService } from 'src/shared/services/parametros.service';
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
 import { OikosService } from 'src/shared/services/oikos.service';
 
-const {
-  PLANTILLAS,
-  logoUDistritalOCI,
-  contactoOCI,
-  CARGO
-} = environment;
+const { PLANTILLAS, logoUDistritalOCI, contactoOCI, CARGO } = environment;
 
 @Injectable()
 export class PlantillaSolicitudInformacionService {
@@ -31,22 +26,30 @@ export class PlantillaSolicitudInformacionService {
   async get(idAuditoria: string) {
     const auditoria = await this.auditoriaService.getOne(idAuditoria);
     const infoParaPlantilla = await this.organizarData(auditoria.Data);
-    const baseRenderizado =
-      await this.plantillasMidService.post('/v1/plantilla/renderizar', infoParaPlantilla);
+    const baseRenderizado = await this.plantillasMidService.post(
+      '/v1/plantilla/renderizar',
+      infoParaPlantilla,
+    );
     return baseRenderizado;
   }
 
   private async organizarData(auditoria: any) {
     const auditoriaPadre = auditoria;
-    const dependenciaPrincipal = this.obtenerDependenciaPrincipal(auditoriaPadre?.dependencia_id);
+    const dependenciaPrincipal = this.obtenerDependenciaPrincipal(
+      auditoriaPadre?.dependencia_id,
+    );
 
     const [dependencias, vigencia, auditoriaOSeguimiento, auditores, jefeOci] =
       await Promise.all([
         this.obtenergrupoDependencias(auditoriaPadre.dependencia_id),
-        this.parametrosService.get('parametro', auditoriaPadre.vigencia_id, null).then(data => data.Data),
-        this.parametrosService.get('parametro', auditoriaPadre.tipo_evaluacion_id, null).then(data => data.Data),
+        this.parametrosService
+          .get('parametro', auditoriaPadre.vigencia_id, null)
+          .then((data) => data.Data),
+        this.parametrosService
+          .get('parametro', auditoriaPadre.tipo_evaluacion_id, null)
+          .then((data) => data.Data),
         this.obtenerNombresAuditores(auditoria._id),
-        this.tercerosService.getJefeOCI()
+        this.tercerosService.getJefeOCI(),
       ]);
 
     const infoParaPlantilla = {
@@ -54,17 +57,22 @@ export class PlantillaSolicitudInformacionService {
       data: {
         logoUDistrital: logoUDistritalOCI,
         fecha: moment().locale('es').format('D [de] MMMM [de] YYYY'),
-        fecha_inicio: moment(auditoria.fecha_inicio).locale('es').format('DD/MM/YYYY'),
+        fecha_inicio: moment(auditoria.fecha_inicio)
+          .locale('es')
+          .format('DD/MM/YYYY'),
         consecutivo_oci: auditoria.consecutivo_OCI,
         dependencias: dependencias,
         ciudad: 'Bogotá D.C.',
-        referencia: auditoriaOSeguimiento.Nombre + " - " + auditoriaPadre.titulo,
+        referencia:
+          auditoriaOSeguimiento.Nombre + ' - ' + auditoriaPadre.titulo,
         anoAuditoria: vigencia.Nombre,
         tipo_auditoria: auditoriaOSeguimiento.Nombre,
         auditores: auditores,
         tema: auditoria.tema,
-        jefe_oci: jefeOci || "No se encontró el jefe de la Oficina Asesora de Control Interno",
-        contacto_oci: contactoOCI
+        jefe_oci:
+          jefeOci ||
+          'No se encontró el jefe de la Oficina Asesora de Control Interno',
+        contacto_oci: contactoOCI,
       },
     };
 
@@ -75,16 +83,20 @@ export class PlantillaSolicitudInformacionService {
     const params = {
       query: `auditoria_id:${auditoriaId},activo:true`,
       fields: 'auditor_id',
-      limit: '0'
-    }
-    const auditores = await this.auditoriaCrudService.traerDataCrud('auditor', null, params).then(data => data.Data);
+      limit: '0',
+    };
+    const auditores = await this.auditoriaCrudService
+      .traerDataCrud('auditor', null, params)
+      .then((data) => data.Data);
 
     if (!auditores?.length) return 'No se encontraron auditores.';
 
     const nombres = await Promise.all(
       auditores.map(async (auditor) => {
         try {
-          const tercero = await this.tercerosService.getTerceroById(auditor.auditor_id);
+          const tercero = await this.tercerosService.getTerceroById(
+            auditor.auditor_id,
+          );
           return tercero?.NombreCompleto
             ? capitalize(tercero.NombreCompleto)
             : null;
@@ -107,7 +119,9 @@ export class PlantillaSolicitudInformacionService {
     return unirListaNombres(nombres);
   }
 
-  private obtenerDependenciaPrincipal(dependenciaId: number | number[]): number | null {
+  private obtenerDependenciaPrincipal(
+    dependenciaId: number | number[],
+  ): number | null {
     if (Array.isArray(dependenciaId)) {
       return dependenciaId.length > 0 ? dependenciaId[0] : null;
     }
@@ -121,29 +135,45 @@ export class PlantillaSolicitudInformacionService {
     try {
       if (Array.isArray(dependencias)) {
         for (const idDependencia of dependencias) {
-          const dependencia = await this.oikosService.traerData('dependencia', idDependencia, null).then(data => data.Data);
-          const responsableDependencia = await this.tercerosService.getTerceroVinculado(idDependencia, CARGO.JEFE_DEPENDENCIA_ID);
+          const dependencia = await this.oikosService
+            .traerData('dependencia', idDependencia, null)
+            .then((data) => data.Data);
+          const responsableDependencia =
+            await this.tercerosService.getTerceroVinculado(
+              idDependencia,
+              CARGO.JEFE_DEPENDENCIA_ID,
+            );
 
           respuestaDependencias.push({
             nombre: dependencia.Nombre,
-            responsable: responsableDependencia?.NombreCompleto || 'No se encontró el responsable de la dependencia'
+            responsable:
+              responsableDependencia?.NombreCompleto ||
+              'No se encontró el responsable de la dependencia',
           });
         }
       } else {
-        const dependencia = await this.oikosService.traerData('dependencia', dependencias, null).then(data => data.Data);
-        const responsableDependencia = await this.tercerosService.getTerceroVinculado(dependencias, CARGO.JEFE_DEPENDENCIA_ID);
+        const dependencia = await this.oikosService
+          .traerData('dependencia', dependencias, null)
+          .then((data) => data.Data);
+        const responsableDependencia =
+          await this.tercerosService.getTerceroVinculado(
+            dependencias,
+            CARGO.JEFE_DEPENDENCIA_ID,
+          );
 
         respuestaDependencias.push({
           nombre: dependencia.Nombre,
-          responsable: responsableDependencia?.NombreCompleto || 'No se encontró el responsable de la dependencia'
+          responsable:
+            responsableDependencia?.NombreCompleto ||
+            'No se encontró el responsable de la dependencia',
         });
       }
       return respuestaDependencias;
     } catch (error) {
       throw new HttpException(
-            'Error al consultar el grupo de dependencias',
-            HttpStatus.INTERNAL_SERVER_ERROR,
-        );
+        'Error al consultar el grupo de dependencias',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }

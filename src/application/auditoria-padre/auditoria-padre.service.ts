@@ -58,13 +58,14 @@ export class AuditoriaPadreService {
       filtros.tipo_evaluacion_id = queryParams.tipo_evaluacion_id;
     }
 
-    const auditoriasOrdenadas = await this.auditoriaOrdenadaService.getAuditoriasOrdenadas(
-      planId,
-      undefined,
-      undefined,
-      filtros,
-      'auditoria-padre',
-    );
+    const auditoriasOrdenadas =
+      await this.auditoriaOrdenadaService.getAuditoriasOrdenadas(
+        planId,
+        undefined,
+        undefined,
+        filtros,
+        'auditoria-padre',
+      );
 
     const data = {
       Data: auditoriasOrdenadas,
@@ -77,7 +78,11 @@ export class AuditoriaPadreService {
     }
 
     if (queryParams.orderBy) {
-      data.Data = aplicarOrdenamiento(data.Data, queryParams.orderBy, queryParams.orderDirection);
+      data.Data = aplicarOrdenamiento(
+        data.Data,
+        queryParams.orderBy,
+        queryParams.orderDirection,
+      );
     }
 
     return data;
@@ -116,11 +121,9 @@ export class AuditoriaPadreService {
       );
 
       // 4. actualizar plan
-      await this.auditoriaCrudService.put(
-        'plan-auditoria',
-        planAuditoriaId,
-        { auditorias: auditoriasPadreActualizadas },
-      );
+      await this.auditoriaCrudService.put('plan-auditoria', planAuditoriaId, {
+        auditorias: auditoriasPadreActualizadas,
+      });
 
       return {
         Success: true,
@@ -165,7 +168,10 @@ export class AuditoriaPadreService {
         queryParams,
       );
     } catch (error: any) {
-      console.error('Error en AuditoriaPadreService.traerDataCrud:', error?.response?.data || error.message);
+      console.error(
+        'Error en AuditoriaPadreService.traerDataCrud:',
+        error?.response?.data || error.message,
+      );
       throw new HttpException(
         'Error al obtener los datos del servicio externo (auditoria-padre)',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -267,12 +273,24 @@ export class AuditoriaPadreService {
       if (element.dependencia_id !== undefined)
         this.reemplazar(this.dependencias, element, 'dependencia_id');
 
-      const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+      const MESES = [
+        'Enero',
+        'Febrero',
+        'Marzo',
+        'Abril',
+        'Mayo',
+        'Junio',
+        'Julio',
+        'Agosto',
+        'Septiembre',
+        'Octubre',
+        'Noviembre',
+        'Diciembre',
+      ];
       element.cronograma = this.unirNombres(element.cronograma_nombre, MESES);
       element.macroproceso = this.unirNombres(element.macroproceso_nombre);
       element.proceso = this.unirNombres(element.proceso_nombre);
       element.dependencia = this.unirNombres(element.dependencia_nombre);
-
     };
 
     if (Array.isArray(data.Data)) {
@@ -304,11 +322,13 @@ export class AuditoriaPadreService {
 
   private unirNombres(nombres: any[], todosSiCompletos?: string[]): string {
     if (!Array.isArray(nombres)) return nombres ?? null;
-    if (todosSiCompletos?.length && nombres.length === todosSiCompletos.length &&
-      todosSiCompletos.every((n) => nombres.includes(n))) {
+    if (
+      todosSiCompletos?.length &&
+      nombres.length === todosSiCompletos.length &&
+      todosSiCompletos.every((n) => nombres.includes(n))
+    ) {
       return 'Todos';
     }
     return unirListaNombresConComas(nombres);
   }
-  
 }

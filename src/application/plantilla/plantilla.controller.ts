@@ -1,5 +1,17 @@
-import { Controller, Get, NotFoundException, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Query,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { PlantillaService } from './services/plantilla.service';
 import { PlantillaPlanTrabajoService } from './services/plantilla-plan-trabajo.service';
 import { PlantillaSolicitudInformacionService } from './services/plantilla-solicitud-informacion.service';
@@ -36,17 +48,24 @@ export class PlantillaController {
     required: false,
     default: false,
     type: Boolean,
-    description: 'Usar la auditoría padre en la plantilla en lugar de la colección de auditorías original',
+    description:
+      'Usar la auditoría padre en la plantilla en lugar de la colección de auditorías original',
   })
   @ApiResponse({ status: 200, description: 'Plantilla encontrada.' })
-  async getById(@Param('id') id: string, @Query('conEspeciales') conEspeciales?: string, @Query('auditoria-padre') auditoriaPadre?: string) {
-    if (conEspeciales == null)
-      conEspeciales = 'false';
+  async getById(
+    @Param('id') id: string,
+    @Query('conEspeciales') conEspeciales?: string,
+    @Query('auditoria-padre') auditoriaPadre?: string,
+  ) {
+    if (conEspeciales == null) conEspeciales = 'false';
 
-    if (auditoriaPadre == null)
-      auditoriaPadre = 'false';
+    if (auditoriaPadre == null) auditoriaPadre = 'false';
 
-    return this.plantillaService.getOne(id, conEspeciales === 'true', auditoriaPadre === 'true');
+    return this.plantillaService.getOne(
+      id,
+      conEspeciales === 'true',
+      auditoriaPadre === 'true',
+    );
   }
 
   @Get('/:tipo/:idAuditoria')

@@ -5,16 +5,13 @@ import {
 } from '../utils/auditoria-ordenamiento.utils';
 import { AuditoriaCrudService } from './auditoria-crud.service';
 
-
 /**
  * Servicio compartido para obtener auditorías ordenadas.
  * Permite reutilización sin acoplamiento entre módulos.
  */
 @Injectable()
 export class AuditoriaOrdenadaService {
-  constructor(
-    private readonly auditoriaCrudService: AuditoriaCrudService,
-  ) {}
+  constructor(private readonly auditoriaCrudService: AuditoriaCrudService) {}
 
   /**
    * Obtiene auditorías ordenadas según el plan.
@@ -32,12 +29,15 @@ export class AuditoriaOrdenadaService {
     filtros?: any,
     tipo: 'auditoria' | 'auditoria-padre' = 'auditoria',
   ): Promise<any[]> {
-    const auditorias = await this.obtenerAuditoriasDeCrud(planAuditoriaId, tipo);
+    const auditorias = await this.obtenerAuditoriasDeCrud(
+      planAuditoriaId,
+      tipo,
+    );
     let auditoriasActivas = auditorias.filter((a) => a.activo === true);
 
     if (filtros?.tipo_evaluacion_id) {
       auditoriasActivas = auditoriasActivas.filter(
-        (a) => a.tipo_evaluacion_id === parseInt(filtros.tipo_evaluacion_id)
+        (a) => a.tipo_evaluacion_id === parseInt(filtros.tipo_evaluacion_id),
       );
     }
 
@@ -57,11 +57,11 @@ export class AuditoriaOrdenadaService {
   }
 
   /**
-     * Obtiene auditorías desde el CRUD usando el servicio centralizado.
-     * @param planId - ID del plan
-     * @param tipo - Endpoint ('auditoria' o 'auditoria-padre')
-     * @returns Lista de auditorías
-     */
+   * Obtiene auditorías desde el CRUD usando el servicio centralizado.
+   * @param planId - ID del plan
+   * @param tipo - Endpoint ('auditoria' o 'auditoria-padre')
+   * @returns Lista de auditorías
+   */
   private async obtenerAuditoriasDeCrud(
     planId: string,
     tipo: string = 'auditoria',

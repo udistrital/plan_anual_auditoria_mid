@@ -1,15 +1,14 @@
-import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
-import { HttpService } from "@nestjs/axios";
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
 import { ConfigService } from '@nestjs/config';
 
 /** Service for interacting with the Oikos API, providing methods for making GET and POST requests to specified endpoints. */
 @Injectable()
 export class OikosService {
-
   constructor(
     private readonly httpService: HttpService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
   ) {}
 
   /**
@@ -20,7 +19,7 @@ export class OikosService {
    * @returns Datos obtenidos del Servicio.
    */
   async traerData(endpoint: string, id: number | null, queryParams: any) {
-    let url = `${this.configService.get<string>('OIKOS_SERVICE')}${endpoint}${id ? '/'+id : ''}` 
+    let url = `${this.configService.get<string>('OIKOS_SERVICE')}${endpoint}${id ? '/' + id : ''}`;
 
     if (queryParams) {
       const queryString = new URLSearchParams(queryParams).toString();
@@ -33,9 +32,8 @@ export class OikosService {
       throw new HttpException(
         'Error al obtener los datos del servicio externo',
         HttpStatus.INTERNAL_SERVER_ERROR,
-        error
+        error,
       );
     }
   }
-
 }
