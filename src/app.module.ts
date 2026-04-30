@@ -16,6 +16,8 @@ import { AuditadoModule } from './application/auditado/auditado.module';
 import { LoggerModule } from 'nestjs-pino';
 import { env } from './config/configuration';
 import { ServicesModule } from './shared/services/services.module';
+import { APP_FILTER } from '@nestjs/core';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 
 @Module({
   imports: [
@@ -43,8 +45,15 @@ import { ServicesModule } from './shared/services/services.module';
     InformeModule,
     AuditadoModule,
     ServicesModule,
+
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionFilter,
+    }
+  ],
 })
 export class AppModule {}

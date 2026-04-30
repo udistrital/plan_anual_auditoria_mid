@@ -4,7 +4,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
-import { PinoLogger } from 'nestjs-pino';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 @Injectable()
 export class ActividadService {
@@ -16,10 +16,9 @@ export class ActividadService {
 
   constructor(
     private readonly auditoriaCrudService: AuditoriaCrudService,
+    @InjectPinoLogger(ActividadService.name)
     private readonly logger: PinoLogger,
-  ) {
-    this.logger.setContext(ActividadService.name);
-  }
+  ) {}
 
   async getAll(queryParams: any) {
     try {
@@ -28,25 +27,23 @@ export class ActividadService {
         null,
         queryParams,
       );
-
+  
       if (!data || !data.Data || data.Data.length === 0) {
         throw new NotFoundException('No se encontraron actividades');
       }
-
+  
       if (await this.identificarCampo(data)) {
         this.reemplazarCampos(data);
       }
-
+  
       return data;
     } catch (error) {
       this.logger.error(
         { err: error, queryParams },
         'Error en ActividadService.getAll',
       );
-
-      throw error instanceof NotFoundException
-        ? error
-        : new InternalServerErrorException('Error obteniendo actividades');
+  
+      throw error;
     }
   }
 
@@ -57,25 +54,23 @@ export class ActividadService {
         id,
         null,
       );
-
+  
       if (!data || !data.Data) {
         throw new NotFoundException(`Actividad con id ${id} no encontrada`);
       }
-
+  
       if (await this.identificarCampo(data)) {
         this.reemplazarCampos(data);
       }
-
+  
       return data;
     } catch (error) {
       this.logger.error(
         { err: error, id },
         'Error en ActividadService.getOne',
       );
-
-      throw error instanceof NotFoundException
-        ? error
-        : new InternalServerErrorException('Error obteniendo actividad');
+  
+      throw error;
     }
   }
 
