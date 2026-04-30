@@ -12,17 +12,10 @@ paths:
   /actividad:
     get:
       operationId: ActividadController_getAll
-      parameters:
-        - name: queryParams
-          required: false
-          in: query
-          description: Filtros opcionales.
-          schema: {}
+      parameters: []
       responses:
         '200':
           description: Actividades obtenidas.
-        '404':
-          description: Sin resultados.
       summary: Obtener todas las actividades
       tags: &ref_0
         - Actividad
@@ -33,14 +26,11 @@ paths:
         - name: id
           required: true
           in: path
-          description: ID de la actividad.
           schema:
             type: string
       responses:
         '200':
           description: Actividad obtenida.
-        '404':
-          description: No encontrada.
       summary: Obtener actividad por ID
       tags: *ref_0
   /auditoria-estado:
