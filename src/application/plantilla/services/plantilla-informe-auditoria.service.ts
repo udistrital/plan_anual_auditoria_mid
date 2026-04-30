@@ -45,8 +45,11 @@ export class PlantillaInformeAuditoriaService {
             
             const auditoriaPadreRespuesta = await this.auditoriaService.getAll({query: `_id:${auditoria.auditoria_padre_id}`});
             const auditoriaPadre = auditoriaPadreRespuesta.Data[0];
-            const temas = await this.obtenerTemasInforme(informe._id);
-            const temasReestructurados = await this.reestructurarTemas(temas);
+            const [temas, hallazgos] = await Promise.all([
+                this.obtenerTemasInforme(informe._id),
+                this.obtenerHallazgosInforme(informe._id),
+            ]);
+            const temasReestructurados = this.reestructurarTemas(temas, hallazgos);
             const [anio, mes, dia] = informe.fecha_emision.split('T')[0].split('-');
             const [tituloInforme, jefeOci, auditorResponsable, dependencias] = await Promise.all([
                 this.generarTituloInforme(auditoria._id, auditoria.tipo_evaluacion_id, auditoria.titulo),
@@ -68,6 +71,10 @@ export class PlantillaInformeAuditoriaService {
                         titulo: tituloInforme,
                         dependencias: dependencias,
                         procreso: auditoria.proceso,
+                        // TODO: Ajustar para diferentes dependencias y procesos
+                        dependencia: auditoria.proceso_nombre[0] + ' / ' + auditoria.dependencia_nombre[0],
+                        lider: auditoria.datos_dependencias?.[0]?.jefe_nombre,
+                        responsable: auditoria.datos_dependencias?.[0]?.asistente_nombre,
                         objetivo: auditoria.objetivo,
                         alcance: auditoria.alcance,
                         criterios: auditoria.criterio,
@@ -164,12 +171,27 @@ export class PlantillaInformeAuditoriaService {
         }
     }
 
-    private async reestructurarTemas(temas: any[]) {
+    private async obtenerHallazgosInforme(idInforme: string) {
+        const url = `${PLAN_AUDITORIA_CRUD_SERVICE}hallazgo?query=informe_id:${idInforme},activo:true&limit=0`;
+        try {
+            const respuesta = await lastValueFrom(this.httpService.get(url));
+            return respuesta.data.Data || [];
+        } catch (error) {
+            throw new HttpException(
+                'Error al obtener los hallazgos del informe',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    private reestructurarTemas(temas: any[], hallazgos: any[]) {
         return temas.map(({ subtema, ...data }) => ({
             ...data,
-            subtemas: subtema?.map(({ hallazgo, ...sub }) => ({
+            subtemas: subtema?.map((sub: any) => ({
                 ...sub,
-                hallazgos: hallazgo ?? [],
+                hallazgos: hallazgos.filter(
+                    (h: any) => h.subtema_id?.toString() === sub._id?.toString()
+                ),
             })) ?? [],
         }));
     }
