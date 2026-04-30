@@ -1,31 +1,22 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Injectable, OnModuleInit } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import axios, { AxiosError } from 'axios';
 
 @Injectable()
-export class LoggerService implements OnModuleInit {
+@Catch()
+export class LoggerService implements OnModuleInit, ExceptionFilter {
 
   constructor(
     private readonly httpService: HttpService,
     @InjectPinoLogger(LoggerService.name) private readonly logger: PinoLogger,
   ) {}
 
+  // configura interceptores de Axios para loguear errores en peticiones HTTP
   onModuleInit() {
     const axiosInstance = this.httpService.axiosRef;
     axiosInstance.interceptors.request.use(
-      (config) => {
-        this.logger.info(
-          {
-            method: config.method?.toUpperCase(),
-            url: config.url,
-            baseURL: config.baseURL,
-            params: config.params,
-          },
-          'Outgoing HTTP request',
-        );
-        return config;
-      },
+      (config) => config, // se deja pasar la configuración sin modificar
       (error: AxiosError) => {
         this.logger.error(
           { err: error, message: error.message },
@@ -36,18 +27,7 @@ export class LoggerService implements OnModuleInit {
     );
 
     axiosInstance.interceptors.response.use(
-      (response) => {
-        this.logger.info(
-          {
-            status: response.status,
-            url: response.config.url,
-            method: response.config.method?.toUpperCase(),
-            length: Array.isArray(response.data.Data) ? response.data.Data.length : 1,
-          },
-          'HTTP response received',
-        );
-        return response;
-      },
+      (response) => response, //se deja pasar la respuesta sin modificar
       (error: AxiosError) => {
         const isAxiosError = axios.isAxiosError(error);
 
@@ -93,6 +73,78 @@ export class LoggerService implements OnModuleInit {
 
         return Promise.reject(error);
       },
+    );
+  }
+
+  // Implementación del filtro de excepciones global para capturar y loguear errores no manejados en los controladores
+  catch(exception: unknown, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const request = ctx.getRequest<Request>();
+    const response = ctx.getResponse();
+
+    const { status, body } = this.resolve(exception);
+
+    // Log centralizado según tipo
+    this.log(exception, request, status);
+
+    response.data.json({
+      ...body,
+      path: request.url,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  private resolve(exception: unknown): {
+    status: number;
+    body: Record<string, unknown>;
+  } {
+    // 1. HttpException de NestJS (BadRequestException, NotFoundException, etc.)
+    if (exception instanceof HttpException) {
+      const status = exception.getStatus();
+      const res = exception.getResponse();
+      return {
+        status,
+        body: { "message": res },
+      };
+    }
+
+    // 2. Error de Axios con respuesta del servidor
+    if (axios.isAxiosError(exception)) {
+      const status =
+        exception.response?.status ?? HttpStatus.BAD_GATEWAY;
+      return {
+        status,
+        body: {
+          message: 'Upstream service error',
+          upstream: {
+            status: exception.response?.status,
+            url: exception.config?.url,
+          },
+        },
+      };
+    }
+
+    // 3. Cualquier otro error no controlado
+    return {
+      status: HttpStatus.INTERNAL_SERVER_ERROR,
+      body: { message: 'Internal server error' },
+    };
+  }
+
+  private log(exception: unknown, request: Request, status: number) {
+    const meta = {
+      method: request.method,
+      url: request.url,
+      status: status,
+      body: request.body,
+      //params: request.params,
+      //query: request.query,
+    };
+
+    // Error inesperado — siempre error
+    this.logger.error(
+      { ...meta, err: exception },
+      'Unhandled exception',
     );
   }
 

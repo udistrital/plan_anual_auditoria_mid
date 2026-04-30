@@ -44,7 +44,7 @@ export class PlantillaPlanTrabajoService {
     const auditoria = data.auditoria;
     const [macroproceso, lider, responsable] = await Promise.all([
       this.parametrosService
-        .get('parametro', auditoria.macroproceso, null)
+        .get('parametro', auditoria.macroproceso_id, null)
         .then((data) => data.Data),
       this.parametrosService
         .get('parametro', auditoria.lider_id, null)
