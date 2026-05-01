@@ -48,8 +48,12 @@ export class PlantillaInformeAuditoriaService {
         throw new Error('No se encontró el informe asociado a la auditoría');
       }
 
-      const temas = await this.obtenerTemasInforme(informe._id);
-      const temasReestructurados = await this.reestructurarTemas(temas);
+      const [temas, hallazgos] = await Promise.all([
+        this.obtenerComponentesInforme('tema', informe._id),
+        this.obtenerComponentesInforme('hallazgo' , informe._id),
+      ]);
+
+      const temasReestructurados = await this.reestructurarTemas(temas, hallazgos);
       const [anio, mes, dia] = informe.fecha_emision.split('T')[0].split('-');
       const [tituloInforme, jefeOci, auditorResponsable, dependencias] =
         await Promise.all([
@@ -75,7 +79,10 @@ export class PlantillaInformeAuditoriaService {
           informe: {
             titulo: tituloInforme,
             dependencias: dependencias,
-            procreso: auditoria.proceso,
+            proceso: auditoria.proceso,
+            dependencia: auditoria.proceso_nombre[0] + ' / ' + auditoria.dependencia_nombre[0],
+            lider: auditoria.datos_dependencias[0]?.jefe_nombre,
+            responsable: auditoria.datos_dependencias[0]?.asistente_nombre,
             objetivo: auditoria.objetivo,
             alcance: auditoria.alcance,
             criterios: auditoria.criterio,
@@ -133,17 +140,17 @@ export class PlantillaInformeAuditoriaService {
     return respuestaInforme.Data[0];
   }
 
-  private async obtenerTemasInforme(idInforme: string) {
+  private async obtenerComponentesInforme(tipo: string, idInforme: string) {
     const params = {
       query: `informe_id:${idInforme},activo:true`,
       limit: 0,
     };
-    const respuestaTemas = await this.auditoriaCrudService.traerDataCrud(
-      'tema',
+    const respuesta = await this.auditoriaCrudService.traerDataCrud(
+      tipo,
       null,
       params,
     );
-    return respuestaTemas.Data;
+    return respuesta.Data;
   }
 
   private async generarTituloInforme(
@@ -171,13 +178,13 @@ export class PlantillaInformeAuditoriaService {
     return `${tipo}: ${auditoriaTitulo} - ${sufijo}`;
   }
 
-  private async reestructurarTemas(temas: any[]) {
+  private async reestructurarTemas(temas: any[], hallazgos: any[]) {
     return temas.map(({ subtema, ...data }) => ({
       ...data,
       subtemas:
-        subtema?.map(({ hallazgo, ...sub }) => ({
+        subtema?.map((sub: any ) => ({
           ...sub,
-          hallazgos: hallazgo ?? [],
+          hallazgos: hallazgos.filter((h) => h.subtema_id?.toString() === sub._id?.toString()),
         })) ?? [],
     }));
   }
