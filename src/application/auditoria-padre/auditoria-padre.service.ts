@@ -1,4 +1,4 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, NotFoundException, BadRequestException } from '@nestjs/common';
 import { lastValueFrom, forkJoin } from 'rxjs';
 import { environment } from 'src/config/configuration';
 import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
@@ -25,39 +25,66 @@ export class AuditoriaPadreService {
     private readonly auditoriaOrdenadaService: AuditoriaOrdenadaService,
     private readonly auditoriaCrudService: AuditoriaCrudService,
   ) {}
-
+  
   async getAll(queryParams: any) {
     const data = await this.traerDataCrud(null, queryParams);
-    if (await this.identificarCampo(data)) {
-      this.reemplazarCampos(data);
+  
+    if (!data?.Data || data.Data.length === 0) {
+      throw new NotFoundException('No se encontraron auditorías padre');
     }
+  
+    if (await this.identificarCampo(data)) {
+      await this.reemplazarCampos(data);
+    }
+  
     return data;
   }
 
   async getOne(id: string) {
-    const data = await this.traerDataCrud(id, null);
-    if (await this.identificarCampo(data)) {
-      this.reemplazarCampos(data);
+    if (!id) {
+      throw new BadRequestException('El id es obligatorio');
     }
+  
+    const data = await this.traerDataCrud(id, null);
+  
+    if (!data?.Data) {
+      throw new NotFoundException(
+        `Auditoría padre con id ${id} no encontrada`,
+      );
+    }
+  
+    if (await this.identificarCampo(data)) {
+      await this.reemplazarCampos(data);
+    }
+  
     return data;
   }
 
   async getAuditoriasOrdenadas(queryParams: any) {
     const planId = this.extraerPlanId(queryParams);
-
+  
+    if (!planId) {
+      throw new BadRequestException(
+        'El parámetro "plan_auditoria_id" es obligatorio',
+      );
+    }
+  
     const filtros: any = {};
+  
     if (queryParams.query) {
       const queryParts = queryParams.query.split(',');
+  
       queryParts.forEach((part: string) => {
         if (part.startsWith('tipo_evaluacion_id:')) {
           filtros.tipo_evaluacion_id = part.split(':')[1];
         }
       });
     }
+  
     if (queryParams.tipo_evaluacion_id) {
       filtros.tipo_evaluacion_id = queryParams.tipo_evaluacion_id;
     }
-
+  
     const auditoriasOrdenadas =
       await this.auditoriaOrdenadaService.getAuditoriasOrdenadas(
         planId,
@@ -66,17 +93,15 @@ export class AuditoriaPadreService {
         filtros,
         'auditoria-padre',
       );
-
+  
     const data = {
-      Data: auditoriasOrdenadas,
-      Success: true,
-      Status: 200,
+      Data: auditoriasOrdenadas || [],
     };
-
+  
     if (await this.identificarCampo(data)) {
-      this.reemplazarCampos(data);
+      await this.reemplazarCampos(data);
     }
-
+  
     if (queryParams.orderBy) {
       data.Data = aplicarOrdenamiento(
         data.Data,
@@ -84,7 +109,7 @@ export class AuditoriaPadreService {
         queryParams.orderDirection,
       );
     }
-
+  
     return data;
   }
 
@@ -92,54 +117,66 @@ export class AuditoriaPadreService {
     auditoriaPadreId: string,
     planAuditoriaId: string,
   ) {
-    if (!planAuditoriaId) {
-      throw new HttpException(
-        'El parámetro "plan_auditoria_id" es obligatorio.',
-        HttpStatus.BAD_REQUEST,
+    if (!auditoriaPadreId) {
+      throw new BadRequestException(
+        'El parámetro "auditoriaPadreId" es obligatorio',
       );
     }
 
-    try {
-      // 1. eliminar auditoría padre
-      await this.auditoriaCrudService.delete(
-        'auditoria-padre',
-        auditoriaPadreId,
+    if (!planAuditoriaId) {
+      throw new BadRequestException(
+        'El parámetro "planAuditoriaId" es obligatorio',
       );
+    }
 
-      // 2. obtener plan
-      const planResponse = await this.auditoriaCrudService.traerDataCrud(
+    // 1. obtener plan primero
+    const planResponse =
+      await this.auditoriaCrudService.traerDataCrud(
         'plan-auditoria',
         planAuditoriaId,
         null,
       );
 
-      const plan = planResponse.Data;
+    const plan = planResponse?.Data;
 
-      // 3. filtrar ids
-      const auditoriasPadreActualizadas = (plan.auditorias || []).filter(
-        (id: string) => id !== auditoriaPadreId,
-      );
-
-      // 4. actualizar plan
-      await this.auditoriaCrudService.put('plan-auditoria', planAuditoriaId, {
-        auditorias: auditoriasPadreActualizadas,
-      });
-
-      return {
-        Success: true,
-        Status: 200,
-        Message: 'Auditoría padre eliminada exitosamente',
-        Data: null,
-      };
-    } catch (error: any) {
-      console.error('Error en deleteAuditoriaPadre:', error);
-
-      throw new HttpException(
-        error?.response?.data?.message ||
-          'Error al eliminar la auditoría padre',
-        error?.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
+    if (!plan) {
+      throw new NotFoundException(
+        `Plan ${planAuditoriaId} no encontrado`,
       );
     }
+
+    const auditorias = Array.isArray(plan.auditorias)
+      ? plan.auditorias
+      : [];
+
+    if (!auditorias.includes(auditoriaPadreId)) {
+      throw new NotFoundException(
+        `La auditoría padre ${auditoriaPadreId} no pertenece al plan`,
+      );
+    }
+
+    // 2. actualizar plan
+    const auditoriasActualizadas = auditorias.filter(
+      (id: string) => id !== auditoriaPadreId,
+    );
+
+    await this.auditoriaCrudService.put(
+      'plan-auditoria',
+      planAuditoriaId,
+      {
+        auditorias: auditoriasActualizadas,
+      },
+    );
+
+    // 3. eliminar auditoría padre
+    await this.auditoriaCrudService.delete(
+      'auditoria-padre',
+      auditoriaPadreId,
+    );
+
+    return {
+      message: 'Auditoría padre eliminada exitosamente',
+    };
   }
 
   private extraerPlanId(queryParams: any): string {
@@ -160,23 +197,15 @@ export class AuditoriaPadreService {
     );
   }
 
-  private async traerDataCrud(id: string | null, queryParams: any) {
-    try {
-      return await this.auditoriaCrudService.traerDataCrud(
-        'auditoria-padre',
-        id,
-        queryParams,
-      );
-    } catch (error: any) {
-      console.error(
-        'Error en AuditoriaPadreService.traerDataCrud:',
-        error?.response?.data || error.message,
-      );
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo (auditoria-padre)',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+  private async traerDataCrud(
+    id: string | null,
+    queryParams: any,
+  ) {
+    return this.auditoriaCrudService.traerDataCrud(
+      'auditoria-padre',
+      id,
+      queryParams,
+    );
   }
 
   private async identificarCampo(data: any) {

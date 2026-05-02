@@ -1,4 +1,8 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
 
@@ -15,62 +19,77 @@ export class AuditadoService {
     cargoId: number,
     tipoDocumentoId?: string,
   ) {
-    try {
-      // 1. Construir filtros
-      const queryParams = {
-        query: `referencia_id:${auditoriaId},activo:true`,
-        limit: 0,
-      };
+    // Validaciones de negocio
+    if (!auditoriaId) {
+      throw new BadRequestException('auditoria_id es requerido');
+    }
 
-      // 2. Tipos de documento
-      const tiposDocumentosArray = tipoDocumentoId
-        ? tipoDocumentoId.split(',').map((id) => parseInt(id, 10))
-        : [];
+    // 1. Construir filtros
+    const queryParams = {
+      query: `referencia_id:${auditoriaId},activo:true`,
+      limit: 0,
+    };
 
-      // 3. Obtener dependencias desde helper
-      const dependenciasAuditado =
-        await this.tercerosHelper.getDependenciasByPersona(personaId, cargoId);
+    // 2. Tipos de documento
+    const tiposDocumentosArray = tipoDocumentoId
+      ? tipoDocumentoId.split(',').map((id) => {
+          const parsed = parseInt(id, 10);
+          if (isNaN(parsed)) {
+            throw new BadRequestException(
+              `tipo_documento_id inválido: ${id}`,
+            );
+          }
+          return parsed;
+        })
+      : [];
 
-      console.log('dependenciasAuditado:', dependenciasAuditado);
-
-      // 4. Obtener documentos desde CRUD service
-      const response = await this.auditoriaCrudService.traerDataCrud(
-        'documento',
-        null,
-        queryParams,
+    // 3. Dependencias del auditado
+    const dependenciasAuditado =
+      await this.tercerosHelper.getDependenciasByPersona(
+        personaId,
+        cargoId,
       );
 
-      const documentos = response?.Data || [];
+    // 4. Obtener documentos
+    const response = await this.auditoriaCrudService.traerDataCrud(
+      'documento',
+      null,
+      queryParams,
+    );
 
-      console.log('documentos obtenidos:', documentos.length);
+    const documentos = response?.Data || [];
 
-      // 5. Filtrar documentos
-      const documentosFiltrados = documentos.filter((documento: any) => {
-        const tipoDocumentoOk =
-          tiposDocumentosArray.length === 0 ||
-          tiposDocumentosArray.includes(documento.tipo_id);
-
-        const dependenciaOk =
-          !documento.metadatos ||
-          dependenciasAuditado.includes(documento.metadatos?.dependencia_id);
-
-        const firmaOk =
-          documento.metadatos?.firmado === true ||
-          documento.metadatos?.firmado === false;
-
-        return (tipoDocumentoOk && dependenciaOk) || firmaOk;
-      });
-
-      console.log('documentos filtrados:', documentosFiltrados.length);
-
-      return documentosFiltrados;
-    } catch (error) {
-      console.error('Error en filtrarDocumentosPorDependencia:', error);
-
-      throw new HttpException(
-        'Error al filtrar documentos',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+    if (!documentos.length) {
+      throw new NotFoundException(
+        'No se encontraron documentos para la auditoría',
       );
     }
+
+    // 5. Filtrar documentos
+    const documentosFiltrados = documentos.filter((documento: any) => {
+      const tipoDocumentoOk =
+        tiposDocumentosArray.length === 0 ||
+        tiposDocumentosArray.includes(documento.tipo_id);
+
+      const dependenciaOk =
+        !documento.metadatos ||
+        dependenciasAuditado.includes(
+          documento.metadatos?.dependencia_id,
+        );
+
+      const firmaOk =
+        documento.metadatos?.firmado === true ||
+        documento.metadatos?.firmado === false;
+
+      return (tipoDocumentoOk && dependenciaOk) || firmaOk;
+    });
+
+    if (!documentosFiltrados.length) {
+      throw new NotFoundException(
+        'No hay documentos que cumplan los criterios de filtrado',
+      );
+    }
+
+    return documentosFiltrados;
   }
 }

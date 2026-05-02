@@ -1,10 +1,8 @@
 import {
   Injectable,
-  NotFoundException,
-  InternalServerErrorException,
+  NotFoundException
 } from '@nestjs/common';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
-import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 @Injectable()
 export class ActividadService {
@@ -16,75 +14,42 @@ export class ActividadService {
 
   constructor(
     private readonly auditoriaCrudService: AuditoriaCrudService,
-    @InjectPinoLogger(ActividadService.name)
-    private readonly logger: PinoLogger,
   ) {}
 
   async getAll(queryParams: any) {
-    try {
-      const data = await this.auditoriaCrudService.traerDataCrud(
-        'actividad',
-        null,
-        queryParams,
-      );
-  
-      if (!data || !data.Data || data.Data.length === 0) {
-        throw new NotFoundException('No se encontraron actividades');
-      }
-  
-      if (await this.identificarCampo(data)) {
-        this.reemplazarCampos(data);
-      }
-  
-      return data;
-    } catch (error) {
-      this.logger.error(
-        { err: error, queryParams },
-        'Error en ActividadService.getAll',
-      );
-  
-      throw error;
+    const data = await this.auditoriaCrudService.traerDataCrud(
+      'actividad',
+      null,
+      queryParams,
+    );
+
+    if (this.identificarCampo(data)) {
+      this.reemplazarCampos(data);
     }
+
+    return data;
   }
 
   async getOne(id: string) {
-    try {
-      const data = await this.auditoriaCrudService.traerDataCrud(
-        'actividad',
-        id,
-        null,
-      );
+    const data = await this.auditoriaCrudService.traerDataCrud(
+      'actividad',
+      id,
+      null,
+    );
   
-      if (!data || !data.Data) {
-        throw new NotFoundException(`Actividad con id ${id} no encontrada`);
-      }
-  
-      if (await this.identificarCampo(data)) {
-        this.reemplazarCampos(data);
-      }
-  
-      return data;
-    } catch (error) {
-      this.logger.error(
-        { err: error, id },
-        'Error en ActividadService.getOne',
-      );
-  
-      throw error;
+    if (this.identificarCampo(data)) {
+      this.reemplazarCampos(data);
     }
+  
+    return data;
   }
 
-  private async identificarCampo(data: any): Promise<boolean> {
-    try {
-      const firstElement = Array.isArray(data.Data)
-        ? data.Data[0]
-        : data.Data;
+  private identificarCampo(data: any): boolean {
+    const firstElement = Array.isArray(data.Data)
+      ? data.Data[0]
+      : data.Data;
 
-      return !!(firstElement && 'medio_id' in firstElement);
-    } catch (error) {
-      this.logger.error({ err: error }, 'Error en identificarCampo');
-      return false;
-    }
+    return !!(firstElement && 'medio_id' in firstElement);
   }
 
   private reemplazarCampos(data: any) {
@@ -99,6 +64,7 @@ export class ActividadService {
         this.reemplazar(this.medio, data.Data, 'medio_id');
       }
     }
+
     return data;
   }
 

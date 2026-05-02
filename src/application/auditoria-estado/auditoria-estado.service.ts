@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { environment } from 'src/config/configuration';
 import { reemplazar, reemplazarCampoRol } from 'src/utils/campo.utils';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
@@ -23,9 +23,15 @@ export class AuditoriaEstadoService {
       null,
       queryParams,
     );
+
+    if (!data?.Data || data.Data.length === 0) {
+      throw new NotFoundException('No se encontraron estados');
+    }
+
     if (await this.identificarCampo(data)) {
       await this.reemplazarCampos(data);
     }
+
     return data;
   }
 
@@ -35,9 +41,17 @@ export class AuditoriaEstadoService {
       id,
       null,
     );
+
+    if (!data?.Data) {
+      throw new NotFoundException(
+        `Estado de auditoría con id ${id} no encontrado`,
+      );
+    }
+
     if (await this.identificarCampo(data)) {
       await this.reemplazarCampos(data);
     }
+
     return data;
   }
 

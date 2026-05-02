@@ -87,7 +87,7 @@ export class LoggerService implements OnModuleInit, ExceptionFilter {
     // Log centralizado según tipo
     this.log(exception, request, status);
 
-    response.data.json({
+    response.status(status).json({
       ...body,
       path: request.url,
       timestamp: new Date().toISOString(),
@@ -102,9 +102,30 @@ export class LoggerService implements OnModuleInit, ExceptionFilter {
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
       const res = exception.getResponse();
+      
+      if (typeof res === 'string') {
+        return {
+          status,
+          body: {
+            statusCode: status,
+            message: res,
+            details: null,
+          },
+        };
+      }
+
+      const responseObject = res as Record<string, any>;
+
       return {
         status,
-        body: { "message": res },
+        body: {
+          statusCode: status,
+          message: responseObject.message || 'Unexpected error',
+          details: {
+            ...responseObject,
+            message: undefined, 
+          },
+        },
       };
     }
 
@@ -112,12 +133,16 @@ export class LoggerService implements OnModuleInit, ExceptionFilter {
     if (axios.isAxiosError(exception)) {
       const status =
         exception.response?.status ?? HttpStatus.BAD_GATEWAY;
+    
+      const responseData = exception.response?.data;
+    
       return {
         status,
         body: {
-          message: 'Upstream service error',
-          upstream: {
-            status: exception.response?.status,
+          statusCode: status,
+          message: 'Error en servicio externo',
+          details: {
+            detail: responseData ?? null,
             url: exception.config?.url,
           },
         },

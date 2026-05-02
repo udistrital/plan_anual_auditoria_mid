@@ -1,4 +1,4 @@
-import { Controller, Get, HttpStatus, Param, Query, Res } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Param, Query, ParseIntPipe } from '@nestjs/common';
 import { AuditadoService } from './auditado.service';
 import {
   ApiOperation,
@@ -45,31 +45,18 @@ export class AuditadoController {
     required: false,
     description:
       'ID del tipo de documento para filtrar los documentos (opcional).',
-    explode: false,
-    style: 'form',
   })
   async filtrarDocumentosPorDependencia(
-    @Res() res: any,
-    @Param('personaId') personaId: number,
+    @Param('personaId', ParseIntPipe) personaId: number,
     @Query('auditoria_id') auditoriaId: string,
-    @Query('cargo_id') cargoId: number,
+    @Query('cargo_id', ParseIntPipe) cargoId: number,
     @Query('tipo_documento_id') tipoDocumentoId?: string,
   ) {
-    try {
-      const data = await this.auditadoService.filtrarDocumentosPorDependencia(
-        personaId,
-        auditoriaId,
-        cargoId,
-        tipoDocumentoId,
-      );
-      return res.status(HttpStatus.OK).json(data);
-    } catch (error) {
-      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        Success: false,
-        Status: HttpStatus.INTERNAL_SERVER_ERROR,
-        Message: 'Error al filtrar los documentos',
-        Data: error.message,
-      });
-    }
+    return this.auditadoService.filtrarDocumentosPorDependencia(
+      personaId,
+      auditoriaId,
+      cargoId,
+      tipoDocumentoId,
+    );
   }
 }

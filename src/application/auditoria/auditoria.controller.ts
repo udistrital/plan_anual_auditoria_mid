@@ -3,9 +3,9 @@ import {
   Get,
   Delete,
   Param,
-  HttpStatus,
-  Res,
   Query,
+  ParseIntPipe,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -31,25 +31,13 @@ export class AuditoriaController {
   @ApiResponse({ status: 200, description: 'Auditorías obtenidas.' })
   @ApiResponse({ status: 404, description: 'Sin resultados.' })
   async getByAuditor(
-    @Res() res: any,
     @Param('personaId') personaId: string,
     @Query() queryParams: any,
   ) {
-    try {
-      const data = await this.auditoriaService.getByAuditor(
-        personaId,
-        queryParams,
-      );
-      res.status(HttpStatus.OK).json(data);
-    } catch (error) {
-      res.status(HttpStatus.NOT_FOUND).json({
-        Success: false,
-        Status: HttpStatus.NOT_FOUND,
-        Message:
-          'Error en servicio GetByAuditor: sin datos o parámetro inválido.',
-        Data: error.message,
-      });
-    }
+    return this.auditoriaService.getByAuditor(
+      personaId,
+      queryParams,
+    );
   }
 
   @Get('auditado/:personaId/:cargoId')
@@ -69,27 +57,15 @@ export class AuditoriaController {
   @ApiResponse({ status: 200, description: 'Auditorías obtenidas.' })
   @ApiResponse({ status: 404, description: 'Sin resultados.' })
   async getByDependencia(
-    @Res() res: any,
-    @Param('personaId') personaId: string,
-    @Param('cargoId') cargoId: string,
+    @Param('personaId', ParseIntPipe) personaId: number,
+    @Param('cargoId', ParseIntPipe) cargoId: number,
     @Query() queryParams: any,
   ) {
-    try {
-      const data = await this.auditoriaService.getByDependencia(
-        +personaId,
-        +cargoId,
-        queryParams,
-      );
-      res.status(HttpStatus.OK).json(data);
-    } catch (error) {
-      res.status(HttpStatus.NOT_FOUND).json({
-        Success: false,
-        Status: HttpStatus.NOT_FOUND,
-        Message:
-          'Error en servicio GetByDependencia: sin datos o parámetro inválido.',
-        Data: error.message,
-      });
-    }
+    return this.auditoriaService.getByDependencia(
+      personaId,
+      cargoId,
+      queryParams,
+    );
   }
 
   @Get()
@@ -101,18 +77,8 @@ export class AuditoriaController {
   })
   @ApiResponse({ status: 200, description: 'Auditorías obtenidas.' })
   @ApiResponse({ status: 404, description: 'Sin resultados.' })
-  async getAll(@Res() res: any, @Query() queryParams: any) {
-    try {
-      const data = await this.auditoriaService.getAll(queryParams);
-      res.status(HttpStatus.OK).json(data);
-    } catch (error) {
-      res.status(HttpStatus.NOT_FOUND).json({
-        Success: false,
-        Status: HttpStatus.NOT_FOUND,
-        Message: 'Error en servicio GetAll: sin datos o parámetro inválido.',
-        Data: error.message,
-      });
-    }
+  async getAll(@Query() queryParams: any) {
+    return this.auditoriaService.getAll(queryParams);
   }
 
   @Delete(':id/:planId')
@@ -127,21 +93,10 @@ export class AuditoriaController {
   @ApiResponse({ status: 400, description: 'Parámetros inválidos.' })
   @ApiResponse({ status: 500, description: 'Error interno.' })
   async delete(
-    @Res() res: any,
     @Param('id') id: string,
     @Param('planId') planId: string,
   ) {
-    try {
-      const data = await this.auditoriaService.deleteAuditoria(id, planId);
-      res.status(HttpStatus.OK).json(data);
-    } catch (error) {
-      res.status(error.status || HttpStatus.INTERNAL_SERVER_ERROR).json({
-        Success: false,
-        Status: error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-        Message: 'Error al eliminar la auditoría.',
-        Data: error.message,
-      });
-    }
+    return this.auditoriaService.deleteAuditoria(id, planId);
   }
 
   @Get(':id')
@@ -150,6 +105,6 @@ export class AuditoriaController {
   @ApiResponse({ status: 200, description: 'Auditoría obtenida.' })
   @ApiResponse({ status: 404, description: 'Auditoría no encontrada.' })
   async getById(@Param('id') id: string) {
-    return await this.auditoriaService.getOne(id);
+    return this.auditoriaService.getOne(id);
   }
 }
