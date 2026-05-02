@@ -3,7 +3,6 @@ import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiQuery,
   ApiParam,
 } from '@nestjs/swagger';
 import { ActividadService } from './actividad.service';
@@ -17,7 +16,7 @@ export class ActividadController {
   @ApiOperation({ summary: 'Obtener todas las actividades' })
   @ApiResponse({ status: 200, description: 'Actividades obtenidas.' })
   async getAll(@Query() queryParams: any) {
-    return await this.actividadService.getAll(queryParams);
+    return this.actividadService.getAll(queryParams);
   }
 
   @Get(':id')
@@ -25,6 +24,6 @@ export class ActividadController {
   @ApiResponse({ status: 200, description: 'Actividad obtenida.' })
   @ApiParam({ name: 'id', required: true })
   async getById(@Param('id') id: string) {
-    return await this.actividadService.getOne(id);
+    return this.actividadService.getOne(id);
   }
 }

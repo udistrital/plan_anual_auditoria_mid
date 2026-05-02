@@ -23,7 +23,11 @@ export class AuditoriaCrudService {
    * @param queryParams - Parámetros de búsqueda de la consulta.
    * @returns Datos obtenidos de la API CRUD.
    */
-  async traerDataCrud(endpoint: string, id: string | null, queryParams: any) {
+  async traerDataCrud(
+    endpoint: string,
+    id: string | null,
+    queryParams?: Record<string, any>,
+  ) {
     let url = `${this.baseUrl}${endpoint}${id ? '/' + id : ''}`;
 
     if (queryParams) {
@@ -31,21 +35,8 @@ export class AuditoriaCrudService {
       url += `?${queryString}`;
     }
 
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data;
-    } catch (error: any) {
-      console.error('Error en traerDataCrud:', {
-        url,
-        error: error?.response?.data || error.message,
-      });
-
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        error
-      );
-    }
+    const response = await lastValueFrom(this.httpService.get(url));
+    return response.data;
   }
 
   /**
@@ -57,22 +48,11 @@ export class AuditoriaCrudService {
   async post(endpoint: string, data: any) {
     const url = `${this.baseUrl}${endpoint}`;
 
-    try {
-      const response = await lastValueFrom(this.httpService.post(url, data));
-      return response.data;
-    } catch (error: any) {
-      console.error('Error en create:', {
-        url,
-        data,
-        error: error?.response?.data || error.message,
-      });
+    const response = await lastValueFrom(
+      this.httpService.post(url, data),
+    );
 
-      throw new HttpException(
-        'Error al crear el recurso',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        error
-      );
-    }
+    return response.data;
   }
 
   /**
@@ -92,22 +72,11 @@ export class AuditoriaCrudService {
 
     const url = `${this.baseUrl}${endpoint}/${id}`;
 
-    try {
-      const response = await lastValueFrom(this.httpService.put(url, data));
-      return response.data;
-    } catch (error: any) {
-      console.error('Error en update:', {
-        url,
-        data,
-        error: error?.response?.data || error.message,
-      });
+    const response = await lastValueFrom(
+      this.httpService.put(url, data),
+    );
 
-      throw new HttpException(
-        'Error al actualizar el recurso',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        error
-      );
-    }
+    return response.data;
   }
 
   /**
@@ -126,20 +95,10 @@ export class AuditoriaCrudService {
 
     const url = `${this.baseUrl}${endpoint}/${id}`;
 
-    try {
-      const response = await lastValueFrom(this.httpService.delete(url));
-      return response.data;
-    } catch (error: any) {
-      console.error('Error en delete:', {
-        url,
-        error: error?.response?.data || error.message,
-      });
+    const response = await lastValueFrom(
+      this.httpService.delete(url),
+    );
 
-      throw new HttpException(
-        'Error al eliminar el recurso',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        error
-      );
-    }
+    return response.data;
   }
 }

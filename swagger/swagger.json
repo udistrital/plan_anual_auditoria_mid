@@ -146,7 +146,7 @@
             "in": "path",
             "description": "ID de la persona (tercero).",
             "schema": {
-              "type": "string"
+              "type": "number"
             }
           },
           {
@@ -155,7 +155,7 @@
             "in": "path",
             "description": "ID del cargo (312 o 320).",
             "schema": {
-              "type": "string"
+              "type": "number"
             }
           }
         ],
@@ -353,9 +353,6 @@
           },
           "400": {
             "description": "Parámetros inválidos."
-          },
-          "500": {
-            "description": "Error interno."
           }
         },
         "summary": "Obtener auditorías padre ordenadas",
@@ -447,9 +444,6 @@
           },
           "400": {
             "description": "Parámetros inválidos."
-          },
-          "500": {
-            "description": "Error interno."
           }
         },
         "summary": "Eliminar auditoría padre lógicamente",
@@ -919,8 +913,6 @@
             "required": false,
             "in": "query",
             "description": "ID del tipo de documento para filtrar los documentos (opcional).",
-            "explode": false,
-            "style": "form",
             "schema": {
               "type": "string"
             }

@@ -1,4 +1,4 @@
-import { Controller, Get, Param, HttpStatus, Res, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, HttpStatus, ParseIntPipe } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -22,19 +22,8 @@ export class AuditorController {
     required: false,
     description: 'Filtros opcionales.',
   })
-  async getAll(@Res() res: any, @Query() queryParams: any) {
-    try {
-      const data = await this.auditorService.getAll(queryParams);
-      res.status(HttpStatus.OK).json(data);
-    } catch (error) {
-      res.status(HttpStatus.NOT_FOUND).json({
-        Success: false,
-        Status: HttpStatus.NOT_FOUND,
-        Message:
-          'Error en servicio GetAll: parámetro inválido o sin registros.',
-        Data: error.message,
-      });
-    }
+  async getAll(@Query() queryParams: any) {
+    return this.auditorService.getAll(queryParams);
   }
 
   @Get(':id')
@@ -43,6 +32,6 @@ export class AuditorController {
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No encontrado.' })
   @ApiParam({ name: 'id', required: true, description: 'ID del auditor.' })
   async getById(@Param('id') id: string) {
-    return await this.auditorService.getOne(id);
+    return this.auditorService.getOne(id);
   }
 }

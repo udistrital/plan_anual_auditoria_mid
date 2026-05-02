@@ -94,13 +94,13 @@ paths:
           in: path
           description: ID de la persona (tercero).
           schema:
-            type: string
+            type: number
         - name: cargoId
           required: true
           in: path
           description: ID del cargo (312 o 320).
           schema:
-            type: string
+            type: number
       responses:
         '200':
           description: Auditorías obtenidas.
@@ -224,8 +224,6 @@ paths:
           description: Auditorías padre obtenidas.
         '400':
           description: Parámetros inválidos.
-        '500':
-          description: Error interno.
       summary: Obtener auditorías padre ordenadas
       tags: &ref_4
         - Auditoria Padre
@@ -283,8 +281,6 @@ paths:
           description: Auditoría padre eliminada.
         '400':
           description: Parámetros inválidos.
-        '500':
-          description: Error interno.
       summary: Eliminar auditoría padre lógicamente
       tags: *ref_4
   /cargue-masivo/auditorias/plantilla:
@@ -589,8 +585,6 @@ paths:
           required: false
           in: query
           description: ID del tipo de documento para filtrar los documentos (opcional).
-          explode: false
-          style: form
           schema:
             type: string
       responses:

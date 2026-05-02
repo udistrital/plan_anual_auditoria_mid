@@ -1,4 +1,4 @@
-import { Controller, Get, Param, HttpStatus, Res, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, HttpStatus } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -22,20 +22,10 @@ export class AuditoriaEstadoController {
     required: false,
     description: 'Filtro opcional.',
   })
-  @ApiResponse({ status: 200, description: 'Lista obtenida con éxito.' })
-  @ApiResponse({ status: 404, description: 'No se encontraron estados.' })
-  async getAll(@Res() res: any, @Query() queryParams: any) {
-    try {
-      const data = await this.auditoriaEstadoService.getAll(queryParams);
-      res.status(HttpStatus.OK).json(data);
-    } catch (error) {
-      res.status(HttpStatus.NOT_FOUND).json({
-        Success: false,
-        Status: HttpStatus.NOT_FOUND,
-        Message: 'Error en servicio GetAll.',
-        Data: error.message,
-      });
-    }
+  @ApiResponse({ status: HttpStatus.OK, description: 'Lista obtenida con éxito.' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No se encontraron estados.' })
+  async getAll(@Query() queryParams: any) {
+    return this.auditoriaEstadoService.getAll(queryParams);
   }
 
   @Get(':id')
@@ -45,9 +35,9 @@ export class AuditoriaEstadoController {
     required: true,
     description: 'ID del estado de la auditoría.',
   })
-  @ApiResponse({ status: 200, description: 'Estado obtenido con éxito.' })
-  @ApiResponse({ status: 404, description: 'No se encontró el estado.' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Estado obtenido con éxito.' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No se encontró el estado.' })
   async getById(@Param('id') id: string) {
-    return await this.auditoriaEstadoService.getOne(id);
+    return this.auditoriaEstadoService.getOne(id);
   }
 }
