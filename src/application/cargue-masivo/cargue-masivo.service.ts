@@ -221,12 +221,6 @@ export class CargueMasivoService {
         mapping[parametro.Nombre] = parametro.Id;
       });
 
-      console.log(
-        'Mapping for tipoParametroId:',
-        tipoParametroId,
-        'is:',
-        mapping,
-      );
       return mapping;
     } catch (error) {
       const newError = new Error('Failed to get parametros');
@@ -250,7 +244,6 @@ export class CargueMasivoService {
         mapping[parametro.Nombre] = parametro.Id;
       });
 
-      console.log('Dependencias mapping is:', mapping);
       return mapping;
     } catch (error) {
       const newError = new Error('Failed to get dependencias');
@@ -288,7 +281,7 @@ export class CargueMasivoService {
       return response.data;
     } catch (error: any) {
       throw new HttpException(
-        'Error al obtener los datos del servicio externo',
+        'Error al ejecutar el cargue masivo',
         HttpStatus.INTERNAL_SERVER_ERROR,
         error,
       );

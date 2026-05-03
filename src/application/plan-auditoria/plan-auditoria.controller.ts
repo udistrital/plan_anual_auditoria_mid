@@ -23,17 +23,8 @@ export class PlanAuditoriaController {
   @ApiResponse({ status: 200, description: 'Lista obtenida con éxito.' })
   @ApiResponse({ status: 404, description: 'No se encontraron planes.' })
   async getAll(@Res() res: any, @Query() queryParams: any) {
-    try {
-      const data = await this.planAuditoriaService.getAll(queryParams);
-      res.status(HttpStatus.OK).json(data);
-    } catch (error) {
-      res.status(HttpStatus.NOT_FOUND).json({
-        Success: false,
-        Status: HttpStatus.NOT_FOUND,
-        Message: 'Error en servicio GetAll.',
-        Data: error.message,
-      });
-    }
+    const data = await this.planAuditoriaService.getAll(queryParams);
+    res.status(HttpStatus.OK).json(data);
   }
 
   @Get(':id')

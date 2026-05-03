@@ -24,15 +24,7 @@ export class TercerosService {
       const queryString = new URLSearchParams(queryParams).toString();
       url += `?${queryString}`;
     }
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data;
-    } catch (error: any) {
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        error,
-      );
-    }
+    const response = await lastValueFrom(this.httpService.get(url));
+    return response.data;
   }
 }

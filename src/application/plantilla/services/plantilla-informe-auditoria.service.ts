@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
 import { environment } from 'src/config/configuration';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
@@ -104,11 +104,12 @@ export class PlantillaInformeAuditoriaService {
         },
       };
       return infoParaPlantilla;
-    } catch (error) {
-      throw new HttpException(
-        'Error al organizar los datos para la plantilla',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+    } catch (error: any) {
+      const newError = new Error(
+        'Error al organizar los datos para la plantilla del Informe de Auditoría',
       );
+      newError.stack = error.stack;
+      throw newError;
     }
   }
 
@@ -226,42 +227,18 @@ export class PlantillaInformeAuditoriaService {
   private async obtenergrupoDependencias(dependencias: any): Promise<any> {
     const respuestaDependencias = [];
 
-    try {
-      if (Array.isArray(dependencias)) {
-        for (const idDependencia of dependencias) {
-          const dependencia = await this.oikosService
-            .traerData('dependencia', idDependencia, null);
-          const liderDependencia =
-            await this.tercerosService.getTerceroVinculado(
-              idDependencia,
-              CARGO.JEFE_DEPENDENCIA_ID,
-            );
-          const responsableDependencia =
-            await this.tercerosService.getTerceroVinculado(
-              idDependencia,
-              CARGO.ASISTENTE_DEPENDENCIA_ID,
-            );
-
-          respuestaDependencias.push({
-            nombre: dependencia.Nombre,
-            lider:
-              liderDependencia?.NombreCompleto ||
-              'No se encontró el líder de la dependencia',
-            responsable:
-              responsableDependencia?.NombreCompleto ||
-              'No se encontró el responsable de la dependencia',
-          });
-        }
-      } else {
+    if (Array.isArray(dependencias)) {
+      for (const idDependencia of dependencias) {
         const dependencia = await this.oikosService
-          .traerData('dependencia', dependencias, null);
-        const liderDependencia = await this.tercerosService.getTerceroVinculado(
-          dependencias,
-          CARGO.JEFE_DEPENDENCIA_ID,
-        );
+          .traerData('dependencia', idDependencia, null);
+        const liderDependencia =
+          await this.tercerosService.getTerceroVinculado(
+            idDependencia,
+            CARGO.JEFE_DEPENDENCIA_ID,
+          );
         const responsableDependencia =
           await this.tercerosService.getTerceroVinculado(
-            dependencias,
+            idDependencia,
             CARGO.ASISTENTE_DEPENDENCIA_ID,
           );
 
@@ -275,12 +252,29 @@ export class PlantillaInformeAuditoriaService {
             'No se encontró el responsable de la dependencia',
         });
       }
-      return respuestaDependencias;
-    } catch (error) {
-      throw new HttpException(
-        'Error al consultar el grupo de dependencias',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+    } else {
+      const dependencia = await this.oikosService
+        .traerData('dependencia', dependencias, null);
+      const liderDependencia = await this.tercerosService.getTerceroVinculado(
+        dependencias,
+        CARGO.JEFE_DEPENDENCIA_ID,
       );
+      const responsableDependencia =
+        await this.tercerosService.getTerceroVinculado(
+          dependencias,
+          CARGO.ASISTENTE_DEPENDENCIA_ID,
+        );
+
+      respuestaDependencias.push({
+        nombre: dependencia.Nombre,
+        lider:
+          liderDependencia?.NombreCompleto ||
+          'No se encontró el líder de la dependencia',
+        responsable:
+          responsableDependencia?.NombreCompleto ||
+          'No se encontró el responsable de la dependencia',
+      });
     }
+    return respuestaDependencias;
   }
 }

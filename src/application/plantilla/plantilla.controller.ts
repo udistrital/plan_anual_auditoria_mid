@@ -64,23 +64,12 @@ export class PlantillaController {
 
     if (auditoriaPadre == null) auditoriaPadre = 'false';
 
-    try {
-      const data = await this.plantillaService.getOne(
-        id,
-        conEspeciales === 'true',
-        auditoriaPadre === 'true',
-      );
-      res.status(HttpStatus.OK).json(data);
-    } catch (error: any) {
-
-      res.status(HttpStatus.NOT_FOUND).json({
-        Success: false,
-        Status: HttpStatus.NOT_FOUND,
-        Message:
-          'Error en servicio Plantillas',
-        Data: error.message,
-      });
-    }
+    const data = await this.plantillaService.getOne(
+      id,
+      conEspeciales === 'true',
+      auditoriaPadre === 'true',
+    );
+    res.status(HttpStatus.OK).json(data);
   }
 
   @Get('/:tipo/:idAuditoria')

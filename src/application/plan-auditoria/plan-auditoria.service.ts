@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { environment } from 'src/config/configuration';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
@@ -18,7 +18,6 @@ export class PlanAuditoriaService {
   ) {}
 
   async getAll(queryParams: any) {
-    console.log('Environment variables:', PLAN_ESTADO);
     const data = await this.auditoriaCrudService.traerDataCrud(
       'plan-auditoria',
       null,
@@ -32,11 +31,22 @@ export class PlanAuditoriaService {
   }
 
   async getOne(id: string) {
+    if (!id) {
+      throw new BadRequestException('El id es requerido');
+    }
+
     const data = await this.auditoriaCrudService.traerDataCrud(
       'plan-auditoria',
       id,
       null,
     );
+
+    if (!data?.Data) {
+      throw new NotFoundException(
+        `Plan de auditoría con id ${id} no encontrado`,
+      );
+    }
+
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
     }
@@ -79,7 +89,7 @@ export class PlanAuditoriaService {
       }
       return validacion;
     } catch (error) {
-      console.warn('Error en identificarCampo:', error);
+      console.warn('Error en identificarCampo de plan:', error);
     }
   }
 

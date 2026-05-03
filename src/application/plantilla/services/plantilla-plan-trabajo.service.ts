@@ -1,7 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { environment } from 'src/config/configuration';
-import * as moment from 'moment';
-import 'moment/locale/es';
 import { PlantillasMidService } from 'src/shared/services/plantillas-mid.service';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
 import { ParametrosService } from 'src/shared/services/parametros.service';
@@ -16,6 +14,7 @@ export class PlantillaPlanTrabajoService {
     private readonly auditoriaCrudService: AuditoriaCrudService,
     private readonly parametrosService: ParametrosService,
     private readonly auditoriaService: AuditoriaService,
+    @Inject('MOMENT') private readonly moment: any,
   ) {}
 
   async get(idAuditoria: string) {
@@ -67,9 +66,7 @@ export class PlantillaPlanTrabajoService {
         alcance: auditoria.alcance,
         criterios: auditoria.criterio,
         grupoAuditor: auditoria.rec_humano,
-        fechaEjecucion: moment(auditoria.fecha_inicio)
-          .locale('es')
-          .format('LL'),
+        fechaEjecucion: this.moment(auditoria.fecha_inicio).format('LL'),
         actividades: actividades,
       },
     };
@@ -81,8 +78,8 @@ export class PlantillaPlanTrabajoService {
     return actividades.map((actividad) => ({
       actividad: actividad.titulo,
       auditor: 'sdjk', // todo: esta quemado
-      fechaInicial: moment(actividad.fecha_inicio).format('DD/MM/YYYY'),
-      fechaFinal: moment(actividad.fecha_fin).format('DD/MM/YYYY'),
+      fechaInicial: this.moment(actividad.fecha_inicio).format('DD/MM/YYYY'),
+      fechaFinal: this.moment(actividad.fecha_fin).format('DD/MM/YYYY'),
     }));
   }
 }

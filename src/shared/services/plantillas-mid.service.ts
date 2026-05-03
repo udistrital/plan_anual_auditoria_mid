@@ -12,16 +12,7 @@ export class PlantillasMidService {
 
   async post(endpoint: string, data: any) {
     const url = `${this.configService.get<string>('PLANTILLAS_MID_SERVICE')}/${endpoint}`;
-    try {
-      const response = await lastValueFrom(this.httpService.post(url, data));
-      return response.data;
-    } catch (error: any) {
-      //log
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        error,
-      );
-    }
+    const response = await lastValueFrom(this.httpService.post(url, data));
+    return response.data;
   }
 }

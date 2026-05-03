@@ -66,31 +66,18 @@ export class AuditoriaOrdenadaService {
     planId: string,
     tipo: string = 'auditoria',
   ): Promise<any[]> {
-    try {
-      const queryParams = {
-        query: `plan_auditoria_id:${planId},activo:true`,
-        limit: 0,
-      };
+    const queryParams = {
+      query: `plan_auditoria_id:${planId},activo:true`,
+      limit: 0,
+    };
 
-      console.log('📡 Consultando auditorías:', tipo, queryParams);
+    const response = await this.auditoriaCrudService.traerDataCrud(
+      tipo,
+      null,
+      queryParams,
+    );
 
-      const response = await this.auditoriaCrudService.traerDataCrud(
-        tipo,
-        null,
-        queryParams,
-      );
-
-      console.log('✅ Auditorías obtenidas:', response?.Data?.length);
-
-      return response?.Data || [];
-    } catch (error: any) {
-      console.error('❌ Error al obtener auditorías:', error?.message);
-      throw new HttpException(
-        'Error al obtener auditorías',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        error
-      );
-    }
+    return response?.Data || [];
   }
 
   /**
@@ -99,25 +86,12 @@ export class AuditoriaOrdenadaService {
    * @returns Plan de auditoría
    */
   private async obtenerPlan(planId: string): Promise<any> {
-    try {
-      console.log('📡 Consultando plan:', planId);
+    const response = await this.auditoriaCrudService.traerDataCrud(
+      'plan-auditoria',
+      planId,
+      null,
+    );
 
-      const response = await this.auditoriaCrudService.traerDataCrud(
-        'plan-auditoria',
-        planId,
-        null,
-      );
-
-      console.log('✅ Plan obtenido');
-
-      return response?.Data;
-    } catch (error: any) {
-      console.error('❌ Error al obtener plan:', error?.message);
-      throw new HttpException(
-        'Error al obtener el plan',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        error
-      );
-    }
+    return response?.Data;
   }
 }

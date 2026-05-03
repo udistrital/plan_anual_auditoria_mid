@@ -1,6 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import * as moment from 'moment';
-import 'moment/locale/es';
+import { Inject, Injectable } from '@nestjs/common';
 import { environment } from 'src/config/configuration';
 import { capitalize, unirListaNombres } from 'src/utils/texto.utils';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
@@ -21,6 +19,7 @@ export class PlantillaProgramaAuditoriaService {
     private readonly parametrosService: ParametrosService,
     private readonly tercerosService: TercerosHelperService,
     private readonly oikosService: OikosService,
+    @Inject('MOMENT') private readonly moment: any,
   ) {}
 
   async get(idAuditoria: string) {
@@ -94,20 +93,21 @@ export class PlantillaProgramaAuditoriaService {
           criterios: auditoria.criterio,
           equipoAuditor: grupoAuditor,
           periodoEjecucion:
-            moment(auditoria.fecha_inicio).format('DD/MM/YYYY') +
+            this.moment(auditoria.fecha_inicio).format('DD/MM/YYYY') +
             ' - ' +
-            moment(auditoria.fecha_fin).format('DD/MM/YYYY'),
+            this.moment(auditoria.fecha_fin).format('DD/MM/YYYY'),
           logoUDistrital: logoUDistrital,
           logoSIGUD: logoSIGUD,
         },
       };
 
       return infoParaPlantilla;
-    } catch (error) {
-      throw new HttpException(
-        'Error al organizar los datos para la plantilla',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+    } catch (error: any) {
+      const newError = new Error(
+        'Error al organizar los datos para la plantilla del programa',
       );
+      newError.stack = error.stack;
+      throw newError;
     }
   }
 
@@ -115,8 +115,8 @@ export class PlantillaProgramaAuditoriaService {
     return actividades.map((dataActividad) => ({
       actividad: dataActividad.titulo,
       auditor: grupoAuditor,
-      fechaInicial: moment(dataActividad.fecha_inicio).format('DD/MM/YYYY'),
-      fechaFinal: moment(dataActividad.fecha_fin).format('DD/MM/YYYY'),
+      fechaInicial: this.moment(dataActividad.fecha_inicio).format('DD/MM/YYYY'),
+      fechaFinal: this.moment(dataActividad.fecha_fin).format('DD/MM/YYYY'),
       observacion: dataActividad.observacion || '',
       referencia: dataActividad.referencia || '',
       descripcion: dataActividad.descripcion || '',
@@ -140,27 +140,19 @@ export class PlantillaProgramaAuditoriaService {
 
     const nombres = await Promise.all(
       auditores.map(async (auditor) => {
-        try {
-          const tercero = await this.tercerosService.getTerceroById(
-            auditor.auditor_id,
-          );
-          return tercero?.NombreCompleto
-            ? capitalize(tercero.NombreCompleto)
-            : null;
-        } catch (error) {
-          console.error(
-            `Error al obtener tercero ${auditor.auditor_id}:`,
-            error,
-          );
-          return null;
-        }
+        const tercero = await this.tercerosService.getTerceroById(
+          auditor.auditor_id,
+        );
+        return tercero?.NombreCompleto
+          ? capitalize(tercero.NombreCompleto)
+          : null;
       }),
     );
 
     const todosValidos = nombres.every((nombre) => nombre !== null);
 
     if (!todosValidos) {
-      return 'Error al obtener los nombres de los auditores';
+      throw new Error('Error al obtener los nombres de los auditores para plantilla Programa de Auditoría');
     }
 
     return unirListaNombres(nombres);

@@ -23,22 +23,13 @@ export class InformeController {
   })
   @ApiResponse({ status: 404, description: 'Informe no encontrado' })
   async getById(@Res() res: any, @Param('id') id: string) {
-    try {
-      const data = await this.informeService.getInformeCompleto(id);
-      res.status(HttpStatus.OK).json({
-        Success: true,
-        Status: HttpStatus.OK,
-        Message: 'Peticion Exitosa',
-        Data: data,
-      });
-    } catch (error) {
-      res.status(error.status || HttpStatus.INTERNAL_SERVER_ERROR).json({
-        Success: false,
-        Status: error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-        Message: error.message || 'Error al obtener el informe',
-        Data: null,
-      });
-    }
+    const data = await this.informeService.getInformeCompleto(id);
+    res.status(HttpStatus.OK).json({
+      Success: true,
+      Status: HttpStatus.OK,
+      Message: 'Peticion Exitosa',
+      Data: data,
+    });
   }
 
   @Get()
@@ -49,17 +40,8 @@ export class InformeController {
   })
   @ApiResponse({ status: 200, description: 'Informes obtenidos exitosamente' })
   async getAll(@Res() res: any, @Query() queryParams: any) {
-    try {
-      const data = await this.informeService.getAll(queryParams);
-      res.status(HttpStatus.OK).json(data);
-    } catch (error) {
-      res.status(HttpStatus.NOT_FOUND).json({
-        Success: false,
-        Status: HttpStatus.NOT_FOUND,
-        Message: 'Error en servicio GetAll: sin datos o parámetro inválido',
-        Data: error.message,
-      });
-    }
+    const data = await this.informeService.getAll(queryParams);
+    res.status(HttpStatus.OK).json(data);
   }
 
   @Get('auditoria/:auditoriaId')
@@ -80,16 +62,7 @@ export class InformeController {
     @Res() res: any,
     @Param('auditoriaId') auditoriaId: string,
   ) {
-    try {
-      const data = await this.informeService.getByAuditoria(auditoriaId);
-      res.status(HttpStatus.OK).json(data);
-    } catch (error) {
-      res.status(HttpStatus.NOT_FOUND).json({
-        Success: false,
-        Status: HttpStatus.NOT_FOUND,
-        Message: 'Error al obtener informes de la auditoría',
-        Data: error.message,
-      });
-    }
+    const data = await this.informeService.getByAuditoria(auditoriaId);
+    res.status(HttpStatus.OK).json(data);
   }
 }

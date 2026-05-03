@@ -10,6 +10,9 @@ import { PlantillaInformeAuditoriaService } from './services/plantilla-informe-a
 import { DominiosModule } from 'src/shared/utils/dominios/dominios.module';
 import { AuditoriaModule } from '../auditoria/auditoria.module';
 import { ServicesModule } from 'src/shared/services/services.module';
+import moment from 'moment';
+// @ts-ignore
+import 'moment/locale/es';
 
 @Module({
   imports: [DominiosModule, AuditoriaModule, ServicesModule],
@@ -22,6 +25,13 @@ import { ServicesModule } from 'src/shared/services/services.module';
     PlantillaProgramaAuditoriaService,
     PlantillaInformeSeguimientoService,
     PlantillaInformeAuditoriaService,
+    {
+      provide: 'MOMENT',
+      useFactory: () => {
+        moment.locale('es');
+        return moment;
+      },
+    },
   ],
 })
 export class PlantillaModule {}

@@ -137,10 +137,6 @@ export class PlantillaService {
       especiales: await especiales,
     };
 
-    console.debug(
-      'JSON generado para renderizar:',
-      JSON.stringify(json, null, 2),
-    );
     return json;
   }
 
@@ -241,29 +237,22 @@ export class PlantillaService {
   ): string {
     const parametros = dominio.parametros;
 
-    try {
-      if (Array.isArray(parametroId)) {
-        return parametroId
-          .map((id) => {
-            const parametro = parametros.find((p) => p.Id === id);
-            return parametro ? parametro.Nombre : String(id);
-          })
-          .join(', ');
-      }
-
-      const parametro = parametros.find((p) => p.Id === parametroId);
-      if (!parametro) {
-        console.error(
-          `Parametro with ID ${parametroId} not found in dominio ${dominio.nombre}`,
-        );
-        return '?error';
-      }
-
-      return parametro.Nombre;
-    } catch (error: any) {
-      const newError = new Error("Failed to get parametro's name");
-      newError.stack += '\nCaused by: ' + error.stack;
-      throw newError;
+    if (Array.isArray(parametroId)) {
+      return parametroId
+        .map((id) => {
+          const parametro = parametros.find((p) => p.Id === id);
+          return parametro ? parametro.Nombre : String(id);
+        })
+        .join(', ');
     }
+
+    const parametro = parametros.find((p) => p.Id === parametroId);
+    if (!parametro) {
+      throw new Error(
+        `Parametro with ID ${parametroId} not found in dominio ${dominio.nombre} para plantillas`,
+      );
+    }
+
+    return parametro.Nombre;
   }
 }

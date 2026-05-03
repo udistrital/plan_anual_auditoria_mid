@@ -162,13 +162,12 @@ export class LoggerService implements OnModuleInit, ExceptionFilter {
       url: request.url,
       status: status,
       body: request.body,
-      //params: request.params,
-      //query: request.query,
+      code: (exception as any)?.code,
     };
 
     // Error inesperado — siempre error
     this.logger.error(
-      { ...meta, err: exception },
+      { ...meta },
       'Unhandled exception',
     );
   }

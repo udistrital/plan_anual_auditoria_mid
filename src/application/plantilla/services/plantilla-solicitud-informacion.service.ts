@@ -1,6 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import * as moment from 'moment';
-import 'moment/locale/es';
+import { Inject, Injectable } from '@nestjs/common';
 import { environment } from 'src/config/configuration';
 import { capitalize, unirListaNombres } from 'src/utils/texto.utils';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
@@ -21,6 +19,7 @@ export class PlantillaSolicitudInformacionService {
     private readonly auditoriaService: AuditoriaService,
     private readonly tercerosService: TercerosHelperService,
     private readonly oikosService: OikosService,
+    @Inject('MOMENT') private readonly moment: any,
   ) {}
 
   async get(idAuditoria: string) {
@@ -56,10 +55,8 @@ export class PlantillaSolicitudInformacionService {
       plantilla_id: PLANTILLAS.SOLICITUD_INFORMACION,
       data: {
         logoUDistrital: logoUDistritalOCI,
-        fecha: moment().locale('es').format('D [de] MMMM [de] YYYY'),
-        fecha_inicio: moment(auditoria.fecha_inicio)
-          .locale('es')
-          .format('DD/MM/YYYY'),
+        fecha: this.moment().format('D [de] MMMM [de] YYYY'),
+        fecha_inicio: this.moment(auditoria.fecha_inicio).format('DD/MM/YYYY'),
         consecutivo_oci: auditoria.consecutivo_OCI,
         dependencias: dependencias,
         ciudad: 'Bogotá D.C.',
@@ -93,23 +90,19 @@ export class PlantillaSolicitudInformacionService {
 
     const nombres = await Promise.all(
       auditores.map(async (auditor) => {
-        try {
-          const tercero = await this.tercerosService.getTerceroById(
-            auditor.auditor_id,
-          );
-          return tercero?.NombreCompleto
-            ? capitalize(tercero.NombreCompleto)
-            : null;
-        } catch (error) {
-          return null;
-        }
+        const tercero = await this.tercerosService.getTerceroById(
+          auditor.auditor_id,
+        );
+        return tercero?.NombreCompleto
+          ? capitalize(tercero.NombreCompleto)
+          : null;
       }),
     );
 
     const todosValidos = nombres.every((nombre) => nombre !== null);
 
     if (!todosValidos) {
-      return 'Error al obtener los nombres de los auditores';
+      throw new Error('Error al obtener los nombres de los auditores para plantilla Solicitud de Información');
     }
 
     return unirListaNombres(nombres);
@@ -128,30 +121,13 @@ export class PlantillaSolicitudInformacionService {
   private async obtenergrupoDependencias(dependencias: any): Promise<any> {
     const respuestaDependencias = [];
 
-    try {
-      if (Array.isArray(dependencias)) {
-        for (const idDependencia of dependencias) {
-          const dependencia = await this.oikosService
-            .traerData('dependencia', idDependencia, null);
-          const responsableDependencia =
-            await this.tercerosService.getTerceroVinculado(
-              idDependencia,
-              CARGO.JEFE_DEPENDENCIA_ID,
-            );
-
-          respuestaDependencias.push({
-            nombre: dependencia.Nombre,
-            responsable:
-              responsableDependencia?.NombreCompleto ||
-              'No se encontró el responsable de la dependencia',
-          });
-        }
-      } else {
+    if (Array.isArray(dependencias)) {
+      for (const idDependencia of dependencias) {
         const dependencia = await this.oikosService
-          .traerData('dependencia', dependencias, null);
+          .traerData('dependencia', idDependencia, null);
         const responsableDependencia =
           await this.tercerosService.getTerceroVinculado(
-            dependencias,
+            idDependencia,
             CARGO.JEFE_DEPENDENCIA_ID,
           );
 
@@ -162,13 +138,22 @@ export class PlantillaSolicitudInformacionService {
             'No se encontró el responsable de la dependencia',
         });
       }
-      return respuestaDependencias;
-    } catch (error) {
-      throw new HttpException(
-        'Error al consultar el grupo de dependencias',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        error
-      );
+    } else {
+      const dependencia = await this.oikosService
+        .traerData('dependencia', dependencias, null);
+      const responsableDependencia =
+        await this.tercerosService.getTerceroVinculado(
+          dependencias,
+          CARGO.JEFE_DEPENDENCIA_ID,
+        );
+
+      respuestaDependencias.push({
+        nombre: dependencia.Nombre,
+        responsable:
+          responsableDependencia?.NombreCompleto ||
+          'No se encontró el responsable de la dependencia',
+      });
     }
+    return respuestaDependencias;
   }
 }

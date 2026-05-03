@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { environment } from 'src/config/configuration';
 import { reemplazar, reemplazarCampoRol } from 'src/utils/campo.utils';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
@@ -51,11 +51,20 @@ export class PlanEstadoService {
   }
 
   async getOne(id: string) {
+    if (!id) {
+      throw new BadRequestException('El id es requerido');
+    }
+
     const data = await this.auditoriaCrudService.traerDataCrud(
       'estado',
       id,
       null,
     );
+
+    if (!data || !data.Data) {
+      throw new NotFoundException(`No se encontró estado de plan con id ${id}`);
+    }
+
     if (await this.identificarCampo(data)) {
       this.reemplazarCampos(data);
     }

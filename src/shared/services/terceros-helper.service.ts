@@ -14,30 +14,25 @@ export class TercerosHelperService {
       return null;
     }
 
-    try {
-      const response = await this.tercerosService.traerData(
-        'tercero',
-        terceroId,
-        null,
-      );
+    const response = await this.tercerosService.traerData(
+      'tercero',
+      terceroId,
+      null,
+    );
 
-      let tercero = null;
+    let tercero = null;
 
-      if (Array.isArray(response)) {
-        tercero = response[0];
-      } else if (response?.Data && Array.isArray(response.Data)) {
-        tercero = response.Data[0];
-      } else if (response?.Data) {
-        tercero = response.Data;
-      } else {
-        tercero = response;
-      }
-
-      return tercero;
-    } catch (error) {
-      console.error('[TercerosHelper] Error obteniendo tercero:', error);
-      throw new Error('Error al obtener tercero');
+    if (Array.isArray(response)) {
+      tercero = response[0];
+    } else if (response?.Data && Array.isArray(response.Data)) {
+      tercero = response.Data[0];
+    } else if (response?.Data) {
+      tercero = response.Data;
+    } else {
+      tercero = response;
     }
+
+    return tercero;
   }
 
   async getTerceroVinculado(
@@ -64,43 +59,29 @@ export class TercerosHelperService {
   ): Promise<number[]> {
     if (!personaId || !cargoId) return [];
 
-    try {
-      const response = await this.tercerosService.traerData(
-        'vinculacion',
-        null,
-        {
-          query: `TerceroPrincipalId:${personaId},Activo:true,CargoId:${cargoId}`,
-          fields: 'DependenciaId',
-        },
-      );
+    const response = await this.tercerosService.traerData(
+      'vinculacion',
+      null,
+      {
+        query: `TerceroPrincipalId:${personaId},Activo:true,CargoId:${cargoId}`,
+        fields: 'DependenciaId',
+      },
+    );
 
-      const dependencias = (response || [])
-        .map((v: any) => v.DependenciaId)
-        .filter((id: any) => id != null);
+    const dependencias = (response || [])
+      .map((v: any) => v.DependenciaId)
+      .filter((id: any) => id != null);
 
-      return dependencias;
-    } catch (error: any) {
-      console.error('[TercerosHelper] Error obteniendo dependencias:', {
-        personaId,
-        cargoId,
-        error: error?.message || error,
-      });
-
-      return [];
-    }
+    return dependencias;
   }
 
   async getJefeOCI(): Promise<string> {
-    try {
-      const tercero = await this.getTerceroVinculado(
-        ID_DEPENDENCIA_OCI,
-        CARGO.JEFE_DEPENDENCIA_ID,
-      );
+    const tercero = await this.getTerceroVinculado(
+      ID_DEPENDENCIA_OCI,
+      CARGO.JEFE_DEPENDENCIA_ID,
+    );
 
-      return tercero?.NombreCompleto || 'No se encontró el jefe OCI';
-    } catch {
-      return 'No se encontró el jefe OCI';
-    }
+    return tercero?.NombreCompleto || 'No se encontró el jefe OCI';
   }
 
   async getAuditorResponsable(auditores: any[]): Promise<string> {

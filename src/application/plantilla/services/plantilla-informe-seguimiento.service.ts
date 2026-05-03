@@ -53,7 +53,7 @@ export class PlantillaInformeSeguimientoService {
           auditoria.titulo,
         ),
         this.parametrosService
-          .get('parametro', auditoria.macroproceso, null)
+          .get('parametro', auditoria.macroproceso_id, null)
           .then((data) => data.Data),
         this.parametrosService
           .get('parametro', auditoria.lider_id, null)
@@ -96,11 +96,12 @@ export class PlantillaInformeSeguimientoService {
         },
       };
       return infoParaPlantilla;
-    } catch (error) {
-      throw new HttpException(
-        'Error al organizar los datos para la plantilla',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+    } catch (error: any) {
+      const newError = new Error(
+        'Error al organizar los datos para la plantilla del informe de seguimiento',
       );
+      newError.stack = error.stack;
+      throw newError;
     }
   }
 

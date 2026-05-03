@@ -2,12 +2,14 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { map, catchError, Observable, of } from 'rxjs';
+import { LoggerService } from './logger.service';
 
 @Injectable()
 export class NuxeoService {
   constructor(
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
+    private readonly logger: LoggerService,
   ) {}
 
   /**
@@ -30,12 +32,12 @@ export class NuxeoService {
           return res.file;
         }),
         catchError((error) => {
-          console.error(this.createError(endpoint, methodName, error));
+          this.logger.error(this.createError(endpoint, methodName, error));
           return of('');
         }),
       );
     } catch (error) {
-      console.error(this.createError(endpoint, methodName, error));
+      this.logger.error(this.createError(endpoint, methodName, error));
       return of('');
     }
   }
