@@ -34,13 +34,13 @@ export class AuditoriaService {
 
   async getAll(queryParams: any) {
     const queryEstado = queryParams.query
-        ? queryParams.query.split(',').filter((param: string) => param.startsWith('estado_id:'))[0]
+        ? queryParams.query.split(',').filter((param: string) => param.startsWith('estado_id'))[0]
         : undefined;
     
     if (queryParams.query) {
       queryParams.query = queryParams.query
         .split(',')
-        .filter((param: string) => !param.startsWith('estado_id:'))
+        .filter((param: string) => !param.startsWith('estado_id'))
         .join(',');
     }
 
@@ -87,22 +87,22 @@ export class AuditoriaService {
 
   async getByAuditor(personaId: string, queryParams: any) {
     const queryEstado = queryParams.query
-        ? queryParams.query.split(',').filter((param: string) => param.startsWith('estado_id:'))[0]
+        ? queryParams.query.split(',').filter((param: string) => param.startsWith('estado_id'))[0]
         : '';
 
     if (queryParams.query) {
       queryParams.query = queryParams.query
         .split(',')
-        .filter((param: string) => !param.startsWith('estado_id:'))
+        .filter((param: string) => !param.startsWith('estado_id'))
         .join(',');
     }
 
     let padreQueryStr = '';
     for (const param of queryParams.query.split(',')) {
       if (
-        param.startsWith('tipo_evaluacion_id:') ||
-        param.startsWith('dependencia_id:') ||
-        param.startsWith('vigencia_id:')
+        param.startsWith('tipo_evaluacion_id') ||
+        param.startsWith('dependencia_id') ||
+        param.startsWith('vigencia_id')
       ) {
         padreQueryStr += padreQueryStr ? `,${param}` : param;
       }
@@ -175,11 +175,11 @@ export class AuditoriaService {
     const dependenciasFilter = dependenciaIds.join('|');
 
     const queryEstado = queryParams.query
-      ? queryParams.query.split(',').filter((param: string) => param.startsWith('estado_id:'))[0]
+      ? queryParams.query.split(',').filter((param: string) => param.startsWith('estado_id'))[0]
       : undefined;
 
     const queryPadreBase = queryParams.query
-      ? queryParams.query.split(',').filter((param: string) => !param.startsWith('estado_id:')).join(',')
+      ? queryParams.query.split(',').filter((param: string) => !param.startsWith('estado_id')).join(',')
       : '';
 
     const additionalFilters = `dependencia_id__in:${dependenciasFilter}`;
@@ -187,7 +187,7 @@ export class AuditoriaService {
 
     // incluir tipo_evaluacion_id si viene en queryParams.query original
     const tipoEvalParam = queryParams.query
-      ? queryParams.query.split(',').filter((param: string) => param.startsWith('tipo_evaluacion_id:'))[0]
+      ? queryParams.query.split(',').filter((param: string) => param.startsWith('tipo_evaluacion_id'))[0]
       : undefined;
 
     let queryPadreFinal = queryPadreString;
