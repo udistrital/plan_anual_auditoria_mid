@@ -36,11 +36,11 @@ export class AuditoriaService {
     const queryParts = query ? query.split(',') : [];
 
     const queryEstado = queryParts.find((param: string) =>
-      param.startsWith('estado_id:'),
+      param.startsWith('estado_id'),
     );
 
     const querySinEstado = queryParts
-      .filter((param: string) => !param.startsWith('estado_id:'))
+      .filter((param: string) => !param.startsWith('estado_id'))
       .join(',');
 
     // 2. Query auditorías padre
@@ -137,20 +137,20 @@ export class AuditoriaService {
     const queryParts = query ? query.split(',') : [];
   
     const queryEstado = queryParts.find((param: string) =>
-      param.startsWith('estado_id:'),
+      param.startsWith('estado_id'),
     );
   
     const querySinEstado = queryParts.filter(
-      (param: string) => !param.startsWith('estado_id:'),
+      (param: string) => !param.startsWith('estado_id'),
     );
   
     // 2. Construir query de padres (más declarativo)
     const padreQueryStr = querySinEstado
       .filter(
         (param: string) =>
-          param.startsWith('tipo_evaluacion_id:') ||
-          param.startsWith('dependencia_id:') ||
-          param.startsWith('vigencia_id:'),
+          param.startsWith('tipo_evaluacion_id') ||
+          param.startsWith('dependencia_id') ||
+          param.startsWith('vigencia_id'),
       )
       .join(',');
   
@@ -264,17 +264,17 @@ export class AuditoriaService {
     const queryParts = query ? query.split(',') : [];
   
     const queryEstado = queryParts.find((param: string) =>
-      param.startsWith('estado_id:'),
+      param.startsWith('estado_id'),
     );
   
     const tipoEvalParam = queryParts.find((param: string) =>
-      param.startsWith('tipo_evaluacion_id:'),
+      param.startsWith('tipo_evaluacion_id'),
     );
   
     const queryBase = queryParts.filter(
       (param: string) =>
-        !param.startsWith('estado_id:') &&
-        !param.startsWith('tipo_evaluacion_id:'),
+        !param.startsWith('estado_id') &&
+        !param.startsWith('tipo_evaluacion_id'),
     );
   
     // 1. Query padres
