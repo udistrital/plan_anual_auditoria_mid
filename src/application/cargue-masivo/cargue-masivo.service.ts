@@ -1,19 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { environment } from 'src/config/configuration';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
-import { setupValidationDomains, descargarAuditorias, AuditoriaExcel } from 'src/shared/utils/auditoriasExcel.utils';
+import {
+  setupValidationDomains,
+  descargarAuditorias,
+  AuditoriaExcel,
+} from 'src/shared/utils/auditoriasExcel.utils';
 import {
   base64ToArrayBuffer,
   arrayBufferToBase64,
 } from 'src/shared/utils/base64.utils';
+import { ConfigService } from '@nestjs/config';
+import { HttpService } from '@nestjs/axios';
 
-const {
-  PLAN_AUDITORIA_CRUD_SERVICE,
-  TIPO_EVALUACION,
-  TIPO_PARAMETRO,
-  MESES,
-} = environment;
+const { TIPO_PARAMETRO, MESES } = environment;
 
 const MESES_MAPPING = {
   Ene: MESES.ENERO,
@@ -30,7 +31,20 @@ const MESES_MAPPING = {
   Dic: MESES.DICIEMBRE,
 };
 
-const CANTIDAD_MAPPING = {'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'11':11,'12':12}
+const CANTIDAD_MAPPING = {
+  '1': 1,
+  '2': 2,
+  '3': 3,
+  '4': 4,
+  '5': 5,
+  '6': 6,
+  '7': 7,
+  '8': 8,
+  '9': 9,
+  '10': 10,
+  '11': 11,
+  '12': 12,
+};
 
 /** Interface representing a parameter object with an Id and Nombre property. */
 interface Parametro {
@@ -42,6 +56,8 @@ interface Parametro {
 export class CargueMasivoService {
   constructor(
     private readonly dominiosService: DominiosService,
+    private readonly configService: ConfigService,
+    private readonly httpService: HttpService,
   ) {}
 
   /**
@@ -57,13 +73,14 @@ export class CargueMasivoService {
       const plantillaArrayBuffer = base64ToArrayBuffer(plantillaBase64);
       const plantillaConValidacionesArrayBuffer = await setupValidationDomains(
         validationDomains,
-        [ { sheetIndex: 0 }, { sheetIndex: 1 } ],
+        [{ sheetIndex: 0 }, { sheetIndex: 1 }],
         plantillaArrayBuffer,
       );
-      const plantillaConValidacionesBase64 = arrayBufferToBase64(plantillaConValidacionesArrayBuffer);
+      const plantillaConValidacionesBase64 = arrayBufferToBase64(
+        plantillaConValidacionesArrayBuffer,
+      );
       return plantillaConValidacionesBase64;
-    }
-    catch (error) {
+    } catch (error) {
       const newError = new Error('Failed to add validations to the template');
       this.addErrorCause(newError, error);
       throw newError;
@@ -79,21 +96,20 @@ export class CargueMasivoService {
    */
   async exportarAuditoriasExcel(
     dataSource: Array<AuditoriaExcel>,
-    plantillaBase64: string
+    plantillaBase64: string,
   ): Promise<string> {
     try {
       const tablaExportadaBuffer = await descargarAuditorias(
-          dataSource,
-          base64ToArrayBuffer(plantillaBase64)
-        );
+        dataSource,
+        base64ToArrayBuffer(plantillaBase64),
+      );
       const tablaConValidacionBuffer = await setupValidationDomains(
         await this.prepararHeadersValidacion(),
-        [ { sheetIndex: 0 , length: dataSource.length + 1 } ],
+        [{ sheetIndex: 0, length: dataSource.length + 1 }],
         tablaExportadaBuffer,
       );
       return arrayBufferToBase64(tablaConValidacionBuffer);
-    }
-    catch (error) {
+    } catch (error) {
       const newError = new Error('Failed to export auditorias to Excel');
       this.addErrorCause(newError, error);
       throw newError;
@@ -107,27 +123,44 @@ export class CargueMasivoService {
   async prepararHeadersValidacion(): Promise<{ [key: string]: string[] }> {
     // Types of parameters to load from the Parametros API.
     const tiposDeParametros = [
-      { nombre: 'Tipo de Evaluación', id: environment.TIPO_PARAMETRO.TIPO_EVALUACION },
-      { nombre: 'Macroproceso', id: environment.TIPO_PARAMETRO.MACROPROCESO },
-      { nombre: 'Proceso', id: environment.TIPO_PARAMETRO.PROCESO },
-    ]
+      { nombre: 'Tipo de Evaluación', id: TIPO_PARAMETRO.TIPO_EVALUACION },
+      { nombre: 'Macroproceso', id: TIPO_PARAMETRO.MACROPROCESO },
+      { nombre: 'Proceso', id: TIPO_PARAMETRO.PROCESO },
+    ];
 
     // Load options for each parameter type and for Dependencias.
-    let opciones: { [key: string]: string[] } = {};
+    const opciones: { [key: string]: string[] } = {};
     for (const tipo of tiposDeParametros) {
-      const parametros = (await firstValueFrom(this.dominiosService.getParametros(tipo.id))).parametros;
-      opciones[tipo.nombre] = parametros.map(p => p.Nombre);
+      const parametros = (
+        await firstValueFrom(this.dominiosService.getParametros(tipo.id))
+      ).parametros;
+      opciones[tipo.nombre] = parametros.map((p) => p.Nombre);
     }
-    opciones['Dependencia'] = (await firstValueFrom(this.dominiosService.getDependencias())).parametros.map(d => d.Nombre);
-    opciones['Cantidad'] = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+    opciones['Dependencia'] = (
+      await firstValueFrom(this.dominiosService.getDependencias())
+    ).parametros.map((d) => d.Nombre);
+    opciones['Cantidad'] = [
+      '1',
+      '2',
+      '3',
+      '4',
+      '5',
+      '6',
+      '7',
+      '8',
+      '9',
+      '10',
+      '11',
+      '12',
+    ];
 
     return opciones;
   }
 
-  async crearEstructura(base64data: string, complemento: Object): Promise<any> {
+  async crearEstructura(base64data: string, complemento: object): Promise<any> {
     return {
       base64data,
-      service: PLAN_AUDITORIA_CRUD_SERVICE,
+      service: this.configService.get<string>('PLAN_AUDITORIA_CRUD_SERVICE'),
       endpoint: 'auditoria-gestion',
       complement: complemento,
       structure: {
@@ -135,7 +168,9 @@ export class CargueMasivoService {
         tipo_evaluacion_id: {
           file_name_column: 'Tipo de Evaluación',
           required: true,
-          mapping: await this.getParametrosMapping(TIPO_PARAMETRO.TIPO_EVALUACION),
+          mapping: await this.getParametrosMapping(
+            TIPO_PARAMETRO.TIPO_EVALUACION,
+          ),
         },
         macroproceso_id: {
           file_name_column: 'Macroproceso',
@@ -174,18 +209,20 @@ export class CargueMasivoService {
    * @returns A promise that resolves to a mapping of parameter names to IDs.
    * @throws An error if the fetch operation fails or if the response is not in the expected format.
    */
-  private async getParametrosMapping(tipoParametroId: number): Promise<Record<string, number>> {
+  private async getParametrosMapping(
+    tipoParametroId: number,
+  ): Promise<Record<string, number>> {
     try {
-      const dominio = await firstValueFrom(this.dominiosService.getParametros(tipoParametroId));
+      const dominio = await firstValueFrom(
+        this.dominiosService.getParametros(tipoParametroId),
+      );
       const mapping: Record<string, number> = {};
       dominio.parametros.forEach((parametro: Parametro) => {
         mapping[parametro.Nombre] = parametro.Id;
       });
 
-      console.log('Mapping for tipoParametroId:', tipoParametroId, 'is:', mapping);
       return mapping;
-    }
-    catch (error) {
+    } catch (error) {
       const newError = new Error('Failed to get parametros');
       this.addErrorCause(newError, error);
       throw newError;
@@ -199,27 +236,26 @@ export class CargueMasivoService {
    */
   private async getDependenciasMapping(): Promise<Record<string, number>> {
     try {
-      const dominio = await firstValueFrom(this.dominiosService.getDependencias());
+      const dominio = await firstValueFrom(
+        this.dominiosService.getDependencias(),
+      );
       const mapping: Record<string, number> = {};
       dominio.parametros.forEach((parametro: Parametro) => {
         mapping[parametro.Nombre] = parametro.Id;
       });
 
-      console.log('Dependencias mapping is:', mapping);
       return mapping;
-    }
-    catch (error) {
+    } catch (error) {
       const newError = new Error('Failed to get dependencias');
       this.addErrorCause(newError, error);
       throw newError;
     }
   }
 
-  crearEstructuraActividad(base64data: string, complemento: Object): any {
-
+  crearEstructuraActividad(base64data: string, complemento: object): any {
     const estructura = {
       base64data,
-      service: environment.PLAN_AUDITORIA_CRUD_SERVICE,
+      service: this.configService.get<string>('PLAN_AUDITORIA_CRUD_SERVICE'),
       endpoint: 'actividad',
       complement: complemento,
       structure: {
@@ -229,7 +265,7 @@ export class CargueMasivoService {
         referencia: { file_name_column: 'Referencia', required: false },
         descripcion: { file_name_column: 'Descripcion', required: false },
         folio: { file_name_column: 'Folio', required: false },
-        medio: { file_name_column: 'Medio', required: false, },
+        medio: { file_name_column: 'Medio', required: false },
         carpeta: { file_name_column: 'Carpeta', required: false },
         observacion: { file_name_column: 'Observaciones', required: false },
       },
@@ -238,17 +274,33 @@ export class CargueMasivoService {
     return estructura;
   }
 
+  async enviar(data: any) {
+    const url = `${this.configService.get<string>('CARGUE_MASIVO_SERVERLESS_MID')}registro-datos-archivo`;
+    try {
+      const response = await lastValueFrom(this.httpService.post(url, data));
+      return response.data;
+    } catch (error: any) {
+      throw new HttpException(
+        'Error al ejecutar el cargue masivo',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        error,
+      );
+    }
+  }
+
   /**
    * Adds the stack trace of a cause error to a new error's stack trace, ensuring that the original error information is preserved and accessible in the new error.
    * @param newError The new error to which the cause's stack trace will be added.
    * @param cause The original error whose stack trace is to be added to the new error.
    */
   private addErrorCause(newError: Error, cause: any): void {
-    const causeString = cause instanceof Error
-        ? (cause.stack || cause.message || String(cause))
+    const causeString =
+      cause instanceof Error
+        ? cause.stack || cause.message || String(cause)
         : String(cause);
-    newError.stack = (newError.stack || newError.message || '')
-        + causeString ? ("\nCaused by: " + causeString) : '';
+    newError.stack =
+      (newError.stack || newError.message || '') + causeString
+        ? '\nCaused by: ' + causeString
+        : '';
   }
-
 }

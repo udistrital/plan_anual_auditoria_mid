@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { PlantillaUtilsService } from '../../../utils/plantilla.utils';
 import { environment } from 'src/config/configuration';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
+import { PlantillasMidService } from 'src/shared/services/plantillas-mid.service';
+import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
 
 interface CartaRenderizada {
   dependencia_id: number | null;
@@ -9,11 +10,14 @@ interface CartaRenderizada {
   base64: string;
 }
 
+const { CARGO, logoUDistrital, logoSIGUD } = environment;
+
 @Injectable()
 export class PlantillaCartaPresentacionService {
   constructor(
-    private readonly plantillaUtils: PlantillaUtilsService,
+    private readonly plantillasMidService: PlantillasMidService,
     private readonly auditoriaService: AuditoriaService,
+    private readonly tercerosHelper: TercerosHelperService,
   ) {}
 
   async get(idAuditoria: string) {
@@ -36,12 +40,20 @@ export class PlantillaCartaPresentacionService {
         const dependenciaNombre = String(
           nombresDependencias[index] || `Dependencia ${index + 1}`,
         );
+        const jefeDependencia = dependenciaId
+          ? await this.tercerosHelper
+              .getTerceroVinculado(dependenciaId, CARGO.JEFE_DEPENDENCIA_ID)
+              .then((jefe) => jefe?.NombreCompleto)
+          : 'No se encontró al jefe de la dependencia';
         const infoParaPlantilla = await this.organizarData(
           auditoria,
           dependenciaNombre,
+          jefeDependencia,
         );
-        const baseRenderizado =
-          await this.plantillaUtils.renderizarPlantilla(infoParaPlantilla);
+        const baseRenderizado = await this.plantillasMidService.post(
+          '/v1/plantilla/renderizar',
+          infoParaPlantilla,
+        );
 
         return {
           dependencia_id: dependenciaId,
@@ -59,7 +71,11 @@ export class PlantillaCartaPresentacionService {
     };
   }
 
-  private async organizarData(auditoria: any, dependenciaNombre: string) {
+  private async organizarData(
+    auditoria: any,
+    dependenciaNombre: string,
+    jefeDependencia: string,
+  ) {
     const fechaInicio = auditoria?.fecha_inicio
       ? new Date(auditoria.fecha_inicio)
       : new Date();
@@ -70,6 +86,8 @@ export class PlantillaCartaPresentacionService {
     const infoParaPlantilla = {
       plantilla_id: environment.PLANTILLAS.CARTA_PRESENTACION,
       data: {
+        logoUDistrital: logoUDistrital,
+        logoSIGUD: logoSIGUD,
         ciudad: 'Bogotá D.C.',
         auditoria: auditoria.titulo,
         dia: fechaInicio.getDate(),
@@ -77,6 +95,7 @@ export class PlantillaCartaPresentacionService {
         anio: fechaInicio.getFullYear(),
         objetivo: auditoria.objetivo,
         dependencia: dependenciaNombre,
+        jefe_dependencia: jefeDependencia,
       },
     };
     return infoParaPlantilla;
@@ -90,7 +109,10 @@ export class PlantillaCartaPresentacionService {
       return dependenciasNombre;
     }
 
-    if (typeof dependenciasNombre === 'string' && dependenciasNombre.length > 0) {
+    if (
+      typeof dependenciasNombre === 'string' &&
+      dependenciasNombre.length > 0
+    ) {
       return [dependenciasNombre];
     }
 

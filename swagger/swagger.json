@@ -18,21 +18,10 @@
     "/actividad": {
       "get": {
         "operationId": "ActividadController_getAll",
-        "parameters": [
-          {
-            "name": "queryParams",
-            "required": false,
-            "in": "query",
-            "description": "Filtros opcionales.",
-            "schema": {}
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "Actividades obtenidas."
-          },
-          "404": {
-            "description": "Sin resultados."
           }
         },
         "summary": "Obtener todas las actividades",
@@ -49,7 +38,6 @@
             "name": "id",
             "required": true,
             "in": "path",
-            "description": "ID de la actividad.",
             "schema": {
               "type": "string"
             }
@@ -58,9 +46,6 @@
         "responses": {
           "200": {
             "description": "Actividad obtenida."
-          },
-          "404": {
-            "description": "No encontrada."
           }
         },
         "summary": "Obtener actividad por ID",
@@ -161,7 +146,7 @@
             "in": "path",
             "description": "ID de la persona (tercero).",
             "schema": {
-              "type": "string"
+              "type": "number"
             }
           },
           {
@@ -170,7 +155,7 @@
             "in": "path",
             "description": "ID del cargo (312 o 320).",
             "schema": {
-              "type": "string"
+              "type": "number"
             }
           }
         ],
@@ -368,9 +353,6 @@
           },
           "400": {
             "description": "Parámetros inválidos."
-          },
-          "500": {
-            "description": "Error interno."
           }
         },
         "summary": "Obtener auditorías padre ordenadas",
@@ -462,9 +444,6 @@
           },
           "400": {
             "description": "Parámetros inválidos."
-          },
-          "500": {
-            "description": "Error interno."
           }
         },
         "summary": "Eliminar auditoría padre lógicamente",
@@ -854,36 +833,6 @@
         "tags": [
           "Informe"
         ]
-      },
-      "put": {
-        "description": "Actualiza los datos de un informe existente",
-        "operationId": "InformeController_update",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "ID del informe",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Informe actualizado exitosamente"
-          },
-          "400": {
-            "description": "Datos de entrada inválidos"
-          },
-          "404": {
-            "description": "Informe no encontrado"
-          }
-        },
-        "summary": "Actualizar un informe",
-        "tags": [
-          "Informe"
-        ]
       }
     },
     "/informe": {
@@ -964,8 +913,6 @@
             "required": false,
             "in": "query",
             "description": "ID del tipo de documento para filtrar los documentos (opcional).",
-            "explode": false,
-            "style": "form",
             "schema": {
               "type": "string"
             }

@@ -1,4 +1,12 @@
-import { Controller, Get, Delete, Param, HttpStatus, Res, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Delete,
+  Param,
+  Query,
+  ParseIntPipe,
+  HttpStatus,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -20,28 +28,16 @@ export class AuditoriaController {
     required: true,
     description: 'ID del auditor.',
   })
-  @ApiResponse({ status: 200, description: 'Auditorías obtenidas.' })
-  @ApiResponse({ status: 404, description: 'Sin resultados.' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Auditorías obtenidas.' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Sin resultados.' })
   async getByAuditor(
-    @Res() res: any,
     @Param('personaId') personaId: string,
     @Query() queryParams: any,
   ) {
-    try {
-      const data = await this.auditoriaService.getByAuditor(
-        personaId,
-        queryParams,
-      );
-      res.status(HttpStatus.OK).json(data);
-    } catch (error) {
-      res.status(HttpStatus.NOT_FOUND).json({
-        Success: false,
-        Status: HttpStatus.NOT_FOUND,
-        Message:
-          'Error en servicio GetByAuditor: sin datos o parámetro inválido.',
-        Data: error.message,
-      });
-    }
+    return this.auditoriaService.getByAuditor(
+      personaId,
+      queryParams,
+    );
   }
 
   @Get('auditado/:personaId/:cargoId')
@@ -58,30 +54,18 @@ export class AuditoriaController {
     required: true,
     description: 'ID del cargo (312 o 320).',
   })
-  @ApiResponse({ status: 200, description: 'Auditorías obtenidas.' })
-  @ApiResponse({ status: 404, description: 'Sin resultados.' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Auditorías obtenidas.' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Sin resultados.' })
   async getByDependencia(
-    @Res() res: any,
-    @Param('personaId') personaId: string,
-    @Param('cargoId') cargoId: string,
+    @Param('personaId', ParseIntPipe) personaId: number,
+    @Param('cargoId', ParseIntPipe) cargoId: number,
     @Query() queryParams: any,
   ) {
-    try {
-      const data = await this.auditoriaService.getByDependencia(
-        +personaId,
-        +cargoId,
-        queryParams,
-      );
-      res.status(HttpStatus.OK).json(data);
-    } catch (error) {
-      res.status(HttpStatus.NOT_FOUND).json({
-        Success: false,
-        Status: HttpStatus.NOT_FOUND,
-        Message:
-          'Error en servicio GetByDependencia: sin datos o parámetro inválido.',
-        Data: error.message,
-      });
-    }
+    return this.auditoriaService.getByDependencia(
+      personaId,
+      cargoId,
+      queryParams,
+    );
   }
 
   @Get()
@@ -91,49 +75,36 @@ export class AuditoriaController {
     required: false,
     description: 'Filtro opcional.',
   })
-  @ApiResponse({ status: 200, description: 'Auditorías obtenidas.' })
-  @ApiResponse({ status: 404, description: 'Sin resultados.' })
-  async getAll(@Res() res: any, @Query() queryParams: any) {
-    try {
-      const data = await this.auditoriaService.getAll(queryParams);
-      res.status(HttpStatus.OK).json(data);
-    } catch (error) {
-      res.status(HttpStatus.NOT_FOUND).json({
-        Success: false,
-        Status: HttpStatus.NOT_FOUND,
-        Message: 'Error en servicio GetAll: sin datos o parámetro inválido.',
-        Data: error.message,
-      });
-    }
+  @ApiResponse({ status: HttpStatus.OK, description: 'Auditorías obtenidas.' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Sin resultados.' })
+  async getAll(@Query() queryParams: any) {
+    return this.auditoriaService.getAll(queryParams);
   }
 
   @Delete(':id/:planId')
   @ApiOperation({ summary: 'Eliminar auditoría lógicamente' })
   @ApiParam({ name: 'id', required: true, description: 'ID de auditoría.' })
-  @ApiParam({ name: 'planId', required: true, description: 'ID del plan de auditoría.' })
-  @ApiResponse({ status: 200, description: 'Auditoría eliminada.' })
-  @ApiResponse({ status: 400, description: 'Parámetros inválidos.' })
-  @ApiResponse({ status: 500, description: 'Error interno.' })
-  async delete(@Res() res: any, @Param('id') id: string, @Param('planId') planId: string) {
-    try {
-      const data = await this.auditoriaService.deleteAuditoria(id, planId);
-      res.status(HttpStatus.OK).json(data);
-    } catch (error) {
-      res.status(error.status || HttpStatus.INTERNAL_SERVER_ERROR).json({
-        Success: false,
-        Status: error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-        Message: 'Error al eliminar la auditoría.',
-        Data: error.message,
-      });
-    }
+  @ApiParam({
+    name: 'planId',
+    required: true,
+    description: 'ID del plan de auditoría.',
+  })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Auditoría eliminada.' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Parámetros inválidos.' })
+  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: 'Error interno.' })
+  async delete(
+    @Param('id') id: string,
+    @Param('planId') planId: string,
+  ) {
+    return this.auditoriaService.deleteAuditoria(id, planId);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Obtener auditoría por ID' })
   @ApiParam({ name: 'id', required: true, description: 'ID de auditoría.' })
-  @ApiResponse({ status: 200, description: 'Auditoría obtenida.' })
-  @ApiResponse({ status: 404, description: 'Auditoría no encontrada.' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Auditoría obtenida.' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Auditoría no encontrada.' })
   async getById(@Param('id') id: string) {
-    return await this.auditoriaService.getOne(id);
+    return this.auditoriaService.getOne(id);
   }
 }

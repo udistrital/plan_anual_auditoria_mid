@@ -7,16 +7,18 @@
 export function base64ToArrayBuffer(base64: string): ArrayBuffer {
   try {
     const buffer = Buffer.from(base64, 'base64');
-    return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
-    
-  }
-  catch (error) {
-    const newError = new Error('Failed to convert Base64 string to ArrayBuffer');
-    newError.stack += "\nCaused by: " + error.stack;
+    return buffer.buffer.slice(
+      buffer.byteOffset,
+      buffer.byteOffset + buffer.byteLength,
+    );
+  } catch (error) {
+    const newError = new Error(
+      'Failed to convert Base64 string to ArrayBuffer',
+    );
+    newError.stack += '\nCaused by: ' + error.stack;
     throw newError;
   }
 }
-
 
 /**
  * Converts an ArrayBuffer to a Base64 string.
@@ -30,12 +32,13 @@ export function arrayBufferToBase64(buffer: ArrayBuffer): string {
     let binaryString = '';
     for (let i = 0; i < bytes.byteLength; i++)
       binaryString += String.fromCharCode(bytes[i]);
-    
+
     return Buffer.from(binaryString, 'binary').toString('base64');
-  }
-  catch (error) {
-    const newError = new Error('Failed to convert ArrayBuffer to Base64 string');
-    newError.stack += "\nCaused by: " + error.stack;
+  } catch (error) {
+    const newError = new Error(
+      'Failed to convert ArrayBuffer to Base64 string',
+    );
+    newError.stack += '\nCaused by: ' + error.stack;
     throw newError;
   }
 }

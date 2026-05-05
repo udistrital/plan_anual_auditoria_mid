@@ -2,17 +2,17 @@
  * Ordena auditorías según el orden especificado en el plan.
  * Las auditorías que están en el orden del plan se colocan primero,
  * seguidas de las auditorías restantes que no están en el orden.
- * 
+ *
  * @param auditorias - Array de auditorías a ordenar
  * @param auditoriasOrden - Array de IDs que especifica el orden deseado
  * @returns Array de auditorías ordenadas
  */
 export function ordenarAuditoriasPorPlan(
   auditorias: any[],
-  auditoriasOrden: string[]
+  auditoriasOrden: string[],
 ): any[] {
   const auditoriasMap = new Map(
-    auditorias.map((auditoria) => [auditoria._id, auditoria])
+    auditorias.map((auditoria) => [auditoria._id, auditoria]),
   );
   const ordenSet = new Set(auditoriasOrden);
 
@@ -21,7 +21,7 @@ export function ordenarAuditoriasPorPlan(
     .filter((auditoria) => auditoria !== undefined);
 
   const restantes = auditorias.filter(
-    (auditoria) => !ordenSet.has(auditoria._id)
+    (auditoria) => !ordenSet.has(auditoria._id),
   );
 
   return [...ordenadas, ...restantes];
@@ -29,7 +29,7 @@ export function ordenarAuditoriasPorPlan(
 
 /**
  * Aplica ordenamiento por campo específico (tipo_evaluacion o titulo).
- * 
+ *
  * @param auditorias - Array de auditorías a ordenar
  * @param orderBy - Campo por el cual ordenar ('tipo_evaluacion' o 'titulo')
  * @param orderDirection - Dirección del ordenamiento ('ASC' o 'DESC'), por defecto 'ASC'
@@ -38,7 +38,7 @@ export function ordenarAuditoriasPorPlan(
 export function aplicarOrdenamiento(
   auditorias: any[],
   orderBy: string,
-  orderDirection: string = 'ASC'
+  orderDirection: string = 'ASC',
 ): any[] {
   return auditorias.sort((a, b) => {
     let valorA, valorB;

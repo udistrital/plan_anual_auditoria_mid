@@ -1,22 +1,37 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { PlanAuditoriaModule } from './plan-auditoria/plan-auditoria.module';
+import { PlanAuditoriaModule } from './application/plan-auditoria/plan-auditoria.module';
 import { AuditoriaModule } from './application/auditoria/auditoria.module';
 import { AuditoriaPadreModule } from './application/auditoria-padre/auditoria-padre.module';
-import { ActividadModule } from './actividad/actividad.module';
+import { ActividadModule } from './application/actividad/actividad.module';
 import { ConfigModule } from '@nestjs/config';
 import { PlantillaModule } from './application/plantilla/plantilla.module';
 import { CargueMasivoModule } from './application/cargue-masivo/cargue-masivo.module';
-import { PlanEstadoModule } from './plan-estado/plan-estado.module';
-import { AuditorModule } from './auditor/auditor.module';
-import { InformeModule } from './informe/informe.module';
-import { AuditoriaEstadoModule } from './auditoria-estado/auditoria-estado.module';
-import { AuditoriaCrudModule } from './shared/services/auditoria-crud/auditoria-crud.module';
-import { AuditadoModule } from './auditado/auditado.module';
+import { PlanEstadoModule } from './application/plan-estado/plan-estado.module';
+import { AuditorModule } from './application/auditor/auditor.module';
+import { InformeModule } from './application/informe/informe.module';
+import { AuditoriaEstadoModule } from './application/auditoria-estado/auditoria-estado.module';
+import { AuditadoModule } from './application/auditado/auditado.module';
+import { LoggerModule } from 'nestjs-pino';
+import { env } from './config/configuration';
+import { ServicesModule } from './shared/services/services.module';
+import { LoggerService } from './shared/services/logger.service';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [env],
+    }),
+    LoggerModule.forRoot({
+      pinoHttp: {
+        transport: process.env.NODE_ENV === 'production' ? undefined : {
+          target: 'pino-pretty',
+          options: { colorize: true }
+        },
+      }
+    }),
     ActividadModule,
     AuditoriaEstadoModule,
     AuditoriaModule,
@@ -26,14 +41,13 @@ import { AuditadoModule } from './auditado/auditado.module';
     PlanAuditoriaModule,
     PlanEstadoModule,
     PlantillaModule,
-    AuditoriaCrudModule,
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
     InformeModule,
     AuditadoModule,
+    ServicesModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+  ],
 })
 export class AppModule {}
