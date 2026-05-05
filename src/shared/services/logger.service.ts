@@ -66,7 +66,13 @@ export class LoggerService implements OnModuleInit, ExceptionFilter {
         } else {
           // Error inesperado al configurar la petición
           this.logger.error(
-            { err: error },
+            {
+              err: {
+                message: error?.message,
+                code: error?.code,
+                stack: error?.stack,
+              }
+          },
             'Axios unexpected error',
           );
         }
@@ -107,7 +113,7 @@ export class LoggerService implements OnModuleInit, ExceptionFilter {
         return {
           status,
           body: {
-            statusCode: status,
+            status: status,
             message: res,
             details: null,
           },
@@ -119,7 +125,7 @@ export class LoggerService implements OnModuleInit, ExceptionFilter {
       return {
         status,
         body: {
-          statusCode: status,
+          status: status,
           message: responseObject.message || 'Unexpected error',
           details: {
             ...responseObject,
@@ -139,7 +145,7 @@ export class LoggerService implements OnModuleInit, ExceptionFilter {
       return {
         status,
         body: {
-          statusCode: status,
+          status: status,
           message: 'Error en servicio externo',
           details: {
             detail: responseData ?? null,
@@ -152,7 +158,10 @@ export class LoggerService implements OnModuleInit, ExceptionFilter {
     // 3. Cualquier otro error no controlado
     return {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
-      body: { message: 'Internal server error' },
+      body: {
+        message: 'Internal server error',
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      },
     };
   }
 
@@ -162,7 +171,7 @@ export class LoggerService implements OnModuleInit, ExceptionFilter {
       url: request.url,
       status: status,
       body: request.body,
-      code: (exception as any)?.code,
+      stack: (exception as Error)?.stack,
     };
 
     // Error inesperado — siempre error

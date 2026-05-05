@@ -1,4 +1,4 @@
-import { Controller, Get, Param, HttpStatus, Res, Query } from '@nestjs/common';
+import { Controller, Get, Param, HttpStatus, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { InformeService } from './informe.service';
 
@@ -18,18 +18,12 @@ export class InformeController {
     description: 'ID del informe (MongoDB ObjectId)',
   })
   @ApiResponse({
-    status: 200,
+    status: HttpStatus.OK,
     description: 'Informe obtenido exitosamente con datos complementarios',
   })
   @ApiResponse({ status: 404, description: 'Informe no encontrado' })
-  async getById(@Res() res: any, @Param('id') id: string) {
-    const data = await this.informeService.getInformeCompleto(id);
-    res.status(HttpStatus.OK).json({
-      Success: true,
-      Status: HttpStatus.OK,
-      Message: 'Peticion Exitosa',
-      Data: data,
-    });
+  async getById(@Param('id') id: string) {
+    return this.informeService.getInformeCompleto(id);
   }
 
   @Get()
@@ -38,10 +32,10 @@ export class InformeController {
     description:
       'Lista informes con filtros opcionales y datos complementarios básicos',
   })
-  @ApiResponse({ status: 200, description: 'Informes obtenidos exitosamente' })
-  async getAll(@Res() res: any, @Query() queryParams: any) {
-    const data = await this.informeService.getAll(queryParams);
-    res.status(HttpStatus.OK).json(data);
+  @ApiResponse({ status: HttpStatus.OK, description: 'Informes obtenidos exitosamente' })
+  async getAll(@Query() queryParams: any) {
+    return await this.informeService.getAll(queryParams);
+
   }
 
   @Get('auditoria/:auditoriaId')
@@ -55,14 +49,12 @@ export class InformeController {
     description: 'ID de la auditoría',
   })
   @ApiResponse({
-    status: 200,
+    status: HttpStatus.OK,
     description: 'Informes de la auditoría obtenidos',
   })
   async getByAuditoria(
-    @Res() res: any,
     @Param('auditoriaId') auditoriaId: string,
   ) {
-    const data = await this.informeService.getByAuditoria(auditoriaId);
-    res.status(HttpStatus.OK).json(data);
+    return await this.informeService.getByAuditoria(auditoriaId);
   }
 }

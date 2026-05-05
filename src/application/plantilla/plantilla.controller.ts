@@ -5,7 +5,6 @@ import {
   NotFoundException,
   Param,
   Query,
-  Res,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -53,9 +52,8 @@ export class PlantillaController {
     description:
       'Usar la auditoría padre en la plantilla en lugar de la colección de auditorías original',
   })
-  @ApiResponse({ status: 200, description: 'Plantilla encontrada.' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Plantilla encontrada.' })
   async getById(
-    @Res() res: any,
     @Param('id') id: string,
     @Query('conEspeciales') conEspeciales?: string,
     @Query('auditoria-padre') auditoriaPadre?: string,
@@ -64,12 +62,11 @@ export class PlantillaController {
 
     if (auditoriaPadre == null) auditoriaPadre = 'false';
 
-    const data = await this.plantillaService.getOne(
+    return this.plantillaService.getOne(
       id,
       conEspeciales === 'true',
       auditoriaPadre === 'true',
     );
-    res.status(HttpStatus.OK).json(data);
   }
 
   @Get('/:tipo/:idAuditoria')
@@ -82,8 +79,8 @@ export class PlantillaController {
       'Tipo de la plantilla (ej: plan-trabajo, solicitud-informacion, carta-presentacion, programa-trabajo, informe-seguimiento, informe-auditoria)',
   })
   @ApiParam({ name: 'idAuditoria', description: 'ID de la auditoría' })
-  @ApiResponse({ status: 200, description: 'Plantilla generada exitosamente.' })
-  @ApiResponse({ status: 404, description: 'Tipo de plantilla no encontrado.' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Plantilla generada exitosamente.' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Tipo de plantilla no encontrado.' })
   async getPlantilla(
     @Param('tipo') tipo: string,
     @Param('idAuditoria') id: string,

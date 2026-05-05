@@ -36,6 +36,10 @@ export class ActividadService {
       id,
       null,
     );
+
+    if (!data || !data.Data) {
+      throw new NotFoundException(`No se encontró actividad con id ${id}`);
+    }
   
     if (this.identificarCampo(data)) {
       this.reemplazarCampos(data);

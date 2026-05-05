@@ -12,7 +12,6 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBody,
-  ApiQuery,
   ApiParam,
 } from '@nestjs/swagger';
 import { CargueMasivoService } from './cargue-masivo.service';
@@ -32,9 +31,9 @@ export class CargueMasivoController {
 
   @Get('auditorias/plantilla')
   @ApiOperation({ summary: 'Descargar plantilla de auditorías' })
-  @ApiResponse({ status: 500, description: 'Error interno.' })
+  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: 'Error interno.' })
   @ApiResponse({
-    status: 200,
+    status: HttpStatus.OK,
     description: 'Plantilla descargada exitosamente.',
     content: {
       'application/json': {
@@ -63,14 +62,14 @@ export class CargueMasivoController {
 
   @Get('auditorias/plan/:planId')
   @ApiOperation({ summary: 'Descargar auditorías en formato Excel' })
-  @ApiResponse({ status: 500, description: 'Error interno.' })
+  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: 'Error interno.' })
   @ApiParam({
     name: 'planId',
     required: true,
     description: 'ID del plan de auditoría.',
   })
   @ApiResponse({
-    status: 200,
+    status: HttpStatus.OK,
     description: 'Archivo de auditorías descargado exitosamente.',
     content: {
       'application/json': {
@@ -127,9 +126,9 @@ export class CargueMasivoController {
       required: ['base64data', 'complemento'],
     },
   })
-  @ApiResponse({ status: 201, description: 'Carga masiva exitosa.' })
-  @ApiResponse({ status: 400, description: 'Datos inválidos.' })
-  @ApiResponse({ status: 500, description: 'Error interno.' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Carga masiva exitosa.' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Datos inválidos.' })
+  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: 'Error interno.' })
   async cargueMasivo(@Body() cargaDatos: any): Promise<any> {
     const { base64data, complement: complemento } = cargaDatos;
     const estructura = await this.cargueMasivoService.crearEstructura(
@@ -156,9 +155,9 @@ export class CargueMasivoController {
       required: ['base64data', 'complemento'],
     },
   })
-  @ApiResponse({ status: 201, description: 'Carga masiva exitosa.' })
-  @ApiResponse({ status: 400, description: 'Datos inválidos.' })
-  @ApiResponse({ status: 500, description: 'Error interno.' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Carga masiva exitosa.' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Datos inválidos.' })
+  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: 'Error interno.' })
   async cargueMasivoActividades(@Body() cargaDatos: any): Promise<any> {
     const { base64data, complemento } = cargaDatos;
     const estructura =

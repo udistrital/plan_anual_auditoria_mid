@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, HttpStatus } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -14,14 +14,14 @@ export class ActividadController {
 
   @Get()
   @ApiOperation({ summary: 'Obtener todas las actividades' })
-  @ApiResponse({ status: 200, description: 'Actividades obtenidas.' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Actividades obtenidas.' })
   async getAll(@Query() queryParams: any) {
     return this.actividadService.getAll(queryParams);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Obtener actividad por ID' })
-  @ApiResponse({ status: 200, description: 'Actividad obtenida.' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Actividad obtenida.' })
   @ApiParam({ name: 'id', required: true })
   async getById(@Param('id') id: string) {
     return this.actividadService.getOne(id);

@@ -4,8 +4,9 @@ import { PlantillasMidService } from 'src/shared/services/plantillas-mid.service
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
 import { ParametrosService } from 'src/shared/services/parametros.service';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
+import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
 
-const { PLANTILLAS } = environment;
+const { PLANTILLAS, CARGO } = environment;
 
 @Injectable()
 export class PlantillaPlanTrabajoService {
@@ -14,6 +15,7 @@ export class PlantillaPlanTrabajoService {
     private readonly auditoriaCrudService: AuditoriaCrudService,
     private readonly parametrosService: ParametrosService,
     private readonly auditoriaService: AuditoriaService,
+    private readonly tercerosService: TercerosHelperService,
     @Inject('MOMENT') private readonly moment: any,
   ) {}
 
@@ -45,12 +47,14 @@ export class PlantillaPlanTrabajoService {
       this.parametrosService
         .get('parametro', auditoria.macroproceso_id, null)
         .then((data) => data.Data),
-      this.parametrosService
-        .get('parametro', auditoria.lider_id, null)
-        .then((data) => data.Data),
-      this.parametrosService
-        .get('parametro', auditoria.responsable_id, null)
-        .then((data) => data.Data),
+      this.tercerosService.getTerceroVinculado(
+          auditoria.dependencia_id[0],
+          CARGO.JEFE_DEPENDENCIA_ID,
+        ),
+        this.tercerosService.getTerceroVinculado(
+          auditoria.dependencia_id[0],
+          CARGO.ASISTENTE_DEPENDENCIA_ID,
+        ),
     ]);
     const actividades = this.organizarActividades(data.actividadesAuditoria);
     const infoParaPlantilla = {
@@ -60,8 +64,8 @@ export class PlantillaPlanTrabajoService {
         recursosHumanos: auditoria.rec_humano,
         recursosMateriales: auditoria.rec_fisico,
         macroproceso: macroproceso.Nombre,
-        lider: lider.Nombre,
-        responsable: responsable.Nombre,
+        lider: lider?.NombreCompleto || '',
+        responsable: responsable?.NombreCompleto || '',
         objetivos: auditoria.objetivo,
         alcance: auditoria.alcance,
         criterios: auditoria.criterio,

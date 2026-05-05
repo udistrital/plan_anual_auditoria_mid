@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, HttpStatus, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Param, Query, HttpStatus } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,

@@ -28,8 +28,8 @@ export class AuditoriaController {
     required: true,
     description: 'ID del auditor.',
   })
-  @ApiResponse({ status: 200, description: 'Auditorías obtenidas.' })
-  @ApiResponse({ status: 404, description: 'Sin resultados.' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Auditorías obtenidas.' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Sin resultados.' })
   async getByAuditor(
     @Param('personaId') personaId: string,
     @Query() queryParams: any,
@@ -54,8 +54,8 @@ export class AuditoriaController {
     required: true,
     description: 'ID del cargo (312 o 320).',
   })
-  @ApiResponse({ status: 200, description: 'Auditorías obtenidas.' })
-  @ApiResponse({ status: 404, description: 'Sin resultados.' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Auditorías obtenidas.' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Sin resultados.' })
   async getByDependencia(
     @Param('personaId', ParseIntPipe) personaId: number,
     @Param('cargoId', ParseIntPipe) cargoId: number,
@@ -75,8 +75,8 @@ export class AuditoriaController {
     required: false,
     description: 'Filtro opcional.',
   })
-  @ApiResponse({ status: 200, description: 'Auditorías obtenidas.' })
-  @ApiResponse({ status: 404, description: 'Sin resultados.' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Auditorías obtenidas.' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Sin resultados.' })
   async getAll(@Query() queryParams: any) {
     return this.auditoriaService.getAll(queryParams);
   }
@@ -89,9 +89,9 @@ export class AuditoriaController {
     required: true,
     description: 'ID del plan de auditoría.',
   })
-  @ApiResponse({ status: 200, description: 'Auditoría eliminada.' })
-  @ApiResponse({ status: 400, description: 'Parámetros inválidos.' })
-  @ApiResponse({ status: 500, description: 'Error interno.' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Auditoría eliminada.' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Parámetros inválidos.' })
+  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: 'Error interno.' })
   async delete(
     @Param('id') id: string,
     @Param('planId') planId: string,
@@ -102,8 +102,8 @@ export class AuditoriaController {
   @Get(':id')
   @ApiOperation({ summary: 'Obtener auditoría por ID' })
   @ApiParam({ name: 'id', required: true, description: 'ID de auditoría.' })
-  @ApiResponse({ status: 200, description: 'Auditoría obtenida.' })
-  @ApiResponse({ status: 404, description: 'Auditoría no encontrada.' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Auditoría obtenida.' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Auditoría no encontrada.' })
   async getById(@Param('id') id: string) {
     return this.auditoriaService.getOne(id);
   }

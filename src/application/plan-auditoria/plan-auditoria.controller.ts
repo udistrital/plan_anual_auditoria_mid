@@ -1,4 +1,4 @@
-import { Controller, Get, Param, HttpStatus, Res, Query } from '@nestjs/common';
+import { Controller, Get, Param, HttpStatus, Query } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -20,19 +20,18 @@ export class PlanAuditoriaController {
     required: false,
     description: 'Filtro opcional.',
   })
-  @ApiResponse({ status: 200, description: 'Lista obtenida con éxito.' })
-  @ApiResponse({ status: 404, description: 'No se encontraron planes.' })
-  async getAll(@Res() res: any, @Query() queryParams: any) {
-    const data = await this.planAuditoriaService.getAll(queryParams);
-    res.status(HttpStatus.OK).json(data);
+  @ApiResponse({ status: HttpStatus.OK, description: 'Lista obtenida con éxito.' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No se encontraron planes.' })
+  async getAll(@Query() queryParams: any) {
+    return this.planAuditoriaService.getAll(queryParams);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Obtiene un plan por ID.' })
   @ApiParam({ name: 'id', required: true, description: 'ID del plan.' })
-  @ApiResponse({ status: 200, description: 'Plan obtenido con éxito.' })
-  @ApiResponse({ status: 404, description: 'No se encontró el plan.' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Plan obtenido con éxito.' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No se encontró el plan.' })
   async getById(@Param('id') id: string) {
-    return await this.planAuditoriaService.getOne(id);
+    return this.planAuditoriaService.getOne(id);
   }
 }

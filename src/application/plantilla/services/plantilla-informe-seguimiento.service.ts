@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
 import { environment } from 'src/config/configuration';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
