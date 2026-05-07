@@ -10,6 +10,12 @@ interface CartaRenderizada {
   base64: string;
 }
 
+export interface CartaRenderizadaDOCX {
+  dependencia_id: number | null;
+  dependencia_nombre: string;
+  base64: string;
+}
+
 const { CARGO, logoUDistrital, logoSIGUD } = environment;
 
 @Injectable()
@@ -67,6 +73,57 @@ export class PlantillaCartaPresentacionService {
       Success: true,
       Status: 200,
       Message: 'Plantillas generadas exitosamente.',
+      Data: cartas,
+    };
+  }
+
+  async getDOCX(idAuditoria: string) {
+    const auditoriaResponse = await this.auditoriaService.getOne(idAuditoria);
+    const auditoria = auditoriaResponse?.Data || {};
+
+    const dependencias: number[] = Array.isArray(auditoria.dependencia_id)
+      ? auditoria.dependencia_id
+      : [];
+    const nombresDependencias = this.normalizarNombresDependencias(
+      auditoria.dependencia_nombre,
+      dependencias,
+    );
+
+    const dependenciasRenderizar =
+      dependencias.length > 0 ? dependencias : [null];
+
+    const cartas = await Promise.all(
+      dependenciasRenderizar.map(async (dependenciaId, index) => {
+        const dependenciaNombre = String(
+          nombresDependencias[index] || `Dependencia ${index + 1}`,
+        );
+        const jefeDependencia = dependenciaId
+          ? await this.tercerosHelper
+              .getTerceroVinculado(dependenciaId, CARGO.JEFE_DEPENDENCIA_ID)
+              .then((jefe) => jefe?.NombreCompleto)
+          : 'No se encontró al jefe de la dependencia';
+        const infoParaPlantilla = await this.organizarData(
+          auditoria,
+          dependenciaNombre,
+          jefeDependencia,
+        );
+        const baseRenderizado = await this.plantillasMidService.post(
+          '/v1/plantilla/renderizar-docx',
+          infoParaPlantilla,
+        );
+
+        return {
+          dependencia_id: dependenciaId,
+          dependencia_nombre: dependenciaNombre,
+          base64: baseRenderizado?.Data || baseRenderizado,
+        } as CartaRenderizadaDOCX;
+      }),
+    );
+
+    return {
+      Success: true,
+      Status: 200,
+      Message: 'Plantillas DOCX generadas exitosamente.',
       Data: cartas,
     };
   }
