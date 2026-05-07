@@ -135,7 +135,7 @@ export class GeneracionAuditoriaService {
 
     if (!auditoriaPadre.cantidad_auditorias) {
       throw new BadRequestException(
-        `La auditoría padre ${auditoriaPadreId} no tiene cantidad asignada`,
+        `La auditoría no tiene cantidad asignada`,
       );
     }
 
@@ -155,11 +155,9 @@ export class GeneracionAuditoriaService {
     const cantidadMaxima = auditoriaPadre.cantidad_auditorias;
 
     if (cantidadExistente >= cantidadMaxima) {
-      return {
-        auditoriaPadreId,
-        auditoriasCreadas: 0,
-        mensaje: 'Ya tiene el número máximo de auditorías',
-      };
+        throw new BadRequestException(
+          'Ya tiene el número máximo de auditorías',
+        );
     }
 
     const cantidadACrear = soloUna
