@@ -218,12 +218,6 @@ export class AuditoriaService {
         ...a,
       }));
   
-    auditoriasUnidas = auditoriasUnidas.filter((a: any) =>
-      a.auditores?.some(
-        (auditor: any) => auditor.auditor_id === Number(personaId),
-      ),
-    );
-  
     const result = {
       Data: auditoriasUnidas,
       MetaData: {
