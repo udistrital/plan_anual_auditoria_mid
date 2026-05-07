@@ -121,7 +121,7 @@ export class PlantillaProgramaAuditoriaService {
       referencia: dataActividad.referencia || '',
       descripcion: dataActividad.descripcion || '',
       folio: dataActividad.folio || '',
-      medio: dataActividad.medio_id || '',
+      medio: dataActividad.medio || '',
       carpeta: dataActividad.carpeta || '',
     }));
   }
