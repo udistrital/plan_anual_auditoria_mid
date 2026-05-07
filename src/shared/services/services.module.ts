@@ -9,6 +9,7 @@ import { ParametrosService } from './parametros.service';
 import { OikosService } from './oikos.service';
 import { NuxeoService } from './nuxeo.service';
 import { LoggerService } from './logger.service';
+import { GeneracionAuditoriaService } from './generacion-auditoria.service';
 
 @Module({
   imports: [HttpModule],
@@ -22,6 +23,7 @@ import { LoggerService } from './logger.service';
     OikosService,
     NuxeoService,
     LoggerService,
+    GeneracionAuditoriaService
   ],
   exports: [
     AuditoriaCrudService,
@@ -33,6 +35,7 @@ import { LoggerService } from './logger.service';
     OikosService,
     NuxeoService,
     LoggerService,
+    GeneracionAuditoriaService
   ],
 })
 export class ServicesModule {}

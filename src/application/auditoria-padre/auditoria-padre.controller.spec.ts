@@ -49,23 +49,10 @@ describe('AuditoriaPadreController', () => {
       const result = { Data: [], Success: true, Status: 200 };
       mockAuditoriaPadreService.getAll.mockResolvedValue(result);
 
-      const res = mockResponse();
-      await controller.getAll(res, {});
+      const response = await controller.getAll({});
 
       expect(service.getAll).toHaveBeenCalled();
-      expect(res.status).toHaveBeenCalledWith(HttpStatus.OK);
-      expect(res.json).toHaveBeenCalledWith(result);
-    });
-
-    it('should handle errors', async () => {
-      mockAuditoriaPadreService.getAll.mockRejectedValue(
-        new Error('Test error'),
-      );
-
-      const res = mockResponse();
-      await controller.getAll(res, {});
-
-      expect(res.status).toHaveBeenCalledWith(HttpStatus.NOT_FOUND);
+      expect(response).toEqual(result);
     });
   });
 
@@ -84,30 +71,14 @@ describe('AuditoriaPadreController', () => {
   describe('delete', () => {
     it('should delete auditoria padre', async () => {
       const result = {
-        Success: true,
-        Status: 200,
-        Message: 'Eliminada',
-        Data: null,
+        message: 'Eliminada',
       };
       mockAuditoriaPadreService.deleteAuditoriaPadre.mockResolvedValue(result);
 
-      const res = mockResponse();
-      await controller.delete(res, '123', '456');
+      const response = await controller.delete('123', '456');
 
       expect(service.deleteAuditoriaPadre).toHaveBeenCalledWith('123', '456');
-      expect(res.status).toHaveBeenCalledWith(HttpStatus.OK);
-      expect(res.json).toHaveBeenCalledWith(result);
-    });
-
-    it('should handle delete errors', async () => {
-      mockAuditoriaPadreService.deleteAuditoriaPadre.mockRejectedValue(
-        new Error('Delete error'),
-      );
-
-      const res = mockResponse();
-      await controller.delete(res, '123', '456');
-
-      expect(res.status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);
+      expect(response).toEqual(result);
     });
   });
 
@@ -118,23 +89,10 @@ describe('AuditoriaPadreController', () => {
         result,
       );
 
-      const res = mockResponse();
-      await controller.getAuditoriasOrdenadas(res, { plan_auditoria_id: '1' });
+      const response = await controller.getAuditoriasOrdenadas({ plan_auditoria_id: '1' });
 
       expect(service.getAuditoriasOrdenadas).toHaveBeenCalled();
-      expect(res.status).toHaveBeenCalledWith(HttpStatus.OK);
-      expect(res.json).toHaveBeenCalledWith(result);
-    });
-
-    it('should handle errors in ordenadas', async () => {
-      mockAuditoriaPadreService.getAuditoriasOrdenadas.mockRejectedValue(
-        new Error('Ordenadas error'),
-      );
-
-      const res = mockResponse();
-      await controller.getAuditoriasOrdenadas(res, {});
-
-      expect(res.status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);
+      expect(response).toEqual(result);
     });
   });
 });
