@@ -1,60 +1,60 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
+import { Inject, Injectable } from '@nestjs/common';
 import { environment } from 'src/config/configuration';
-import { lastValueFrom } from 'rxjs';
-import * as moment from 'moment';
-import 'moment/locale/es';
-import { PlantillaUtilsService } from '../../../utils/plantilla.utils';
+import { PlantillasMidService } from 'src/shared/services/plantillas-mid.service';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
+import { ParametrosService } from 'src/shared/services/parametros.service';
+import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
+import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
 
-const {
-  PLAN_AUDITORIA_CRUD_SERVICE,
-  PLANTILLAS,
-  PARAMETROS_SERVICE
-} = environment;
+const { PLANTILLAS, CARGO } = environment;
 
 @Injectable()
 export class PlantillaPlanTrabajoService {
   constructor(
-    private readonly httpService: HttpService,
-    private readonly plantillaUtils: PlantillaUtilsService,
+    private readonly plantillasMidService: PlantillasMidService,
+    private readonly auditoriaCrudService: AuditoriaCrudService,
+    private readonly parametrosService: ParametrosService,
+    private readonly auditoriaService: AuditoriaService,
+    private readonly tercerosService: TercerosHelperService,
+    @Inject('MOMENT') private readonly moment: any,
   ) {}
 
   async get(idAuditoria: string) {
-    const auditoria = await this.obtenerAuditoria(idAuditoria);
-    const infoParaPlantilla = await this.organizarData(auditoria);
-    const baseRenderizado =
-      await this.plantillaUtils.renderizarPlantilla(infoParaPlantilla);
+    const auditoria = await this.auditoriaService.getOne(idAuditoria);
+    const params = {
+      query: `auditoria_id:${idAuditoria},activo:true`,
+      limit: 0,
+    };
+    const actividades = await this.auditoriaCrudService.traerDataCrud(
+      'actividad',
+      null,
+      params,
+    );
+    const infoParaPlantilla = await this.organizarData({
+      auditoria: auditoria.Data,
+      actividadesAuditoria: actividades.Data,
+    });
+    const baseRenderizado = await this.plantillasMidService.post(
+      '/v1/plantilla/renderizar',
+      infoParaPlantilla,
+    );
     return baseRenderizado;
-  }
-
-  private async obtenerAuditoria(idAuditoria: string) {
-    let urlAuditoria = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria/${idAuditoria}`;
-    let urlActividades = `${PLAN_AUDITORIA_CRUD_SERVICE}actividad?query=auditoria_id:${idAuditoria},activo:true&limit=0`;
-    try {
-      const respuestaAuditoria = await lastValueFrom(
-        this.httpService.get(urlAuditoria),
-      );
-      const respuestaActividades = await lastValueFrom(
-        this.httpService.get(urlActividades),
-      );
-      return {
-        auditoria: respuestaAuditoria.data.Data,
-        actividadesAuditoria: respuestaActividades.data.Data,
-      };
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo ',
-        error,
-      );
-    }
   }
 
   private async organizarData(data: any) {
     const auditoria = data.auditoria;
     const [macroproceso, lider, responsable] = await Promise.all([
-      this.traerParametros(auditoria.macroproceso),
-      this.traerParametros(auditoria.lider_id),
-      this.traerParametros(auditoria.responsable_id),
+      this.parametrosService
+        .get('parametro', auditoria.macroproceso_id, null)
+        .then((data) => data.Data),
+      this.tercerosService.getTerceroVinculado(
+          auditoria.dependencia_id[0],
+          CARGO.JEFE_DEPENDENCIA_ID,
+        ),
+        this.tercerosService.getTerceroVinculado(
+          auditoria.dependencia_id[0],
+          CARGO.ASISTENTE_DEPENDENCIA_ID,
+        ),
     ]);
     const actividades = this.organizarActividades(data.actividadesAuditoria);
     const infoParaPlantilla = {
@@ -64,15 +64,13 @@ export class PlantillaPlanTrabajoService {
         recursosHumanos: auditoria.rec_humano,
         recursosMateriales: auditoria.rec_fisico,
         macroproceso: macroproceso.Nombre,
-        lider: lider.Nombre,
-        responsable: responsable.Nombre,
+        lider: lider?.NombreCompleto || '',
+        responsable: responsable?.NombreCompleto || '',
         objetivos: auditoria.objetivo,
         alcance: auditoria.alcance,
         criterios: auditoria.criterio,
         grupoAuditor: auditoria.rec_humano,
-        fechaEjecucion: moment(auditoria.fecha_inicio)
-          .locale('es')
-          .format('LL'),
+        fechaEjecucion: this.moment(auditoria.fecha_inicio).format('LL'),
         actividades: actividades,
       },
     };
@@ -84,21 +82,8 @@ export class PlantillaPlanTrabajoService {
     return actividades.map((actividad) => ({
       actividad: actividad.titulo,
       auditor: 'sdjk', // todo: esta quemado
-      fechaInicial: moment(actividad.fecha_inicio).format('DD/MM/YYYY'),
-      fechaFinal: moment(actividad.fecha_fin).format('DD/MM/YYYY'),
+      fechaInicial: this.moment(actividad.fecha_inicio).format('DD/MM/YYYY'),
+      fechaFinal: this.moment(actividad.fecha_fin).format('DD/MM/YYYY'),
     }));
-  }
-
-  private async traerParametros(idParam: string) {
-    const url = `${PARAMETROS_SERVICE}/parametro?query=Id:${idParam}&fields=Nombre`;
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data.Data[0];
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
   }
 }

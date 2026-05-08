@@ -5,7 +5,7 @@ export class Parametro {
 
 export class Dominio {
   api: string;
-  nombre: string
+  nombre: string;
   tipoParametroId?: number;
   parametros: Parametro[];
 }
