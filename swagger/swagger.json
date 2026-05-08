@@ -928,6 +928,43 @@
         ]
       }
     },
+    "/plantilla/docx/{tipo}/{idAuditoria}": {
+      "get": {
+        "operationId": "PlantillaController_getPlantillaDOCX",
+        "parameters": [
+          {
+            "name": "tipo",
+            "required": true,
+            "in": "path",
+            "description": "Tipo de la plantilla (ej: plan-trabajo, solicitud-informacion, carta-presentacion, programa-trabajo, informe-seguimiento, informe-auditoria)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "idAuditoria",
+            "required": true,
+            "in": "path",
+            "description": "ID de la auditoría",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plantilla generada exitosamente."
+          },
+          "404": {
+            "description": "Tipo de plantilla no encontrado."
+          }
+        },
+        "summary": "Obtener plantilla dinámica según el tipo de auditoría en formato DOCX",
+        "tags": [
+          "Plantilla"
+        ]
+      }
+    },
     "/informe/{id}": {
       "get": {
         "description": "Retorna el informe con auditoría hallazgos y temas",

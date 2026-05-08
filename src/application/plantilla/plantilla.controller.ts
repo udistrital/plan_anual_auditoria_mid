@@ -104,4 +104,30 @@ export class PlantillaController {
         );
     }
   }
+
+  @Get('docx/:tipo/:idAuditoria')
+  @ApiOperation({
+    summary: 'Obtener plantilla dinámica según el tipo de auditoría en formato DOCX',
+  })
+  @ApiParam({
+    name: 'tipo',
+    description:
+      'Tipo de la plantilla (ej: plan-trabajo, solicitud-informacion, carta-presentacion, programa-trabajo, informe-seguimiento, informe-auditoria)',
+  })
+  @ApiParam({ name: 'idAuditoria', description: 'ID de la auditoría' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Plantilla generada exitosamente.' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Tipo de plantilla no encontrado.' })
+  async getPlantillaDOCX(
+    @Param('tipo') tipo: string,
+    @Param('idAuditoria') id: string,
+  ) {
+    switch (tipo) {
+      case 'carta-presentacion':
+        return this.plantillaCartaPresentacion.getDOCX(id);
+      default:
+        throw new NotFoundException(
+          `No se encontró el tipo de plantilla para descargar DOCX: ${tipo}`,
+        );
+    }
+  }
 }
