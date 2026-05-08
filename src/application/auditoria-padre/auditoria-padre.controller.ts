@@ -5,6 +5,8 @@ import {
   Param,
   Query,
   HttpStatus,
+  Post,
+  Body,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -12,14 +14,17 @@ import {
   ApiResponse,
   ApiQuery,
   ApiParam,
+  ApiBody,
 } from '@nestjs/swagger';
 import { AuditoriaPadreService } from './auditoria-padre.service';
+import { GeneracionAuditoriaService } from 'src/shared/services/generacion-auditoria.service';
 
 @ApiTags('Auditoria Padre')
 @Controller('auditoria-padre')
 export class AuditoriaPadreController {
   constructor(
     private readonly auditoriaPadreService: AuditoriaPadreService,
+    private readonly generacionAuditoriaService: GeneracionAuditoriaService,
   ) {}
 
   @Get('ordenadas')
@@ -119,5 +124,47 @@ export class AuditoriaPadreController {
       id,
       planId,
     );
+  }
+
+  /**
+   * Genera UNA auditoría hija para una auditoría padre específica
+   */
+  @Post(':id/generar-auditoria')
+  @ApiOperation({
+    summary:
+      'Genera una auditoría hija para una auditoría padre específica.',
+  })
+  @ApiParam({
+    name: 'id',
+    required: true,
+    description: 'ID de la auditoría padre.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        usuario_id: { type: 'number' },
+        usuario_rol: { type: 'string' },
+        observacion: { type: 'string' },
+        estado_id_padre_actual: { type: 'number' },
+        estado_id_padre_nuevo: { type: 'number' },
+        estado_id_hija_nuevo: { type: 'number' },
+        fase_id: { type: 'number' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Auditoría generada exitosamente.',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Error en la solicitud.',
+  })
+  async generarUnaAuditoria(
+    @Param('id') id: string,
+    @Body() body: any,
+  ) {
+    return this.generacionAuditoriaService.generarUnaAuditoria(id, body);
   }
 }

@@ -452,6 +452,67 @@
         ]
       }
     },
+    "/auditoria-padre/{id}/generar-auditoria": {
+      "post": {
+        "operationId": "AuditoriaPadreController_generarUnaAuditoria",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID de la auditoría padre.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "usuario_id": {
+                    "type": "number"
+                  },
+                  "usuario_rol": {
+                    "type": "string"
+                  },
+                  "observacion": {
+                    "type": "string"
+                  },
+                  "estado_id_padre_actual": {
+                    "type": "number"
+                  },
+                  "estado_id_padre_nuevo": {
+                    "type": "number"
+                  },
+                  "estado_id_hija_nuevo": {
+                    "type": "number"
+                  },
+                  "fase_id": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Auditoría generada exitosamente."
+          },
+          "400": {
+            "description": "Error en la solicitud."
+          }
+        },
+        "summary": "Genera una auditoría hija para una auditoría padre específica.",
+        "tags": [
+          "Auditoria Padre"
+        ]
+      }
+    },
     "/cargue-masivo/auditorias/plantilla": {
       "get": {
         "operationId": "CargueMasivoController_descargarPlantillaAuditorias",
@@ -665,6 +726,67 @@
           }
         },
         "summary": "Obtiene un plan por ID.",
+        "tags": [
+          "Plan Auditoría"
+        ]
+      }
+    },
+    "/plan-auditoria/{id}/generar-auditorias": {
+      "post": {
+        "operationId": "PlanAuditoriaController_generarAuditorias",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID del plan de auditoría.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "usuario_id": {
+                    "type": "number"
+                  },
+                  "usuario_rol": {
+                    "type": "string"
+                  },
+                  "observacion": {
+                    "type": "string"
+                  },
+                  "estado_id_padre_actual": {
+                    "type": "number"
+                  },
+                  "estado_id_padre_nuevo": {
+                    "type": "number"
+                  },
+                  "estado_id_hija_nuevo": {
+                    "type": "number"
+                  },
+                  "fase_id": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Auditorías generadas exitosamente."
+          },
+          "400": {
+            "description": "Error en la solicitud."
+          }
+        },
+        "summary": "Genera auditorías hijas para todas las auditorías padre de un plan.",
         "tags": [
           "Plan Auditoría"
         ]
