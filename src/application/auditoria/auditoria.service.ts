@@ -1,5 +1,4 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { lastValueFrom, forkJoin } from 'rxjs';
 import { environment } from 'src/config/configuration';
 import { AuditorService } from '../auditor/auditor.service';
@@ -13,14 +12,15 @@ const { TIPO_PARAMETRO } = environment;
 
 @Injectable()
 export class AuditoriaService {
-  private tiposEvaluacion: any[] = [];
-  private cronogramasActividad: any[] = [];
-  private macroprocesos: any[] = [];
-  private procesos: any[] = [];
-  private dependencias: any[] = [];
-  private vigencias: any[] = [];
+  private readonly tiposEvaluacion: any[] = [];
+  private readonly cronogramasActividad: any[] = [];
+  private readonly macroprocesos: any[] = [];
+  private readonly procesos: any[] = [];
+  private readonly dependencias: any[] = [];
+  private readonly vigencias: any[] = [];
+  private readonly estados: { Id: number; Nombre: string }[] = [];
+
   private datosTerceros: any[] = [];
-  private estados: { Id: number; Nombre: string }[] = [];
 
   constructor(
     private readonly auditorService: AuditorService,
@@ -792,7 +792,7 @@ export class AuditoriaService {
       },
     );
   
-    // 5. Eliminar auditoría (DESPUÉS de validar todo)
+    // 5. Eliminar auditoría (DESPUÉS de validar el resto)
     await this.auditoriaCrudService.delete(
       'auditoria',
       auditoriaId,

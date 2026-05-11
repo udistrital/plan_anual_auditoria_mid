@@ -34,9 +34,6 @@ export class PlantillaSolicitudInformacionService {
 
   private async organizarData(auditoria: any) {
     const auditoriaPadre = auditoria;
-    const dependenciaPrincipal = this.obtenerDependenciaPrincipal(
-      auditoriaPadre?.dependencia_id,
-    );
 
     const [dependencias, vigencia, auditoriaOSeguimiento, auditores, jefeOci] =
       await Promise.all([

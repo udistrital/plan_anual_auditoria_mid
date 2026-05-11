@@ -16,7 +16,6 @@ import { AuditadoModule } from './application/auditado/auditado.module';
 import { LoggerModule } from 'nestjs-pino';
 import { env } from './config/configuration';
 import { ServicesModule } from './shared/services/services.module';
-import { LoggerService } from './shared/services/logger.service';
 
 @Module({
   imports: [
