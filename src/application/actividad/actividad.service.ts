@@ -6,12 +6,6 @@ import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service
 
 @Injectable()
 export class ActividadService {
-  private medio = [
-    { Id: 1, Nombre: 'Digital' },
-    { Id: 2, Nombre: 'Fisico' },
-    { Id: 3, Nombre: 'Otro' },
-  ];
-
   constructor(
     private readonly auditoriaCrudService: AuditoriaCrudService,
   ) {}
@@ -37,7 +31,7 @@ export class ActividadService {
       null,
     );
 
-    if (!data || !data.Data) {
+    if (data?.Data == null) {
       throw new NotFoundException(`No se encontró actividad con id ${id}`);
     }
   
@@ -59,14 +53,10 @@ export class ActividadService {
   private reemplazarCampos(data: any) {
     if (Array.isArray(data.Data)) {
       data.Data.forEach((element) => {
-        if (element.medio_id !== undefined) {
-          this.reemplazar(this.medio, element, 'medio_id');
-        }
+        // Lógica de remplazos.
       });
     } else if (typeof data.Data === 'object' && data.Data !== null) {
-      if (data.Data.medio_id !== undefined) {
-        this.reemplazar(this.medio, data.Data, 'medio_id');
-      }
+        // Lógica de remplazos para un solo objeto.
     }
 
     return data;

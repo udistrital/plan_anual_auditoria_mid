@@ -8,8 +8,8 @@ const { TIPO_PARAMETRO, PLAN_ESTADO, AUDITORIA_PADRE_ESTADO } = environment;
 
 @Injectable()
 export class PlanAuditoriaService {
-  private vigencias: any[] = [];
-  private estados: any[] = [];
+  private readonly vigencias: any[] = [];
+  private readonly estados: any[] = [];
 
   constructor(
     private readonly auditoriaCrudService: AuditoriaCrudService,
@@ -123,9 +123,9 @@ export class PlanAuditoriaService {
           if (tercero) plan.creado_por_nombre = tercero.NombreCompleto ?? null;
         }),
       );
-    } else if (Data && Data._id) {
+    } else if (Data?._id) {
       const estado = await this.traerEstadoPorPlan(Data._id);
-      if (estado && estado.actual) {
+      if (estado?.actual) {
         Data.estado = estado;
       }
     }
@@ -187,7 +187,7 @@ export class PlanAuditoriaService {
       null,
       queryParams,
     );
-    if (data && data.Data && data.Data.length > 0) {
+    if (data?.Data && data.Data.length > 0) {
       return data.Data[0];
     }
     return null;

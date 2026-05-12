@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuditoriaCrudService {
-  private baseUrl: string;
+  private readonly baseUrl: string;
 
   constructor(
     private readonly httpService: HttpService,

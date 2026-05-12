@@ -36,7 +36,7 @@ export class AuditorService {
       null,
     );
 
-    if (!data || !data.Data) {
+    if (data?.Data == null) {
       throw new NotFoundException(`No se encontró auditor con id ${id}`);
     }
 
