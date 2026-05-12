@@ -35,43 +35,68 @@ export class PlantillaProgramaAuditoriaService {
   private async organizarData(auditoria: any) {
     try {
       const auditoriaPadre = auditoria;
-      const dependenciaPrincipal = this.obtenerDependenciaPrincipal(
-        auditoriaPadre?.dependencia_id,
-      );
 
       const [
         actividades,
-        macroproceso,
-        proceso,
-        dependencia,
-        Lider,
-        Responsable,
+        macroprocesos,
+        procesos,
+        dependencias,
+        lideres,
+        responsables,
         grupoAuditor,
       ] = await Promise.all([
+        // actividades
         this.auditoriaCrudService
           .traerDataCrud('actividad', null, {
             query: `auditoria_id:${auditoria._id},activo:true`,
             limit: 0,
           })
           .then((data) => data.Data),
-        this.parametrosService
-          .get('parametro', auditoriaPadre.macroproceso_id, null)
-          .then((data) => data.Data),
-        this.parametrosService
-          .get('parametro', auditoriaPadre.proceso_id, null)
-          .then((data) => data.Data),
-        this.oikosService
-          .traerData('dependencia', dependenciaPrincipal, null),
-        this.tercerosService.getTerceroVinculado(
-          dependenciaPrincipal,
-          CARGO.JEFE_DEPENDENCIA_ID,
+        // macroprocesos
+        Promise.all(
+          auditoriaPadre.macroproceso_id.map((macroproceso_id: number) =>
+            this.parametrosService
+              .get('parametro', macroproceso_id, null)
+              .then((data) => data.Data),
+          ),
         ),
-        this.tercerosService.getTerceroVinculado(
-          dependenciaPrincipal,
-          CARGO.ASISTENTE_DEPENDENCIA_ID,
+        // procesos
+        Promise.all(
+          auditoriaPadre.proceso_id.map((proceso_id: number) =>
+            this.parametrosService
+              .get('parametro', proceso_id, null)
+              .then((data) => data.Data),
+          ),
         ),
+        // dependencias
+        Promise.all(
+          auditoriaPadre.dependencia_id.map((dependencia_id: number) =>
+            this.oikosService.traerData('dependencia', dependencia_id, null),
+          ),
+        ),
+        // lideres
+        Promise.all(
+          auditoriaPadre.dependencia_id.map((dependencia_id: number) =>
+            this.tercerosService.getTerceroVinculado(
+              dependencia_id,
+              CARGO.JEFE_DEPENDENCIA_ID,
+            ),
+          ),
+        ),
+        // responsables
+        Promise.all(
+          auditoriaPadre.dependencia_id.map((dependencia_id: number) =>
+            this.tercerosService.getTerceroVinculado(
+              dependencia_id,
+              CARGO.ASISTENTE_DEPENDENCIA_ID,
+            ),
+          ),
+        ),
+        // grupo auditor
         this.obtenerNombresAuditores(auditoria._id),
       ]);
+
+      console.log(actividades, macroprocesos, procesos, dependencias, lideres, responsables, grupoAuditor);
 
       const actividadesOrganizadas = this.organizarActividades(
         actividades,
@@ -83,11 +108,26 @@ export class PlantillaProgramaAuditoriaService {
           actividades: actividadesOrganizadas,
           recursosTecnologicos: auditoria.rec_tecnologico,
           recursosMateriales: auditoria.rec_fisico,
-          macroproceso: macroproceso.Nombre,
-          proceso: proceso.Nombre,
-          dependencia: dependencia.Nombre,
-          lider: Lider?.NombreCompleto || '',
-          responsable: Responsable?.NombreCompleto || '',
+          macroproceso: macroprocesos
+              .filter((mp: any) => mp)
+              .map((mp: any) => mp.Nombre)
+              .join(', '),
+          proceso: procesos
+              .filter((p: any) => p)
+              .map((p: any) => p.Nombre)
+              .join(', '),
+          dependencia: dependencias
+              .filter((d: any) => d)
+              .map((d: any) => d.Nombre)
+              .join(', '),
+          lider: lideres
+              .filter((l: any) => l)
+              .map((l: any) => l.NombreCompleto)
+              .join(', ') ?? '',
+          responsable: responsables
+              .filter((r: any) => r)
+              .map((r: any) => r.NombreCompleto)
+              .join(', ') ?? '',
           objetivos: auditoria.objetivo,
           alcance: auditoria.alcance,
           criterios: auditoria.criterio,
@@ -158,13 +198,4 @@ export class PlantillaProgramaAuditoriaService {
     return unirListaNombres(nombres);
   }
 
-  private obtenerDependenciaPrincipal(
-    dependenciaId: number | number[],
-  ): number | null {
-    if (Array.isArray(dependenciaId)) {
-      return dependenciaId.length > 0 ? dependenciaId[0] : null;
-    }
-
-    return typeof dependenciaId === 'number' ? dependenciaId : null;
-  }
 }
