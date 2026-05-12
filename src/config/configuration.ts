@@ -3,7 +3,7 @@ import { productionConfig } from './config.production';
 import { defaultConfig } from './config.default';
 
 export const env = () => ({
-  NODE_ENV: process.env.NODE_ENV || 'development',
+  NODE_ENV: process.env.NODE_ENV || 'production',
   PARAMETROS_SERVICE: process.env.PARAMETROS_SERVICE,
   PLAN_AUDITORIA_MID_PORT: process.env.PLAN_AUDITORIA_MID_PORT,
   PLAN_AUDITORIA_CRUD_SERVICE: process.env.PLAN_AUDITORIA_CRUD_SERVICE,
