@@ -26,7 +26,7 @@ export class NuxeoService {
       return this.httpService.get(url).pipe(
         map((res) => res.data),
         map((res) => {
-          if (!res || !res.file)
+          if (res?.file == null)
             throw new Error('La respuesta no tiene el formato esperado.');
 
           return res.file;

@@ -9,7 +9,7 @@ const { TIPO_PARAMETRO, ETIQUETAS_ROL } = environment;
 
 @Injectable()
 export class PlanEstadoService {
-  private estados: any[] = [];
+  private readonly estados: any[] = [];
 
   constructor(
     private readonly auditoriaCrudService: AuditoriaCrudService,
@@ -61,7 +61,7 @@ export class PlanEstadoService {
       null,
     );
 
-    if (!data || !data.Data) {
+    if (data?.Data == null) {
       throw new NotFoundException(`No se encontró estado de plan con id ${id}`);
     }
 

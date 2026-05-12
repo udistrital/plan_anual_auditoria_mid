@@ -153,7 +153,7 @@ export class PlantillaInformeSeguimientoService {
       .traerDataCrud('auditoria-estado', null, params)
       .then((data) => data.Data);
 
-    if (estado_auditoria_id[0] in ESTADOS_INFORME_AUDITORIA_PRELIMINAR) {
+    if (ESTADOS_INFORME_AUDITORIA_PRELIMINAR.indexOf(estado_auditoria_id[0]) !== -1) {
       titulo += ' - Preliminar';
     } else {
       titulo += ' - Final';

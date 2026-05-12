@@ -195,7 +195,7 @@ export async function setupValidationDomains(
       headersValidacion,
     );
 
-    // TODO: Temporarily remove empty string values from test environment
+    // Remove empty string values
     Object.keys(headersValidacion).forEach((header) => {
       headersValidacion[header] = headersValidacion[header].filter(
         (value) => value !== '',

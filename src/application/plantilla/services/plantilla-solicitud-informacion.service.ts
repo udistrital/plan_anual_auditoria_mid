@@ -34,9 +34,6 @@ export class PlantillaSolicitudInformacionService {
 
   private async organizarData(auditoria: any) {
     const auditoriaPadre = auditoria;
-    const dependenciaPrincipal = this.obtenerDependenciaPrincipal(
-      auditoriaPadre?.dependencia_id,
-    );
 
     const [dependencias, vigencia, auditoriaOSeguimiento, auditores, jefeOci] =
       await Promise.all([
@@ -55,7 +52,7 @@ export class PlantillaSolicitudInformacionService {
       plantilla_id: PLANTILLAS.SOLICITUD_INFORMACION,
       data: {
         logoUDistrital: logoUDistritalOCI,
-        fecha: this.moment().format('D [de] MMMM [de] YYYY'),
+        fecha: this.moment().utcOffset('-05:00').format('D [de] MMMM [de] YYYY'),
         fecha_inicio: this.moment(auditoria.fecha_inicio).format('DD/MM/YYYY'),
         consecutivo_oci: auditoria.consecutivo_OCI,
         dependencias: dependencias,
