@@ -24,6 +24,9 @@ const environmentConf = () => {
     process.env.NODE_ENV === 'production'
       ? productionConfig
       : developmentConfig;
+
+  // Log para imprimir la configuración específica del entorno
+  console.log(`[Config] envConfig cargado: ${JSON.stringify(envConfig, null, 2)}`);
       
   return {
     ...defaultConfig,
