@@ -358,12 +358,8 @@ export class AuditoriaService {
     // 4. Obtener dependencias únicas
     const todosDepIds: number[] = Array.from(
       new Set(
-        result.Data.flatMap((a: any) =>
-          Array.isArray(a.dependencia_id)
-            ? a.dependencia_id
-            : a.dependencia_id != null
-            ? [a.dependencia_id]
-            : [],
+        result.Data.flatMap((a: any) => 
+          this.asegurarArray(a.dependencia_id)
         ),
       ),
     );
@@ -374,11 +370,7 @@ export class AuditoriaService {
     await this.enriquecerAuditorias(result.Data, false);
   
     result.Data.forEach((auditoria: any) => {
-      const ids = Array.isArray(auditoria.dependencia_id)
-        ? auditoria.dependencia_id
-        : auditoria.dependencia_id != null
-        ? [auditoria.dependencia_id]
-        : [];
+      const ids = this.asegurarArray(auditoria.dependencia_id);
   
       auditoria.dependencia_nombre = ids
         .map((id: number) => dependenciaNombres.get(id))
@@ -390,6 +382,16 @@ export class AuditoriaService {
     }
   
     return result;
+  }
+
+  private asegurarArray(value: any): any[] {
+    if (Array.isArray(value))
+      return value;
+
+    if (value != null)
+      return [value];
+
+    return [];
   }
 
   private getDependenciaNombres(dependenciaIds: number[]): Map<number, string> {
@@ -588,18 +590,12 @@ export class AuditoriaService {
     if ('dependencia_id' in firstElement) {
       observables['dependencia_id'] = this.dominiosService.getDependencias();
       if (!Array.isArray(data.Data)) {
-        const dependencias = Array.isArray(firstElement.dependencia_id)
-          ? firstElement.dependencia_id
-          : firstElement.dependencia_id != null
-            ? [firstElement.dependencia_id]
-            : [];
-
-        for (const dep_id of dependencias) {
-          if (dep_id != null) {
+        this.asegurarArray(data.Data.dependencia_id)
+          .filter((dep_id) => dep_id != null)
+          .forEach(async (dep_id) => {
             const datos = await this.getDatosTerceros(dep_id);
             this.datosTerceros.push(datos);
-          }
-        }
+          });
       }
     }
 

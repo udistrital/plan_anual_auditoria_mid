@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { environment } from 'src/config/configuration';
 import { lastValueFrom } from 'rxjs';
-import { jsonPlantillaDto, PlantillaDto } from '../dto/plantilla.dto';
+import { JsonPlantillaDto, PlantillaDto } from '../dto/plantilla.dto';
 import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
 import { Dominio } from 'src/shared/utils/dominios/dominio.model';
 import { PlantillasMidService } from 'src/shared/services/plantillas-mid.service';
@@ -77,7 +77,7 @@ export class PlantillaService {
   }
 
   private async organizarData(data: any) {
-    const json = new jsonPlantillaDto();
+    const json = new JsonPlantillaDto();
 
     const auditorias = data.dataAuditoria?.Data || [];
     const auditoriasOrden = data.dataPlanAuditoria?.Data?.auditorias || [];

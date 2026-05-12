@@ -81,7 +81,6 @@ export class PlantillaPlanTrabajoService {
   organizarActividades(actividades: any[]) {
     return actividades.map((actividad) => ({
       actividad: actividad.titulo,
-      auditor: 'sdjk', // todo: esta quemado
       fechaInicial: this.moment(actividad.fecha_inicio).format('DD/MM/YYYY'),
       fechaFinal: this.moment(actividad.fecha_fin).format('DD/MM/YYYY'),
     }));

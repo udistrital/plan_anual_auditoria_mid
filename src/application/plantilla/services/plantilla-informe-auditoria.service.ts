@@ -204,23 +204,14 @@ export class PlantillaInformeAuditoriaService {
       case 0:
         return 'Sin auditor asignado.';
       case 1:
-        const tercero = await this.tercerosService.getTerceroById(
-          auditores[0].auditor_id,
-        );
-        return tercero?.NombreCompleto || 'Sin auditor asignado.';
-      default:
-        const auditorLider = auditores.find((a) => a.auditor_lider == true);
-        if (auditorLider) {
-          const tercero = await this.tercerosService.getTerceroById(
-            auditorLider.auditor_id,
-          );
-          return tercero?.NombreCompleto || 'Sin auditor asignado.';
-        } else {
-          const tercero = await this.tercerosService.getTerceroById(
+        return (await this.tercerosService.getTerceroById(
             auditores[0].auditor_id,
-          );
-          return tercero?.NombreCompleto || 'Sin auditor asignado.';
-        }
+          ))?.NombreCompleto || 'Sin auditor asignado.';
+      default:
+        return (await this.tercerosService.getTerceroById(
+            auditores.find((a) => a.auditor_lider)?.auditor_id
+              || auditores[0]?.auditor_id,
+          ))?.NombreCompleto || 'Sin auditor asignado.';
     }
   }
 
