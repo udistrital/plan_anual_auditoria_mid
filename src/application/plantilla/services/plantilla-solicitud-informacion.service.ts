@@ -55,7 +55,7 @@ export class PlantillaSolicitudInformacionService {
       plantilla_id: PLANTILLAS.SOLICITUD_INFORMACION,
       data: {
         logoUDistrital: logoUDistritalOCI,
-        fecha: this.moment().format('D [de] MMMM [de] YYYY'),
+        fecha: this.moment().utcOffset('-05:00').format('D [de] MMMM [de] YYYY'),
         fecha_inicio: this.moment(auditoria.fecha_inicio).format('DD/MM/YYYY'),
         consecutivo_oci: auditoria.consecutivo_OCI,
         dependencias: dependencias,
