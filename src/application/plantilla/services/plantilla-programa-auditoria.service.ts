@@ -96,7 +96,19 @@ export class PlantillaProgramaAuditoriaService {
         this.obtenerNombresAuditores(auditoria._id),
       ]);
 
-      console.log(actividades, macroprocesos, procesos, dependencias, lideres, responsables, grupoAuditor);
+      // Relacionar cada líder y responsable con su respectiva dependencia para evitar confusiones en la plantilla
+      dependencias.forEach((dependencia: any, indice: number) => {
+        if (dependencia?.Nombre)
+          dependencia.Nombre += ` (${indice + 1})`; 
+      });
+      lideres.forEach((lider: any, indice: number) => {
+        if (lider?.NombreCompleto)
+          lider.NombreCompleto += ` (${indice + 1})`;
+      });
+      responsables.forEach((responsable: any, indice: number) => {
+        if (responsable?.NombreCompleto)
+          responsable.NombreCompleto += ` (${indice + 1})`;
+      });
 
       const actividadesOrganizadas = this.organizarActividades(
         actividades,
