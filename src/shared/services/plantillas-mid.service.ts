@@ -11,10 +11,11 @@ export class PlantillasMidService {
   ) {}
 
   async post(endpoint: string, data: any) {
-    #const baseUrl = this.configService.get<string>('PLANTILLAS_MID_SERVICE');
-    #const url = new URL(endpoint, baseUrl).toString();
+    //const baseUrl = this.configService.get<string>('PLANTILLAS_MID_SERVICE');
+    //const url = new URL(endpoint, baseUrl).toString();
+    //console.log("PlantillasMidService - url with URL: ", url);
     const url = `${this.configService.get<string>('PLANTILLAS_MID_SERVICE')}/${endpoint}`;
-    console.log("PlantillasMidService - url: ", url)
+    console.log("PlantillasMidService - url: ", url);
     const response = await lastValueFrom(this.httpService.post(url, data));
     return response.data;
   }
