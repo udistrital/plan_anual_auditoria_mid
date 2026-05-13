@@ -11,7 +11,8 @@ export class PlantillasMidService {
   ) {}
 
   async post(endpoint: string, data: any) {
-    const url = `${this.configService.get<string>('PLANTILLAS_MID_SERVICE')}/${endpoint}`;
+    const baseUrl = this.configService.get<string>('PLANTILLAS_MID_SERVICE');
+    const url = new URL(endpoint, baseUrl).toString();
     const response = await lastValueFrom(this.httpService.post(url, data));
     return response.data;
   }
