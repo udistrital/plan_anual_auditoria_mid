@@ -275,7 +275,8 @@ export class CargueMasivoService {
   }
 
   async enviar(data: any) {
-    const url = `${this.configService.get<string>('CARGUE_MASIVO_SERVERLESS_MID')}registro-datos-archivo`;
+    const baseUrl = this.configService.get<string>('CARGUE_MASIVO_SERVERLESS_MID');
+    const url = new URL('registro-datos-archivo', baseUrl).toString();
     try {
       const response = await lastValueFrom(this.httpService.post(url, data));
       return response.data;
