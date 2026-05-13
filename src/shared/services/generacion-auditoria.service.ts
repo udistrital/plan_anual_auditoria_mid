@@ -107,8 +107,6 @@ export class GeneracionAuditoriaService {
       {},
     );
 
-    const auditoriaPadre = response.Data;
-
     if (!response.Data) {
         throw new BadRequestException(
           `Auditoría padre no encontrada`,

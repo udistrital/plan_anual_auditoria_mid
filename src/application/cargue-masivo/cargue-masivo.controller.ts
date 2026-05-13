@@ -96,7 +96,7 @@ export class CargueMasivoController {
         environment.PLANTILLA_CARGUE_MASIVO_AUDITORIAS,
       ),
     );
-    if (!ordenadas || !ordenadas.Data)
+    if (ordenadas?.Data == null)
       throw new HttpException(
         'No se encontraron auditorías para el plan especificado',
         HttpStatus.NOT_FOUND,

@@ -12,13 +12,13 @@ const { TIPO_PARAMETRO } = environment;
 
 @Injectable()
 export class AuditoriaPadreService {
-  private tiposEvaluacion: any[] = [];
-  private cronogramasActividad: any[] = [];
-  private macroprocesos: any[] = [];
-  private procesos: any[] = [];
-  private dependencias: any[] = [];
-  private vigencias: any[] = [];
-  private estados: { Id: number; Nombre: string }[] = [];
+  private readonly tiposEvaluacion: any[] = [];
+  private readonly cronogramasActividad: any[] = [];
+  private readonly macroprocesos: any[] = [];
+  private readonly procesos: any[] = [];
+  private readonly dependencias: any[] = [];
+  private readonly vigencias: any[] = [];
+  private readonly estados: { Id: number; Nombre: string }[] = [];
 
   constructor(
     private readonly dominiosService: DominiosService,

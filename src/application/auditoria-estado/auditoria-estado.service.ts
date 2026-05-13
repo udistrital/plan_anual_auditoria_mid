@@ -9,7 +9,7 @@ const { TIPO_PARAMETRO, ETIQUETAS_ROL } = environment;
 
 @Injectable()
 export class AuditoriaEstadoService {
-  private estados: any[] = [];
+  private readonly estados: any[] = [];
 
   constructor(
     private readonly auditoriaCrudService: AuditoriaCrudService,
