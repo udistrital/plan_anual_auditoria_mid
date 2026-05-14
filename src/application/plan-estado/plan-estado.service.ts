@@ -22,7 +22,7 @@ export class PlanEstadoService {
 
     const queryStr: string = queryParams.query;
     const estadoIdRegex = /estado_id:([^\s,]+)/;
-    const match = queryStr.match(estadoIdRegex);
+    const match = estadoIdRegex.exec(queryStr);
 
     if (!match) return queryParams;
 
