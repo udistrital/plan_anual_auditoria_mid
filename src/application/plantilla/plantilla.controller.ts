@@ -14,7 +14,6 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { PlantillaService } from './services/plantilla.service';
-import { PlantillaPlanTrabajoService } from './services/plantilla-plan-trabajo.service';
 import { PlantillaSolicitudInformacionService } from './services/plantilla-solicitud-informacion.service';
 import { PlantillaCartaPresentacionService } from './services/plantilla-carta-presentacion.service';
 import { PlantillaProgramaAuditoriaService } from './services/plantilla-programa-auditoria.service';
@@ -26,7 +25,6 @@ import { PlantillaInformeAuditoriaService } from './services/plantilla-informe-a
 export class PlantillaController {
   constructor(
     private readonly plantillaService: PlantillaService,
-    private readonly plantillaPlanTrabajo: PlantillaPlanTrabajoService,
     private readonly plantillaSolicitudInformacion: PlantillaSolicitudInformacionService,
     private readonly plantillaCartaPresentacion: PlantillaCartaPresentacionService,
     private readonly plantillaProgramaAuditoria: PlantillaProgramaAuditoriaService,
@@ -86,8 +84,6 @@ export class PlantillaController {
     @Param('idAuditoria') id: string,
   ) {
     switch (tipo) {
-      case 'plan-trabajo':
-        return this.plantillaPlanTrabajo.get(id);
       case 'solicitud-informacion':
         return this.plantillaSolicitudInformacion.get(id);
       case 'carta-presentacion':
