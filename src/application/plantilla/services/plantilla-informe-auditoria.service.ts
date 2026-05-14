@@ -151,7 +151,11 @@ export class PlantillaInformeAuditoriaService {
       null,
       params,
     );
-    return respuesta.Data;
+    let data = respuesta.Data || [];
+    if (tipo === 'hallazgo') {
+      data = data.filter((h: any) => !h?.rechazado);
+    }
+    return data;
   }
 
   private async generarTituloInforme(
