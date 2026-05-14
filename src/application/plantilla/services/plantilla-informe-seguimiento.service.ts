@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
 import { environment } from 'src/config/configuration';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
-import { ParametrosService } from 'src/shared/services/parametros.service';
+import { OikosService } from 'src/shared/services/oikos.service';
 import { PlantillasMidService } from 'src/shared/services/plantillas-mid.service';
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
 
@@ -18,7 +18,7 @@ export class PlantillaInformeSeguimientoService {
   constructor(
     private readonly plantillasMidService: PlantillasMidService,
     private readonly auditoriaCrudService: AuditoriaCrudService,
-    private readonly parametrosService: ParametrosService,
+    private readonly oikosService: OikosService,
     private readonly auditoriaService: AuditoriaService,
     private readonly tercerosService: TercerosHelperService,
   ) {}
@@ -41,29 +41,61 @@ export class PlantillaInformeSeguimientoService {
       const [anio, mes, dia] = informe.fecha_emision.split('T')[0].split('-');
       const [
         tituloInforme,
-        macroproceso,
-        lider,
-        responsable,
+        dependencias,
+        lideres,
+        responsables,
         jefeOci,
         auditorResponsable,
       ] = await Promise.all([
+        // titulo informe
         this.generarTituloInforme(
           auditoria._id,
           auditoria.tipo_evaluacion_id,
           auditoria.titulo,
         ),
-        this.parametrosService
-          .get('parametro', auditoria.macroproceso_id, null)
-          .then((data) => data.Data),
-        this.parametrosService
-          .get('parametro', auditoria.lider_id, null)
-          .then((data) => data.Data),
-        this.parametrosService
-          .get('parametro', auditoria.responsable_id, null)
-          .then((data) => data.Data),
+        // dependencias
+        Promise.all(
+          auditoria.dependencia_id.map((dependencia_id: number) =>
+            this.oikosService.traerData('dependencia', dependencia_id, null),
+          ),
+        ),
+        // lideres
+        Promise.all(
+          auditoria.dependencia_id.map((dependencia_id: number) =>
+            this.tercerosService.getTerceroVinculado(
+              dependencia_id,
+              CARGO.JEFE_DEPENDENCIA_ID,
+            ),
+          ),
+        ),
+        // responsables
+        Promise.all(
+          auditoria.dependencia_id.map((dependencia_id: number) =>
+            this.tercerosService.getTerceroVinculado(
+              dependencia_id,
+              CARGO.ASISTENTE_DEPENDENCIA_ID,
+            ),
+          ),
+        ),
+        // jefe oci
         this.tercerosService.getJefeOCI(),
+        // auditor responsable
         this.obtenerAuditorResponsable(auditoria._id),
       ]);
+
+      // Relacionar cada líder y responsable con su respectiva dependencia para evitar confusiones en la plantilla
+      dependencias.forEach((dependencia: any, indice: number) => {
+        if (dependencia?.Nombre)
+          dependencia.Nombre += ` (${indice + 1})`; 
+      });
+      lideres.forEach((lider: any, indice: number) => {
+        if (lider?.NombreCompleto)
+          lider.NombreCompleto += ` (${indice + 1})`;
+      });
+      responsables.forEach((responsable: any, indice: number) => {
+        if (responsable?.NombreCompleto)
+          responsable.NombreCompleto += ` (${indice + 1})`;
+      });
 
       const infoParaPlantilla = {
         plantilla_id: PLANTILLAS.INFORME_SEGUIMIENTO,
@@ -76,9 +108,19 @@ export class PlantillaInformeSeguimientoService {
           },
           informe: {
             titulo: tituloInforme,
-            dependencia: macroproceso.Nombre,
-            lider: lider.Nombre,
-            responsable: responsable.Nombre,
+            dependencia: dependencias
+                .filter((mp: any) => mp)
+                .map((mp: any) => mp.Nombre)
+                .join(', '),
+            lider: lideres
+                .filter((l: any) => l)
+                .map((l: any) => l.NombreCompleto)
+                .join(', ') ?? '',
+            responsable: responsables
+                .filter((r: any) => r)
+                .map((r: any) => r.NombreCompleto)
+                .join(', ') ?? '',
+          objetivos: auditoria.objetivo,
             objetivo: auditoria.objetivo,
             alcance: auditoria.alcance,
             criterios: auditoria.criterio,
