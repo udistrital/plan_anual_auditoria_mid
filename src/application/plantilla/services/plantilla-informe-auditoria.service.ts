@@ -142,8 +142,9 @@ export class PlantillaInformeAuditoriaService {
   }
 
   private async obtenerComponentesInforme(tipo: string, idInforme: string) {
+    const queryExtra = tipo === 'hallazgo' ? ',rechazado:false' : '';
     const params = {
-      query: `informe_id:${idInforme},activo:true`,
+      query: `informe_id:${idInforme},activo:true${queryExtra}`,
       limit: 0,
     };
     const respuesta = await this.auditoriaCrudService.traerDataCrud(
@@ -151,7 +152,7 @@ export class PlantillaInformeAuditoriaService {
       null,
       params,
     );
-    return respuesta.Data;
+    return respuesta.Data || [];
   }
 
   private async generarTituloInforme(
