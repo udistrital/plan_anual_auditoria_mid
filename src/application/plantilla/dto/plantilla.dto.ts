@@ -18,7 +18,7 @@ export class PlantillaDto {
   cantidad_auditorias: number;
 }
 
-export class jsonPlantillaDto {
+export class JsonPlantillaDto {
   plantilla_id: string;
   data: {
     codigo: string;

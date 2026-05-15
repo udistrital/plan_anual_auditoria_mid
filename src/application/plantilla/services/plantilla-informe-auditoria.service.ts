@@ -142,8 +142,9 @@ export class PlantillaInformeAuditoriaService {
   }
 
   private async obtenerComponentesInforme(tipo: string, idInforme: string) {
+    const queryExtra = tipo === 'hallazgo' ? ',rechazado:false' : '';
     const params = {
-      query: `informe_id:${idInforme},activo:true`,
+      query: `informe_id:${idInforme},activo:true${queryExtra}`,
       limit: 0,
     };
     const respuesta = await this.auditoriaCrudService.traerDataCrud(
@@ -151,7 +152,7 @@ export class PlantillaInformeAuditoriaService {
       null,
       params,
     );
-    return respuesta.Data;
+    return respuesta.Data || [];
   }
 
   private async generarTituloInforme(
@@ -204,23 +205,14 @@ export class PlantillaInformeAuditoriaService {
       case 0:
         return 'Sin auditor asignado.';
       case 1:
-        const tercero = await this.tercerosService.getTerceroById(
-          auditores[0].auditor_id,
-        );
-        return tercero?.NombreCompleto || 'Sin auditor asignado.';
-      default:
-        const auditorLider = auditores.find((a) => a.auditor_lider == true);
-        if (auditorLider) {
-          const tercero = await this.tercerosService.getTerceroById(
-            auditorLider.auditor_id,
-          );
-          return tercero?.NombreCompleto || 'Sin auditor asignado.';
-        } else {
-          const tercero = await this.tercerosService.getTerceroById(
+        return (await this.tercerosService.getTerceroById(
             auditores[0].auditor_id,
-          );
-          return tercero?.NombreCompleto || 'Sin auditor asignado.';
-        }
+          ))?.NombreCompleto || 'Sin auditor asignado.';
+      default:
+        return (await this.tercerosService.getTerceroById(
+            auditores.find((a) => a.auditor_lider)?.auditor_id
+              || auditores[0]?.auditor_id,
+          ))?.NombreCompleto || 'Sin auditor asignado.';
     }
   }
 

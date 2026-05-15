@@ -117,13 +117,13 @@ export class PlantillaController {
     @Param('tipo') tipo: string,
     @Param('idAuditoria') id: string,
   ) {
-    switch (tipo) {
-      case 'carta-presentacion':
-        return this.plantillaCartaPresentacion.getDOCX(id);
-      default:
-        throw new NotFoundException(
-          `No se encontró el tipo de plantilla para descargar DOCX: ${tipo}`,
-        );
+    // Como actualmente sólo hay una plantilla, se usa condicional.
+    // Si en el futuro se añaden más, refactorizar a switch.
+    if (tipo !== 'carta-presentacion') {
+      throw new NotFoundException(
+        `No se encontró el tipo de plantilla para descargar DOCX: ${tipo}`,
+      );
     }
+    return this.plantillaCartaPresentacion.getDOCX(id);
   }
 }
