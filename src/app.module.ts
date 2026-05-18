@@ -14,6 +14,8 @@ import { InformeModule } from './informe/informe.module';
 import { AuditoriaEstadoModule } from './auditoria-estado/auditoria-estado.module';
 import { AuditoriaCrudModule } from './shared/services/auditoria-crud/auditoria-crud.module';
 import { AuditadoModule } from './auditado/auditado.module';
+import { PlanMejoramientoAuditorModule } from './plan-mejoramiento-auditor/plan-mejoramiento-auditor.module';
+import { ResponsableAccionModule } from './responsable-accion/responsable-accion.module';
 
 @Module({
   imports: [
@@ -32,6 +34,8 @@ import { AuditadoModule } from './auditado/auditado.module';
     }),
     InformeModule,
     AuditadoModule,
+    PlanMejoramientoAuditorModule,
+    ResponsableAccionModule,
   ],
   controllers: [AppController],
   providers: [AppService],
