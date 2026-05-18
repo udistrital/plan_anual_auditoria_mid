@@ -5,5 +5,5 @@ export const DOMINIOS_CONFIG = {
   },
   NOMBRES_OIKOS: {
     DEPENDENCIAS: 'DEPENDENCIAS',
-  }
-}
+  },
+};

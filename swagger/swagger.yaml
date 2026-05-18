@@ -12,17 +12,10 @@ paths:
   /actividad:
     get:
       operationId: ActividadController_getAll
-      parameters:
-        - name: queryParams
-          required: false
-          in: query
-          description: Filtros opcionales.
-          schema: {}
+      parameters: []
       responses:
         '200':
           description: Actividades obtenidas.
-        '404':
-          description: Sin resultados.
       summary: Obtener todas las actividades
       tags: &ref_0
         - Actividad
@@ -33,14 +26,11 @@ paths:
         - name: id
           required: true
           in: path
-          description: ID de la actividad.
           schema:
             type: string
       responses:
         '200':
           description: Actividad obtenida.
-        '404':
-          description: No encontrada.
       summary: Obtener actividad por ID
       tags: *ref_0
   /auditoria-estado:
@@ -104,13 +94,13 @@ paths:
           in: path
           description: ID de la persona (tercero).
           schema:
-            type: string
+            type: number
         - name: cargoId
           required: true
           in: path
           description: ID del cargo (312 o 320).
           schema:
-            type: string
+            type: number
       responses:
         '200':
           description: Auditorías obtenidas.
@@ -234,8 +224,6 @@ paths:
           description: Auditorías padre obtenidas.
         '400':
           description: Parámetros inválidos.
-        '500':
-          description: Error interno.
       summary: Obtener auditorías padre ordenadas
       tags: &ref_4
         - Auditoria Padre
@@ -293,9 +281,45 @@ paths:
           description: Auditoría padre eliminada.
         '400':
           description: Parámetros inválidos.
-        '500':
-          description: Error interno.
       summary: Eliminar auditoría padre lógicamente
+      tags: *ref_4
+  /auditoria-padre/{id}/generar-auditoria:
+    post:
+      operationId: AuditoriaPadreController_generarUnaAuditoria
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: ID de la auditoría padre.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                usuario_id:
+                  type: number
+                usuario_rol:
+                  type: string
+                observacion:
+                  type: string
+                estado_id_padre_actual:
+                  type: number
+                estado_id_padre_nuevo:
+                  type: number
+                estado_id_hija_nuevo:
+                  type: number
+                fase_id:
+                  type: number
+      responses:
+        '201':
+          description: Auditoría generada exitosamente.
+        '400':
+          description: Error en la solicitud.
+      summary: Genera una auditoría hija para una auditoría padre específica.
       tags: *ref_4
   /cargue-masivo/auditorias/plantilla:
     get:
@@ -436,6 +460,44 @@ paths:
           description: No se encontró el plan.
       summary: Obtiene un plan por ID.
       tags: *ref_6
+  /plan-auditoria/{id}/generar-auditorias:
+    post:
+      operationId: PlanAuditoriaController_generarAuditorias
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: ID del plan de auditoría.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                usuario_id:
+                  type: number
+                usuario_rol:
+                  type: string
+                observacion:
+                  type: string
+                estado_id_padre_actual:
+                  type: number
+                estado_id_padre_nuevo:
+                  type: number
+                estado_id_hija_nuevo:
+                  type: number
+                fase_id:
+                  type: number
+      responses:
+        '201':
+          description: Auditorías generadas exitosamente.
+        '400':
+          description: Error en la solicitud.
+      summary: Genera auditorías hijas para todas las auditorías padre de un plan.
+      tags: *ref_6
   /plan-estado:
     get:
       operationId: PlanEstadoController_getAll
@@ -528,6 +590,32 @@ paths:
           description: Tipo de plantilla no encontrado.
       summary: Obtener plantilla dinámica según el tipo de auditoría
       tags: *ref_8
+  /plantilla/docx/{tipo}/{idAuditoria}:
+    get:
+      operationId: PlantillaController_getPlantillaDOCX
+      parameters:
+        - name: tipo
+          required: true
+          in: path
+          description: >-
+            Tipo de la plantilla (ej: plan-trabajo, solicitud-informacion,
+            carta-presentacion, programa-trabajo, informe-seguimiento,
+            informe-auditoria)
+          schema:
+            type: string
+        - name: idAuditoria
+          required: true
+          in: path
+          description: ID de la auditoría
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Plantilla generada exitosamente.
+        '404':
+          description: Tipo de plantilla no encontrado.
+      summary: Obtener plantilla dinámica según el tipo de auditoría en formato DOCX
+      tags: *ref_8
   /informe/{id}:
     get:
       description: Retorna el informe con auditoría hallazgos y temas
@@ -547,25 +635,6 @@ paths:
       summary: Obtener informe consolidado para edición
       tags: &ref_9
         - Informe
-    put:
-      description: Actualiza los datos de un informe existente
-      operationId: InformeController_update
-      parameters:
-        - name: id
-          required: true
-          in: path
-          description: ID del informe
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Informe actualizado exitosamente
-        '400':
-          description: Datos de entrada inválidos
-        '404':
-          description: Informe no encontrado
-      summary: Actualizar un informe
-      tags: *ref_9
   /informe:
     get:
       description: Lista informes con filtros opcionales y datos complementarios básicos
@@ -618,8 +687,6 @@ paths:
           required: false
           in: query
           description: ID del tipo de documento para filtrar los documentos (opcional).
-          explode: false
-          style: form
           schema:
             type: string
       responses:

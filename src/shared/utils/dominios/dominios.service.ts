@@ -1,16 +1,16 @@
-import { Injectable } from "@nestjs/common";
-import { Observable, map, catchError } from "rxjs";
-import { ParametrosService } from "src/shared/services/parametros/parametros.service";
-import { OikosService } from "src/shared/services/oikos/oikos.service";
-import { environment } from "src/config/configuration";
-import { Parametro, Dominio } from "./dominio.model";
-import { DOMINIOS_CONFIG } from "./dominios.config";
+import { Injectable } from '@nestjs/common';
+import { Observable, map, catchError, from } from 'rxjs';
+import { ParametrosService } from 'src/shared/services/parametros.service';
+import { OikosService } from 'src/shared/services/oikos.service';
+import { environment } from 'src/config/configuration';
+import { Parametro, Dominio } from './dominio.model';
+import { DOMINIOS_CONFIG } from './dominios.config';
 
 @Injectable()
 export class DominiosService {
   constructor(
     private readonly oikosService: OikosService,
-    private readonly parametrosService: ParametrosService
+    private readonly parametrosService: ParametrosService,
   ) {}
 
   /**
@@ -22,10 +22,11 @@ export class DominiosService {
   getNombreTipoParametro(tipoParametroId: number): string {
     const tipos = environment.TIPO_PARAMETRO;
     for (const tipo of Object.keys(tipos)) {
-      if (tipos[tipo] == tipoParametroId)
-        return tipo;
-    };
-    throw new Error(`TipoParametroId ${tipoParametroId} not found in environment configuration`);
+      if (tipos[tipo] == tipoParametroId) return tipo;
+    }
+    throw new Error(
+      `TipoParametroId ${tipoParametroId} not found in environment configuration`,
+    );
   }
 
   /**
@@ -35,9 +36,14 @@ export class DominiosService {
    * @throws An error if the fetch operation fails or if the response is not in the expected format (See {@link Parametro}).
    */
   getParametros(tipoParametroId: number): Observable<Dominio> {
-    const endpoint = `parametro?query=Activo:true,TipoParametroId:${tipoParametroId}&fields=Id,Nombre&limit=0`;
+    const params = {
+      query: `Activo:true,TipoParametroId:${tipoParametroId}`,
+      fields: 'Id,Nombre',
+      limit: 0,
+    };
+
     try {
-      return this.parametrosService.get(endpoint).pipe(
+      return from(this.parametrosService.get('parametro', null, params)).pipe(
         map((response: any) => {
           if (!response)
             throw new Error('No response received from Parametros service');
@@ -51,13 +57,14 @@ export class DominiosService {
           api: DOMINIOS_CONFIG.NOMBRES_API.PARAMETROS,
           nombre: this.getNombreTipoParametro(tipoParametroId),
           tipoParametroId: tipoParametroId,
-          parametros: data
+          parametros: data,
         })),
-        catchError(error => { throw this.createError("getParametros", error) })
+        catchError((error) => {
+          throw this.createError('getParametros', error);
+        }),
       );
-    }
-    catch (error) {
-      throw this.createError("getParametros", error);
+    } catch (error) {
+      throw this.createError('getParametros', error);
     }
   }
 
@@ -67,9 +74,15 @@ export class DominiosService {
    * @throws An error if the fetch operation fails or if the response is not in the expected format (See {@link Parametro}).
    */
   getDependencias(): Observable<Dominio> {
-    const url = `dependencia?query=Activo:true&fields=Id,Nombre,CorreoElectronico&limit=0`;
+    const params = {
+      query: 'Activo:true',
+      fields: 'Id,Nombre,CorreoElectronico',
+      limit: 0,
+    };
     try {
-      return this.oikosService.get(url).pipe(
+      return from(
+        this.oikosService.traerData('dependencia', null, params),
+      ).pipe(
         map((response: any) => {
           if (!response)
             throw new Error('No response received from OIKOS service');
@@ -79,13 +92,14 @@ export class DominiosService {
         map((data: Parametro[]) => ({
           api: DOMINIOS_CONFIG.NOMBRES_API.OIKOS,
           nombre: DOMINIOS_CONFIG.NOMBRES_OIKOS.DEPENDENCIAS,
-          parametros: data
+          parametros: data,
         })),
-        catchError(error => { throw this.createError("getDependencias", error) })
+        catchError((error) => {
+          throw this.createError('getDependencias', error);
+        }),
       );
-    }
-    catch (error) {
-      throw this.createError("getDependencias", error);
+    } catch (error) {
+      throw this.createError('getDependencias', error);
     }
   }
 
@@ -98,8 +112,7 @@ export class DominiosService {
   createError(method: string, error: any): Error {
     const errorMessage = `DominiosService : ${method} : Error: ${error.message}`;
     const newError = new Error(errorMessage);
-    newError.stack += "\nCaused by: " + error.stack;
+    newError.stack += '\nCaused by: ' + error.stack;
     return newError;
   }
-
-};
+}

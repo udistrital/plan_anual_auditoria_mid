@@ -1,325 +1,470 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { lastValueFrom, forkJoin } from 'rxjs';
 import { environment } from 'src/config/configuration';
-import { AuditorService } from '../../auditor/auditor.service';
+import { AuditorService } from '../auditor/auditor.service';
 import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
 import { Dominio } from 'src/shared/utils/dominios/dominio.model';
 import { unirListaNombresConComas } from 'src/utils/texto.utils';
-import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
+import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
 
-const {
-  PLAN_AUDITORIA_CRUD_SERVICE,
-  TIPO_PARAMETRO,
-  TERCEROS_SERVICE,
-} = environment;
+const { TIPO_PARAMETRO } = environment;
 
 @Injectable()
 export class AuditoriaService {
-  private tiposEvaluacion: any[] = [];
-  private cronogramasActividad: any[] = [];
-  private macroprocesos: any[] = [];
-  private procesos: any[] = [];
-  private dependencias: any[] = [];
-  private vigencias: any[] = [];
+  private readonly tiposEvaluacion: any[] = [];
+  private readonly cronogramasActividad: any[] = [];
+  private readonly macroprocesos: any[] = [];
+  private readonly procesos: any[] = [];
+  private readonly dependencias: any[] = [];
+  private readonly vigencias: any[] = [];
+  private readonly estados: { Id: number; Nombre: string }[] = [];
+
   private datosTerceros: any[] = [];
-  private estados: { Id: number; Nombre: string }[] = [];
 
   constructor(
-    private readonly httpService: HttpService,
     private readonly auditorService: AuditorService,
     private readonly auditoriaCrudService: AuditoriaCrudService,
     private readonly dominiosService: DominiosService,
+    private readonly tercerosHelper: TercerosHelperService,
   ) {}
 
   async getAll(queryParams: any) {
-    const queryEstado = queryParams.query
-        ? queryParams.query.split(',').filter((param: string) => param.startsWith('estado_id:'))[0]
-        : undefined;
-    
-    if (queryParams.query) {
-      queryParams.query = queryParams.query
-        .split(',')
-        .filter((param: string) => !param.startsWith('estado_id:'))
-        .join(',');
-    }
+    const query = queryParams?.query || '';
 
+    // 1. Extraer estado_id sin mutar query original
+    const queryParts = query ? query.split(',') : [];
+
+    const queryEstado = queryParts.find((param: string) =>
+      param.startsWith('estado_id'),
+    );
+
+    const querySinEstado = queryParts
+      .filter((param: string) => !param.startsWith('estado_id'))
+      .join(',');
+
+    // 2. Query auditorías padre
     const queryPadre = {
-      query: queryParams.query.replace('auditoria_padre_id', '_id'),
+      query: (querySinEstado || '').replace(
+        'auditoria_padre_id',
+        '_id',
+      ),
       limit: 0,
-      fields: '_id,titulo,tipo_evaluacion_id,macroproceso_id,proceso_id,dependencia_id'
-    }
-
-    const data = await this.auditoriaCrudService.traerDataCrud('auditoria-padre', null, queryPadre);
-    const auditoriasPadre: any[] = data.Data;
-    if (auditoriasPadre.length > 0) {
-      const padresIds: string[] = auditoriasPadre.map(auditoria => auditoria?._id);
-      
-      const nuevaQuery = queryEstado ? 
-        `${queryEstado},activo:true,auditoria_padre_id__in:${padresIds.join('|')}` :
-        `activo:true,auditoria_padre_id__in:${padresIds.join('|')}`;
-
-      const queryHijas = { ...queryParams, query: nuevaQuery }
-      
-      const data2 = await this.auditoriaCrudService.traerDataCrud('auditoria', null, queryHijas);
-      const auditorias: any[] = data2.Data;
-      
-      const padresMap = Object.fromEntries(auditoriasPadre.map(p => [p?._id, p]));
-      const auditorias_unidas: any[] = auditorias.map(a => {
-        if (a?.auditoria_padre_id in padresMap) {
-          return {
-            ...(padresMap[a?.auditoria_padre_id] || {}),
-            ...a,
-          };
-        }
-      });
-      
-      data.Data = auditorias_unidas;
-      data.MetaData.Count = data2.MetaData.Count;
-    }
-
-    await this.enriquecerAuditorias(data.Data);
-    if (await this.identificarCampo(data)) {
-      this.reemplazarCampos(data);
-    }
-    return data;
-  }
-
-  async getByAuditor(personaId: string, queryParams: any) {
-    const queryEstado = queryParams.query
-        ? queryParams.query.split(',').filter((param: string) => param.startsWith('estado_id:'))[0]
-        : '';
-
-    if (queryParams.query) {
-      queryParams.query = queryParams.query
-        .split(',')
-        .filter((param: string) => !param.startsWith('estado_id:'))
-        .join(',');
-    }
-
-    let padreQueryStr = '';
-    for (const param of queryParams.query.split(',')) {
-      if (
-        param.startsWith('tipo_evaluacion_id:') ||
-        param.startsWith('dependencia_id:') ||
-        param.startsWith('vigencia_id:')
-      ) {
-        padreQueryStr += padreQueryStr ? `,${param}` : param;
-      }
-    }
-
-    const queryPadre = {
-      query: padreQueryStr,
-      limit: 0,
-      fields: '_id,titulo,tipo_evaluacion_id,macroproceso_id,proceso_id,dependencia_id',
+      fields:
+        '_id,titulo,tipo_evaluacion_id,macroproceso_id,proceso_id,dependencia_id',
     };
 
-    const data = await this.auditoriaCrudService.traerDataCrud('auditoria-padre', null, queryPadre);
-    const auditorias_padre: any[] = data.Data;
-    const padresIds: string[] = Array.from(new Set(auditorias_padre.map(a => a?._id).filter(Boolean)));
-
-    if (auditorias_padre.length > 0) {
-      const nuevaQuery = queryEstado ?
-        `${queryEstado},activo:true,auditoria_padre_id__in:${padresIds.join('|')}` :
-        `activo:true,auditoria_padre_id__in:${padresIds.join('|')}`;
-
-      const queryHijas = { ...queryParams, query: nuevaQuery };
-
-      const data2 = await this.auditoriaCrudService.traerDataCrud('auditoria/auditor', personaId, queryHijas);
-      const auditorias: any[] = data2.Data;
-
-      const padresMap = Object.fromEntries(auditorias_padre.map(p => [p?._id, p]));
-      const auditorias_unidas: any[] = auditorias
-          .filter(a =>
-            a?.auditoria_padre_id && a.auditoria_padre_id in padresMap
-          )
-          .map(a => {
-            return {
-              ...(padresMap[a?.auditoria_padre_id] || {}),
-              ...a,
-            }
-          });
-
-      data.Data = auditorias_unidas;
-      data.MetaData.Count = data2.MetaData.Count;
-    }
-    
-    await this.enriquecerAuditorias(data.Data);
-    data.Data = data.Data.filter((a: any) =>
-      a.auditores?.some((auditor: any) => auditor.auditor_id === Number(personaId))
-    );
-    data.MetaData.Count = data.Data.length;
-
-    if (await this.identificarCampo(data)) {
-      this.reemplazarCampos(data);
-    }
-    return data;
-  }
-
-  async getByDependencia(personaId: number, cargoId: number, queryParams: any) {
-    const dependenciaIds = await this.getDependenciasByPersona(
-      personaId,
-      cargoId,
+    const dataPadre = await this.auditoriaCrudService.traerDataCrud(
+      'auditoria-padre',
+      null,
+      queryPadre,
     );
 
-    if (!dependenciaIds || dependenciaIds.length === 0) {
+    const auditoriasPadre: any[] = dataPadre?.Data || [];
+
+    // 👉 Caso sin resultados
+    if (!auditoriasPadre.length) {
       return {
-        Success: true,
-        Status: 200,
-        Message: 'Sin auditorías para las dependencias del usuario',
         Data: [],
         MetaData: { Count: 0 },
       };
     }
 
-    const dependenciasFilter = dependenciaIds.join('|');
+    // 3. Construir query hijas
+    const padresIds = auditoriasPadre.map((a) => a?._id).filter(Boolean);
 
-    const queryEstado = queryParams.query
-      ? queryParams.query.split(',').filter((param: string) => param.startsWith('estado_id:'))[0]
-      : undefined;
+    const baseQuery = [
+      queryEstado,
+      'activo:true',
+      `auditoria_padre_id__in:${padresIds.join('|')}`,
+    ]
+      .filter(Boolean)
+      .join(',');
 
-    const queryPadreBase = queryParams.query
-      ? queryParams.query.split(',').filter((param: string) => !param.startsWith('estado_id:')).join(',')
-      : '';
+    const queryHijas = {
+      ...queryParams,
+      query: baseQuery,
+    };
 
-    const additionalFilters = `dependencia_id__in:${dependenciasFilter}`;
-    const queryPadreString = queryPadreBase ? `${queryPadreBase},${additionalFilters}` : additionalFilters;
+    const dataHijas = await this.auditoriaCrudService.traerDataCrud(
+      'auditoria',
+      null,
+      queryHijas,
+    );
 
-    // incluir tipo_evaluacion_id si viene en queryParams.query original
-    const tipoEvalParam = queryParams.query
-      ? queryParams.query.split(',').filter((param: string) => param.startsWith('tipo_evaluacion_id:'))[0]
-      : undefined;
+    const auditorias: any[] = dataHijas?.Data || [];
 
-    let queryPadreFinal = queryPadreString;
-    if (tipoEvalParam) {
-      queryPadreFinal = `${tipoEvalParam},${queryPadreFinal}`;
+    // 4. Map de padres
+    const padresMap = Object.fromEntries(
+      auditoriasPadre.map((p) => [p._id, p]),
+    );
+
+    // 5. Merge padre + hija (seguro)
+    const auditoriasUnidas = auditorias
+      .map((a) => {
+        const padre = padresMap[a?.auditoria_padre_id];
+        if (!padre) return null;
+
+        return {
+          ...padre,
+          ...a,
+        };
+      })
+      .filter(Boolean);
+
+    // 6. Construir respuesta final
+    const result = {
+      Data: auditoriasUnidas,
+      MetaData: {
+        Count: dataHijas?.MetaData?.Count || 0,
+      },
+    };
+
+    // 7. Enriquecimiento
+    await this.enriquecerAuditorias(result.Data);
+
+    if (await this.identificarCampo(result)) {
+      this.reemplazarCampos(result);
     }
 
+    return result;
+  }
+
+  async getByAuditor(personaId: string, queryParams: any) {
+    const query = queryParams?.query || '';
+  
+    // 1. Separar partes del query
+    const queryParts = query ? query.split(',') : [];
+  
+    const queryEstado = queryParts.find((param: string) =>
+      param.startsWith('estado_id'),
+    );
+  
+    const querySinEstado = queryParts.filter(
+      (param: string) => !param.startsWith('estado_id'),
+    );
+  
+    // 2. Construir query de padres (más declarativo)
+    const padreQueryStr = querySinEstado
+      .filter(
+        (param: string) =>
+          param.startsWith('tipo_evaluacion_id') ||
+          param.startsWith('dependencia_id') ||
+          param.startsWith('vigencia_id'),
+      )
+      .join(',');
+  
+    const queryPadre = {
+      query: padreQueryStr,
+      limit: 0,
+      fields:
+        '_id,titulo,tipo_evaluacion_id,macroproceso_id,proceso_id,dependencia_id',
+    };
+  
+    const dataPadre = await this.auditoriaCrudService.traerDataCrud(
+      'auditoria-padre',
+      null,
+      queryPadre,
+    );
+  
+    const auditoriasPadre: any[] = dataPadre?.Data || [];
+  
+    // 👉 Caso sin padres
+    if (!auditoriasPadre.length) {
+      return {
+        Data: [],
+        MetaData: { Count: 0 },
+      };
+    }
+  
+    const padresIds = Array.from(
+      new Set(auditoriasPadre.map((a) => a?._id).filter(Boolean)),
+    );
+  
+    // 3. Query hijas
+    const nuevaQuery = [
+      queryEstado,
+      'activo:true',
+      `auditoria_padre_id__in:${padresIds.join('|')}`,
+    ]
+      .filter(Boolean)
+      .join(',');
+  
+    const queryHijas = {
+      ...queryParams,
+      query: nuevaQuery,
+    };
+  
+    const dataHijas = await this.auditoriaCrudService.traerDataCrud(
+      'auditoria/auditor',
+      personaId,
+      queryHijas,
+    );
+  
+    const auditorias: any[] = dataHijas?.Data || [];
+  
+    // 4. Map padres
+    const padresMap = Object.fromEntries(
+      auditoriasPadre.map((p) => [p._id, p]),
+    );
+  
+    // 5. Merge seguro
+    let auditoriasUnidas = auditorias
+      .filter(
+        (a) => a?.auditoria_padre_id && padresMap[a.auditoria_padre_id],
+      )
+      .map((a) => ({
+        ...padresMap[a.auditoria_padre_id],
+        ...a,
+      }));
+  
+    const result = {
+      Data: auditoriasUnidas,
+      MetaData: {
+        Count: auditoriasUnidas.length,
+      },
+    };
+  
+    // 6. Enriquecimiento
+    await this.enriquecerAuditorias(result.Data);
+  
+    if (await this.identificarCampo(result)) {
+      this.reemplazarCampos(result);
+    }
+  
+    return result;
+  }
+
+  async getByDependencia(
+    personaId: number,
+    cargoId: number,
+    queryParams: any,
+  ) {
+    const dependenciaIds =
+      await this.tercerosHelper.getDependenciasByPersona(
+        personaId,
+        cargoId,
+      );
+  
+    // 👉 Sin dependencias → respuesta estándar
+    if (!dependenciaIds?.length) {
+      return {
+        Data: [],
+        MetaData: { Count: 0 },
+      };
+    }
+  
+    const query = queryParams?.query || '';
+    const queryParts = query ? query.split(',') : [];
+  
+    const queryEstado = queryParts.find((param: string) =>
+      param.startsWith('estado_id'),
+    );
+  
+    const tipoEvalParam = queryParts.find((param: string) =>
+      param.startsWith('tipo_evaluacion_id'),
+    );
+  
+    const queryBase = queryParts.filter(
+      (param: string) =>
+        !param.startsWith('estado_id') &&
+        !param.startsWith('tipo_evaluacion_id'),
+    );
+  
+    // 1. Query padres
+    const dependenciaFilter = `dependencia_id__in:${dependenciaIds.join('|')}`;
+  
+    const queryPadreFinal = [
+      tipoEvalParam,
+      ...queryBase,
+      dependenciaFilter,
+    ]
+      .filter(Boolean)
+      .join(',');
+  
     const queryPadre = {
       query: queryPadreFinal,
       limit: 0,
-      fields: '_id,titulo,tipo_evaluacion_id,macroproceso_id,proceso_id,dependencia_id',
+      fields:
+        '_id,titulo,tipo_evaluacion_id,macroproceso_id,proceso_id,dependencia_id',
     };
-
-    const data = await this.auditoriaCrudService.traerDataCrud('auditoria-padre', null, queryPadre);
-    const auditorias: any[] = data.Data;
-
-    if (auditorias.length > 0) {
-      const ids: string[] = auditorias.map(a => a?._id);
-
-      // construir query de hijas incluyendo estado (si aplica)
-      const nuevaQueryParts = [] as string[];
-      if (queryEstado) nuevaQueryParts.push(queryEstado);
-      nuevaQueryParts.push('activo:true');
-      nuevaQueryParts.push(`auditoria_padre_id__in:${ids.join('|')}`);
-
-      const nuevaQuery = nuevaQueryParts.join(',');
-
-      const queryHijas = { ...queryParams, query: nuevaQuery };
-      const data2 = await this.auditoriaCrudService.traerDataCrud('auditoria', null, queryHijas);
-      const auditorias_hijas: any[] = data2.Data;
-
-      const padresMap = Object.fromEntries(auditorias.map(p => [p?._id, p]));
-      const auditorias_unidas: any[] = auditorias_hijas
-          .filter( a =>
-            a?.auditoria_padre_id && a.auditoria_padre_id in padresMap
-          )
-          .map(a => {
-            return {
-              ...(padresMap[a?.auditoria_padre_id] || {}),
-              ...a,
-            };
-          });
-
-      data.Data = auditorias_unidas;
-      data.MetaData.Count = data2.MetaData.Count;
-    }
-
-    if (data.Data && Array.isArray(data.Data) && data.Data.length > 0) {
-      const todosDepIds: number[] = Array.from(new Set(
-        data.Data.flatMap((a: any) =>
-          Array.isArray(a.dependencia_id) ? a.dependencia_id : a.dependencia_id != null ? [a.dependencia_id] : []
-        )
-      ));
-      const dependenciaNombres = await this.getDependenciaNombres(todosDepIds);
-
-      await this.enriquecerAuditorias(data.Data, false);
-
-      data.Data.forEach((auditoria: any) => {
-        const ids = Array.isArray(auditoria.dependencia_id)
-          ? auditoria.dependencia_id
-          : auditoria.dependencia_id != null ? [auditoria.dependencia_id] : [];
-        auditoria.dependencia_nombre = ids
-          .map((id: number) => dependenciaNombres.get(id))
-          .filter(Boolean);
-      });
-
-      if (await this.identificarCampo(data)) {
-        this.reemplazarCampos(data);
-      }
-    }
-
-    return data;
-  }
-
-  private async getDependenciasByPersona(
-    personaId: number,
-    cargoId: number,
-  ): Promise<number[]> {
-    const url = `${TERCEROS_SERVICE}vinculacion?query=TerceroPrincipalId:${personaId},Activo:true,CargoId:${cargoId}&fields=DependenciaId`;
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-
-      if (!response.data || response.data.length === 0) {
-        return [];
-      }
-      return response.data
-        .map((v: any) => v.DependenciaId)
-        .filter((id: any) => id != null);
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener las dependencias del usuario',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  private async getDependenciaNombres(
-    dependenciaIds: number[],
-  ): Promise<Map<number, string>> {
-    const dependencias = await lastValueFrom(
-      this.dominiosService.getDependencias()
+  
+    const dataPadre = await this.auditoriaCrudService.traerDataCrud(
+      'auditoria-padre',
+      null,
+      queryPadre,
     );
+  
+    const auditoriasPadre: any[] = dataPadre?.Data || [];
+  
+    // 👉 Sin padres
+    if (!auditoriasPadre.length) {
+      return {
+        Data: [],
+        MetaData: { Count: 0 },
+      };
+    }
+  
+    const padresIds = auditoriasPadre
+      .map((a) => a?._id)
+      .filter(Boolean);
+  
+    // 2. Query hijas
+    const queryHijas = {
+      ...queryParams,
+      query: [
+        queryEstado,
+        'activo:true',
+        `auditoria_padre_id__in:${padresIds.join('|')}`,
+      ]
+        .filter(Boolean)
+        .join(','),
+    };
+  
+    const dataHijas = await this.auditoriaCrudService.traerDataCrud(
+      'auditoria',
+      null,
+      queryHijas,
+    );
+  
+    const auditoriasHijas: any[] = dataHijas?.Data || [];
+  
+    // 3. Merge
+    const padresMap = Object.fromEntries(
+      auditoriasPadre.map((p) => [p._id, p]),
+    );
+  
+    const auditoriasUnidas = auditoriasHijas
+      .filter(
+        (a) => a?.auditoria_padre_id && padresMap[a.auditoria_padre_id],
+      )
+      .map((a) => ({
+        ...padresMap[a.auditoria_padre_id],
+        ...a,
+      }));
+  
+    const result = {
+      Data: auditoriasUnidas,
+      MetaData: {
+        Count: auditoriasUnidas.length,
+      },
+    };
+  
+    // 👉 Si no hay data, salir temprano
+    if (!result.Data.length) {
+      return result;
+    }
+  
+    // 4. Obtener dependencias únicas
+    const todosDepIds: number[] = Array.from(
+      new Set(
+        result.Data.flatMap((a: any) => 
+          this.asegurarArray(a.dependencia_id)
+        ),
+      ),
+    );
+  
+    const dependenciaNombres = this.getDependenciaNombres(todosDepIds);
+  
+    // 5. Enriquecimiento
+    await this.enriquecerAuditorias(result.Data, false);
+  
+    result.Data.forEach((auditoria: any) => {
+      const ids = this.asegurarArray(auditoria.dependencia_id);
+  
+      auditoria.dependencia_nombre = ids
+        .map((id: number) => dependenciaNombres.get(id))
+        .filter(Boolean);
+    });
+  
+    if (await this.identificarCampo(result)) {
+      this.reemplazarCampos(result);
+    }
+  
+    return result;
+  }
 
+  private asegurarArray(value: any): any[] {
+    if (Array.isArray(value))
+      return value;
+
+    if (value != null)
+      return [value];
+
+    return [];
+  }
+
+  private getDependenciaNombres(dependenciaIds: number[]): Map<number, string> {
     const nombresMap = new Map<number, string>();
-    dependenciaIds.forEach(id => {
-      const dep = dependencias.parametros.find(d => d.Id === id);
+    this.dependencias.forEach((dep) => {
       if (dep?.Nombre) {
-        nombresMap.set(id, dep.Nombre);
+        nombresMap.set(dep.id, dep.Nombre);
       }
     });
 
     return nombresMap;
   }
 
+
   async getOne(id: string) {
-    const auditoria = await this.auditoriaCrudService.traerDataCrud('auditoria', id, null);
-    const auditoria_padre = await this.auditoriaCrudService.traerDataCrud('auditoria-padre', auditoria.Data.auditoria_padre_id, null);
-    const data = { ...auditoria, Data: {...auditoria_padre.Data, ...auditoria.Data}};
-    if (await this.identificarCampo(data)) {
-      this.reemplazarCampos(data);
+    if (!id) {
+      throw new BadRequestException('El id es requerido');
     }
-    return data;
+  
+    const auditoria = await this.auditoriaCrudService.traerDataCrud(
+      'auditoria',
+      id,
+      null,
+    );
+  
+    if (!auditoria?.Data) {
+      throw new NotFoundException(`Auditoría con id ${id} no encontrada`);
+    }
+  
+    const auditoriaPadreId = auditoria.Data.auditoria_padre_id;
+  
+    if (!auditoriaPadreId) {
+      throw new NotFoundException(
+        `La auditoría ${id} no tiene auditoría padre asociada`,
+      );
+    }
+  
+    const auditoriaPadre =
+      await this.auditoriaCrudService.traerDataCrud(
+        'auditoria-padre',
+        auditoriaPadreId,
+        null,
+      );
+  
+    const result = {
+      ...auditoria,
+      Data: {
+        ...(auditoriaPadre?.Data || {}),
+        ...(auditoria.Data || {}),
+      },
+    };
+  
+    if (await this.identificarCampo(result)) {
+      this.reemplazarCampos(result);
+    }
+  
+    return result;
   }
 
   async getDatosTerceros(dependencia_id: number) {
     const [jefe_dep, asistente_dep] = await Promise.all([
-      this.traerTerceroVinculado(dependencia_id, environment.CARGO.JEFE_DEPENDENCIA_ID),
-      this.traerTerceroVinculado(dependencia_id, environment.CARGO.ASISTENTE_DEPENDENCIA_ID),
+      this.tercerosHelper.getTerceroVinculado(
+        dependencia_id,
+        environment.CARGO.JEFE_DEPENDENCIA_ID,
+      ),
+      this.tercerosHelper.getTerceroVinculado(
+        dependencia_id,
+        environment.CARGO.ASISTENTE_DEPENDENCIA_ID,
+      ),
     ]);
 
     return {
-      dependencia_id: dependencia_id,
+      dependencia_id,
       jefe_nombre: jefe_dep?.NombreCompleto,
       jefe_correo: jefe_dep?.UsuarioWSO2,
       asistente_nombre: asistente_dep?.NombreCompleto,
@@ -327,45 +472,56 @@ export class AuditoriaService {
     };
   }
 
-  async traerTerceroVinculado(
-    dependenciaId: number,
-    cargoId: number,
-  ): Promise<any> {
-    const url = `${TERCEROS_SERVICE}vinculacion?order=desc&sortby=Id&fields=TerceroPrincipalId&`
-      +`query=Activo:true,DependenciaId:${dependenciaId},CargoId:${cargoId}`;
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data[0]?.TerceroPrincipalId;
-    } catch (error) {
-      throw new HttpException(
-        'Error al traer el tercero vinculado',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        error,
-      );
+  private async enriquecerAuditorias(
+    auditorias: any[],
+    incluirAuditores = true,
+  ) {
+    if (!Array.isArray(auditorias) || auditorias.length === 0) {
+      return;
     }
-  }
-
-  private async enriquecerAuditorias(auditorias: any[], incluirAuditores = true) {
+  
     await Promise.all(
       auditorias.map(async (auditoria) => {
-        const queryParams = { query: `auditoria_id:${auditoria._id},actual:true`}
-        const promises = [this. auditoriaCrudService.traerDataCrud('auditoria-estado', null, queryParams)];
-        if (incluirAuditores) promises.push(this.asociarAuditores(auditoria._id));
-
-        const [estado, auditores] = await Promise.all(promises);
-
-        if (estado.Data[0]?.actual) {
-          auditoria.estado = estado.Data[0];
-          auditoria.estado_id = estado.Data[0]?.estado_id;
+        const queryParams = {
+          query: `auditoria_id:${auditoria._id},actual:true`,
+        };
+  
+        const promises: Promise<any>[] = [
+          this.auditoriaCrudService.traerDataCrud(
+            'auditoria-estado',
+            null,
+            queryParams,
+          ),
+        ];
+  
+        if (incluirAuditores) {
+          promises.push(this.asociarAuditores(auditoria._id));
         }
-        if (incluirAuditores) auditoria.auditores = auditores || [];
-      })
+  
+        const [estadoResp, auditoresResp] = await Promise.all(promises);
+  
+        const estado = estadoResp?.Data?.[0];
+  
+        if (estado?.actual) {
+          auditoria.estado = estado;
+          auditoria.estado_id = estado.estado_id ?? null;
+        } else {
+          auditoria.estado = null;
+          auditoria.estado_id = null;
+        }
+  
+        if (incluirAuditores) {
+          auditoria.auditores = Array.isArray(auditoresResp)
+            ? auditoresResp
+            : [];
+        }
+      }),
     );
   }
 
   private traerCorreoDependencia(dependenciaId: number): string {
     const dependencia = this.dependencias.find(
-      (dep) => dep.Id === dependenciaId
+      (dep) => dep.Id === dependenciaId,
     );
     return dependencia ? dependencia.CorreoElectronico : 'Correo no encontrado';
   }
@@ -380,7 +536,7 @@ export class AuditoriaService {
     return typeof dependenciaId === 'number' ? dependenciaId : null;
   }
 
-private async identificarCampo(data: any) {
+  private async identificarCampo(data: any) {
     const firstElement = Array.isArray(data.Data) ? data.Data[0] : data.Data;
 
     if (!firstElement) {
@@ -434,12 +590,12 @@ private async identificarCampo(data: any) {
     if ('dependencia_id' in firstElement) {
       observables['dependencia_id'] = this.dominiosService.getDependencias();
       if (!Array.isArray(data.Data)) {
-        if (Array.isArray(firstElement.dependencia_id)) {
-          for (const dep_id of firstElement.dependencia_id) {
+        this.asegurarArray(data.Data.dependencia_id)
+          .filter((dep_id) => dep_id != null)
+          .forEach(async (dep_id) => {
             const datos = await this.getDatosTerceros(dep_id);
             this.datosTerceros.push(datos);
-          }
-        }
+          });
       }
     }
 
@@ -482,7 +638,20 @@ private async identificarCampo(data: any) {
       if (element.dependencia_id !== undefined)
         this.reemplazar(this.dependencias, element, 'dependencia_id');
 
-      const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+      const MESES = [
+        'Enero',
+        'Febrero',
+        'Marzo',
+        'Abril',
+        'Mayo',
+        'Junio',
+        'Julio',
+        'Agosto',
+        'Septiembre',
+        'Octubre',
+        'Noviembre',
+        'Diciembre',
+      ];
       element.cronograma = this.unirNombres(element.cronograma_nombre, MESES);
       element.macroproceso = this.unirNombres(element.macroproceso_nombre);
       element.proceso = this.unirNombres(element.proceso_nombre);
@@ -494,8 +663,12 @@ private async identificarCampo(data: any) {
     } else if (typeof data.Data === 'object' && data.Data !== null) {
       if (data.Data.dependencia_id !== undefined) {
         this.datosTerceros.forEach((datos) => {
-          datos.correo_dependencia = this.traerCorreoDependencia(datos.dependencia_id);
-          datos.dependencia_nombre = this.dependencias.find(dep => dep.Id === datos.dependencia_id)?.Nombre || null;
+          datos.correo_dependencia = this.traerCorreoDependencia(
+            datos.dependencia_id,
+          );
+          datos.dependencia_nombre =
+            this.dependencias.find((dep) => dep.Id === datos.dependencia_id)
+              ?.Nombre || null;
         });
         data.Data = {
           ...data.Data,
@@ -548,53 +721,81 @@ private async identificarCampo(data: any) {
 
   private unirNombres(nombres: any[], todosSiCompletos?: string[]): string {
     if (!Array.isArray(nombres)) return nombres ?? null;
-    if (todosSiCompletos?.length && nombres.length === todosSiCompletos.length &&
-      todosSiCompletos.every((n) => nombres.includes(n))) {
+    if (
+      todosSiCompletos?.length &&
+      nombres.length === todosSiCompletos.length &&
+      todosSiCompletos.every((n) => nombres.includes(n))
+    ) {
       return 'Todos';
     }
     return unirListaNombresConComas(nombres);
   }
-
-  async deleteAuditoria(auditoriaId: string, planAuditoriaId: string) {
+  
+  async deleteAuditoria(
+    auditoriaId: string,
+    planAuditoriaId: string,
+  ) {
+    if (!auditoriaId) {
+      throw new BadRequestException(
+        'El parámetro "auditoriaId" es obligatorio.',
+      );
+    }
+  
     if (!planAuditoriaId) {
-      throw new HttpException(
-        'El parámetro "plan_auditoria_id" es obligatorio.',
-        HttpStatus.BAD_REQUEST,
+      throw new BadRequestException(
+        'El parámetro "planAuditoriaId" es obligatorio.',
       );
     }
-
-    try {
-      // 1. Eliminar lógicamente la auditoría
-      const deleteUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}auditoria/${auditoriaId}`;
-      await lastValueFrom(this.httpService.delete(deleteUrl));
-
-      // 2. Obtener el plan de auditoría actual
-      const getPlanUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${planAuditoriaId}`;
-      const planResponse = await lastValueFrom(this.httpService.get(getPlanUrl));
-      const plan = planResponse.data.Data;
-
-      // 3. Filtrar las auditorías para eliminar la auditoría borrada
-      const auditoriasActualizadas = plan.auditorias.filter(
-        (id: string) => id !== auditoriaId,
+  
+    // 1. Obtener plan primero (IMPORTANTE)
+    const planResponse =
+      await this.auditoriaCrudService.traerDataCrud(
+        'plan-auditoria',
+        planAuditoriaId,
+        null,
       );
-
-      // 4. Actualizar el plan de auditoría
-      const putPlanUrl = `${PLAN_AUDITORIA_CRUD_SERVICE}plan-auditoria/${planAuditoriaId}`;
-      await lastValueFrom(
-        this.httpService.put(putPlanUrl, { auditorias: auditoriasActualizadas }),
-      );
-
-      return {
-        Success: true,
-        Status: 200,
-        Message: 'Auditoría eliminada exitosamente',
-        Data: null,
-      };
-    } catch (error: any) {
-      throw new HttpException(
-        error.response?.data?.message || 'Error al eliminar la auditoría',
-        error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
+  
+    const plan = planResponse?.Data;
+  
+    if (!plan) {
+      throw new NotFoundException(
+        `Plan de auditoría ${planAuditoriaId} no encontrado`,
       );
     }
+  
+    const auditorias = Array.isArray(plan.auditorias)
+      ? plan.auditorias
+      : [];
+  
+    // 2. Validar que la auditoría exista en el plan
+    if (!auditorias.includes(auditoriaId)) {
+      throw new NotFoundException(
+        `La auditoría ${auditoriaId} no está asociada al plan ${planAuditoriaId}`,
+      );
+    }
+  
+    // 3. Eliminar auditoría del arreglo
+    const auditoriasActualizadas = auditorias.filter(
+      (id: string) => id !== auditoriaId,
+    );
+  
+    // 4. Actualizar plan
+    await this.auditoriaCrudService.put(
+      'plan-auditoria',
+      planAuditoriaId,
+      {
+        auditorias: auditoriasActualizadas,
+      },
+    );
+  
+    // 5. Eliminar auditoría (DESPUÉS de validar el resto)
+    await this.auditoriaCrudService.delete(
+      'auditoria',
+      auditoriaId,
+    );
+  
+    return {
+      message: 'Auditoría eliminada exitosamente',
+    };
   }
 }
