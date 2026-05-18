@@ -697,6 +697,42 @@ paths:
       summary: Filtrar los documentos a visualizar para el auditado
       tags:
         - Auditado
+  /plan-mejoramiento-auditor:
+    get:
+      operationId: PlanMejoramientoAuditorController_getAll
+      parameters:
+        - name: filter
+          required: false
+          in: query
+          description: Filtro opcional.
+          schema: {}
+      responses:
+        '200':
+          description: Lista obtenida con éxito.
+        '404':
+          description: No se encontraron registros.
+      summary: >-
+        Obtiene todos los auditores del plan de mejoramiento con nombres
+        resueltos.
+      tags:
+        - Plan Mejoramiento Auditor
+  /responsable-accion:
+    get:
+      operationId: ResponsableAccionController_getAll
+      parameters:
+        - name: filter
+          required: false
+          in: query
+          description: Filtro opcional.
+          schema: {}
+      responses:
+        '200':
+          description: Lista obtenida con éxito.
+        '404':
+          description: No se encontraron registros.
+      summary: Obtiene los responsables de acción con nombre de dependencia resuelto.
+      tags:
+        - Responsable Acción
 info:
   title: Plan Anual Auditoria MID
   description: API MID para la gestion de planes de auditorias, auditorias y actividades
