@@ -29,6 +29,12 @@ import { ServicesModule } from './shared/services/services.module';
           target: 'pino-pretty',
           options: { colorize: true }
         },
+        autoLogging: {
+          ignore: (req) => {
+            const ignoredPaths = ['/', '/swagger', '/favicon'];
+            return ignoredPaths.some(path => req.url.includes(path));
+          },
+        }
       }
     }),
     ActividadModule,
