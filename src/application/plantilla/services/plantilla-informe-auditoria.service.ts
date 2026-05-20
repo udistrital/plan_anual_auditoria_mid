@@ -11,6 +11,8 @@ const {
   TIPO_EVALUACION,
   ESTADOS_INFORME_AUDITORIA_PRELIMINAR,
   CARGO,
+  logoUDistrital,
+  logoSIGUD
 } = environment;
 
 @Injectable()
@@ -70,6 +72,8 @@ export class PlantillaInformeAuditoriaService {
       const infoParaPlantilla = {
         plantilla_id: PLANTILLAS.INFORME_AUDITORIA_INTERNA,
         data: {
+          logoUDistrital: logoUDistrital,
+          logoSIGUD: logoSIGUD,
           consecutivo: auditoria.consecutivo_no_auditoria,
           fecha_emision: {
             dia: dia,
