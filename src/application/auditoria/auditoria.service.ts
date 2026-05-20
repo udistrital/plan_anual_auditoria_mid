@@ -221,7 +221,7 @@ export class AuditoriaService {
     const result = {
       Data: auditoriasUnidas,
       MetaData: {
-        Count: auditoriasUnidas.length,
+        Count: dataHijas?.MetaData?.Count || 0,
       },
     };
   
@@ -346,7 +346,7 @@ export class AuditoriaService {
     const result = {
       Data: auditoriasUnidas,
       MetaData: {
-        Count: auditoriasUnidas.length,
+        Count: dataHijas?.MetaData?.Count || 0,
       },
     };
   
