@@ -9,6 +9,7 @@ import { ConfigModule } from '@nestjs/config';
 import { PlantillaModule } from './application/plantilla/plantilla.module';
 import { CargueMasivoModule } from './application/cargue-masivo/cargue-masivo.module';
 import { PlanMejoramientoAuditorModule } from './application/plan-mejoramiento-auditor/plan-mejoramiento-auditor.module';
+import { PlanMejoramientoModule } from './application/plan-mejoramiento/plan-mejoramiento.module';
 import { ResponsableAccionModule } from './application/responsable-accion/responsable-accion.module';
 import { PlanEstadoModule } from './application/plan-estado/plan-estado.module';
 import { AuditorModule } from './application/auditor/auditor.module';
@@ -51,6 +52,7 @@ import { ServicesModule } from './shared/services/services.module';
     InformeModule,
     AuditadoModule,
     PlanMejoramientoAuditorModule,
+    PlanMejoramientoModule,
     ResponsableAccionModule,
     ServicesModule,
   ],
