@@ -8,6 +8,8 @@ import { ActividadModule } from './application/actividad/actividad.module';
 import { ConfigModule } from '@nestjs/config';
 import { PlantillaModule } from './application/plantilla/plantilla.module';
 import { CargueMasivoModule } from './application/cargue-masivo/cargue-masivo.module';
+import { PlanMejoramientoAuditorModule } from './plan-mejoramiento-auditor/plan-mejoramiento-auditor.module';
+import { ResponsableAccionModule } from './responsable-accion/responsable-accion.module';
 import { PlanEstadoModule } from './application/plan-estado/plan-estado.module';
 import { AuditorModule } from './application/auditor/auditor.module';
 import { InformeModule } from './application/informe/informe.module';
@@ -42,6 +44,8 @@ import { ServicesModule } from './shared/services/services.module';
     PlantillaModule,
     InformeModule,
     AuditadoModule,
+    PlanMejoramientoAuditorModule,
+    ResponsableAccionModule,
     ServicesModule,
   ],
   controllers: [AppController],
