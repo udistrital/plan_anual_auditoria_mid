@@ -29,10 +29,6 @@ export class AuditoriaPadreService {
   async getAll(queryParams: any) {
     const data = await this.traerDataCrud(null, queryParams);
   
-    if (!data?.Data || data.Data.length === 0) {
-      throw new NotFoundException('No se encontraron auditorías padre');
-    }
-  
     if (await this.identificarCampo(data)) {
       await this.reemplazarCampos(data);
     }

@@ -16,7 +16,7 @@ export class LoggerService implements OnModuleInit, ExceptionFilter {
   onModuleInit() {
     const axiosInstance = this.httpService.axiosRef;
     axiosInstance.interceptors.request.use(
-      (config) => config, // se deja pasar la configuración sin modificar
+      null, // se deja pasar la configuración sin modificar
       (error: AxiosError) => {
         this.logger.error(
           { err: error, message: error.message },
@@ -27,7 +27,7 @@ export class LoggerService implements OnModuleInit, ExceptionFilter {
     );
 
     axiosInstance.interceptors.response.use(
-      (response) => response, //se deja pasar la respuesta sin modificar
+      null, //se deja pasar la respuesta sin modificar
       (error: AxiosError) => {
         const isAxiosError = axios.isAxiosError(error);
 

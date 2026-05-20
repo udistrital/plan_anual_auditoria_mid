@@ -6,42 +6,48 @@ El API mid permite proporcionar la información completa requerida por el microc
 ### Tecnologías Implementadas y Versiones
 <img src="https://nestjs.com/img/logo-small.svg" alt="NestJS Logo" width="40" height="40">
 
-* [nest 10.0.0]()
-* [typescript 5.6.2]()
+* [nest 11.0.0](https://nestjs.com/)
+* [typescript 5.1.3]()
+* [pnpm 11](https://www.npmjs.com/package/pnpm)
 * [Docker](https://docs.docker.com/engine/install/ubuntu/)
 * [Docker Compose](https://docs.docker.com/compose/)
 
 ### Variables de Entorno
-```shel
+```shell
 PLAN_AUDITORIA_MID_PORT=[puerto de ejecucion]
 PARAMETROS_SERVICE=[direccion donde se encuentra el api crud de parametros inluyendo el puerto]
 PLAN_AUDITORIA_CRUD_SERVICE=[direccion donde se encuentra el api crud de plan auditoria inluyendo el puerto]
 CARGUE_MASIVO_SERVERLESS_MID=[direccion donde se encuentra el api mid de cargue masivo inluyendo el puerto]
 PLANTILLAS_MID_SERVICE=[direccion donde se encuentra el api mid de plantillas inluyendo el puerto]
+...
 ```
 
 ### Ejecución del Proyecto
-```shel
+```shell
 
-# 1. Obtener el repositorio con Go
-go get github.com/udistrital/plan_anual_auditoria_mid.git
+# 1. Obtener el repositorio con Git
+git clone github.com/udistrital/plan_anual_auditoria_mid.git
 
 # 2. Moverse a la carpeta del repositorio
-cd $GOPATH/src/github.com/udistrital/plan_anual_auditoria_mid
+cd plan_anual_auditoria_mid
 
 # 3. Moverse a la rama **develop**
 git pull origin develop && git checkout develop
 
-# 4. alimentar todas las variables de entorno que utiliza el proyecto.
+# 4. Alimentar todas las variables de entorno que utiliza el proyecto.
+touch .env
 
-# 5. ejecutar el proyecto
-npm run start 
+# 5. Instalar las dependencias
+pnpm install
+
+# 6. Ejecutar el proyecto
+pnpm run start:dev 
 ```
 ## Estado CI
 
-| Develop | Relese | Main |
+| Develop | Relese | Master |
 | -- | -- | -- |
-| [![Build Status](https://hubci.portaloas.udistrital.edu.co/api/badges/udistrital/plan_anual_auditoria_mid/status.svg?ref=refs/heads/develop)](https://hubci.portaloas.udistrital.edu.co/udistrital/plan_anual_auditoria_mid/) | [![Build Status](https://hubci.portaloas.udistrital.edu.co/api/badges/udistrital/plan_anual_auditoria_mid/status.svg?ref=refs/heads/release/0.0.1)](https://hubci.portaloas.udistrital.edu.co/udistrital/plan_anual_auditoria_mid/) | [![Build Status](https://hubci.portaloas.udistrital.edu.co/api/badges/udistrital/plan_anual_auditoria_mid/status.svg?ref=refs/heads/main)](https://hubci.portaloas.udistrital.edu.co/udistrital/plan_anual_auditoria_mid/) |
+| [![Build Status](https://hubci.portaloas.udistrital.edu.co/api/badges/udistrital/plan_anual_auditoria_mid/status.svg?ref=refs/heads/develop)](https://hubci.portaloas.udistrital.edu.co/udistrital/plan_anual_auditoria_mid/) | [![Build Status](https://hubci.portaloas.udistrital.edu.co/api/badges/udistrital/plan_anual_auditoria_mid/status.svg?ref=refs/heads/release/0.0.1)](https://hubci.portaloas.udistrital.edu.co/udistrital/plan_anual_auditoria_mid/) | [![Build Status](https://hubci.portaloas.udistrital.edu.co/api/badges/udistrital/plan_anual_auditoria_mid/status.svg?ref=refs/heads/master)](https://hubci.portaloas.udistrital.edu.co/udistrital/plan_anual_auditoria_mid/) |
 
 
 
