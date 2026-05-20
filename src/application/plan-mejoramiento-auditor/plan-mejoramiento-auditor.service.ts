@@ -1,16 +1,12 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { lastValueFrom } from 'rxjs';
-import { environment } from 'src/config/configuration';
-import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud/auditoria-crud.service';
-
-const { TERCEROS_SERVICE } = environment;
+import { Injectable } from '@nestjs/common';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
+import { TercerosService } from 'src/shared/services/terceros.service';
 
 @Injectable()
 export class PlanMejoramientoAuditorService {
   constructor(
-    private readonly httpService: HttpService,
     private readonly auditoriaCrudService: AuditoriaCrudService,
+    private readonly tercerosService: TercerosService,
   ) {}
 
   async getAll(queryParams: any) {
@@ -20,16 +16,7 @@ export class PlanMejoramientoAuditorService {
   }
 
   private async traerTercero(documento: string) {
-    const url = `${TERCEROS_SERVICE}/tercero/${documento}`;
-    try {
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data;
-    } catch (error) {
-      throw new HttpException(
-        'Error al obtener los datos del servicio externo',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    return this.tercerosService.traerData('tercero', documento, null);
   }
 
   private async reemplazarCampos(data: any) {
