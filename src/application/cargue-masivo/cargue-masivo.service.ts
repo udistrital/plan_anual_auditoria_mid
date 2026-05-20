@@ -58,7 +58,7 @@ export class CargueMasivoService {
     private readonly dominiosService: DominiosService,
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
-  ) {}
+  ) { }
 
   /**
    * Add validation domains and formulaes to the template before downloading it,
@@ -275,8 +275,10 @@ export class CargueMasivoService {
   }
 
   async enviar(data: any) {
-    const baseUrl = this.configService.get<string>('CARGUE_MASIVO_SERVERLESS_MID');
-    const url = new URL('registro-datos-archivo', baseUrl).toString();
+    const host = this.configService.get<string>('CARGUE_MASIVO_SERVERLESS_MID');
+    // 1. Quitamos la diagonal al final del host (si la tiene)
+    const cleanHost = host.replace(/\/$/, '');
+    const url = `${cleanHost}/registro-datos-archivo`;
     try {
       const response = await lastValueFrom(this.httpService.post(url, data));
       return response.data;

@@ -8,11 +8,18 @@ export class PlantillasMidService {
   constructor(
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   async post(endpoint: string, data: any) {
-    const baseUrl = this.configService.get<string>('PLANTILLAS_MID_SERVICE');
-    const url = new URL(endpoint, baseUrl).toString();
+    const host = this.configService.get<string>('PLANTILLAS_MID_SERVICE');
+
+    // 1. Quitamos la diagonal al final del host (si la tiene)
+    const cleanHost = host.replace(/\/$/, '');
+
+    // 2. Quitamos la diagonal al inicio del endpoint (si la tiene)
+    const cleanEndpoint = endpoint.replace(/^\//, '');
+
+    const url = `${cleanHost}/${cleanEndpoint}`;
     const response = await lastValueFrom(this.httpService.post(url, data));
     return response.data;
   }
