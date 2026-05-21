@@ -32,23 +32,37 @@ export class AuditoriaService {
   async getAll(queryParams: any) {
     const query = queryParams?.query || '';
 
-    // 1. Extraer estado_id sin mutar query original
+    // 1. Separar parámetros por entidad sin mutar query original
     const queryParts = query ? query.split(',') : [];
 
     const queryEstado = queryParts.find((param: string) =>
       param.startsWith('estado_id'),
     );
 
-    const querySinEstado = queryParts
-      .filter((param: string) => !param.startsWith('estado_id'))
-      .join(',');
+    const queryPadreParts = queryParts.filter((param: string) =>
+      param.startsWith('tipo_evaluacion_id') ||
+      param.startsWith('dependencia_id') ||
+      param.startsWith('vigencia_id') ||
+      param.startsWith('macroproceso_id') ||
+      param.startsWith('proceso_id') ||
+      param.startsWith('auditoria_padre_id'),
+    );
+
+    const queryHijaParts = queryParts.filter((param: string) =>
+      !param.startsWith('tipo_evaluacion_id') &&
+      !param.startsWith('dependencia_id') &&
+      !param.startsWith('vigencia_id') &&
+      !param.startsWith('macroproceso_id') &&
+      !param.startsWith('proceso_id') &&
+      !param.startsWith('auditoria_padre_id') &&
+      !param.startsWith('estado_id'),
+    );
 
     // 2. Query auditorías padre
     const queryPadre = {
-      query: (querySinEstado || '').replace(
-        'auditoria_padre_id',
-        '_id',
-      ),
+      query: queryPadreParts
+        .join(',')
+        .replace('auditoria_padre_id', '_id'),
       limit: 0,
       fields:
         '_id,titulo,tipo_evaluacion_id,macroproceso_id,proceso_id,dependencia_id',
@@ -75,6 +89,7 @@ export class AuditoriaService {
 
     const baseQuery = [
       queryEstado,
+      ...queryHijaParts,
       'activo:true',
       `auditoria_padre_id__in:${padresIds.join('|')}`,
     ]
@@ -132,43 +147,54 @@ export class AuditoriaService {
 
   async getByAuditor(personaId: string, queryParams: any) {
     const query = queryParams?.query || '';
-  
+
     // 1. Separar partes del query
     const queryParts = query ? query.split(',') : [];
-  
+
     const queryEstado = queryParts.find((param: string) =>
       param.startsWith('estado_id'),
     );
-  
+
     const querySinEstado = queryParts.filter(
       (param: string) => !param.startsWith('estado_id'),
     );
-  
+
+    const queryPadreParts = querySinEstado.filter((param: string) =>
+      param.startsWith('tipo_evaluacion_id') ||
+      param.startsWith('dependencia_id') ||
+      param.startsWith('vigencia_id') ||
+      param.startsWith('macroproceso_id') ||
+      param.startsWith('proceso_id') ||
+      param.startsWith('auditoria_padre_id'),
+    );
+
+    const queryHijaParts = querySinEstado.filter((param: string) =>
+      !param.startsWith('tipo_evaluacion_id') &&
+      !param.startsWith('dependencia_id') &&
+      !param.startsWith('vigencia_id') &&
+      !param.startsWith('macroproceso_id') &&
+      !param.startsWith('proceso_id') &&
+      !param.startsWith('auditoria_padre_id'),
+    );
+
     // 2. Construir query de padres (más declarativo)
-    const padreQueryStr = querySinEstado
-      .filter(
-        (param: string) =>
-          param.startsWith('tipo_evaluacion_id') ||
-          param.startsWith('dependencia_id') ||
-          param.startsWith('vigencia_id'),
-      )
-      .join(',');
-  
+    const padreQueryStr = queryPadreParts.join(',');
+
     const queryPadre = {
       query: padreQueryStr,
       limit: 0,
       fields:
         '_id,titulo,tipo_evaluacion_id,macroproceso_id,proceso_id,dependencia_id',
     };
-  
+
     const dataPadre = await this.auditoriaCrudService.traerDataCrud(
       'auditoria-padre',
       null,
       queryPadre,
     );
-  
+
     const auditoriasPadre: any[] = dataPadre?.Data || [];
-  
+
     // 👉 Caso sin padres
     if (!auditoriasPadre.length) {
       return {
@@ -176,20 +202,21 @@ export class AuditoriaService {
         MetaData: { Count: 0 },
       };
     }
-  
+
     const padresIds = Array.from(
       new Set(auditoriasPadre.map((a) => a?._id).filter(Boolean)),
     );
-  
+
     // 3. Query hijas
     const nuevaQuery = [
       queryEstado,
+      ...queryHijaParts,
       'activo:true',
       `auditoria_padre_id__in:${padresIds.join('|')}`,
     ]
       .filter(Boolean)
       .join(',');
-  
+
     const queryHijas = {
       ...queryParams,
       query: nuevaQuery,
