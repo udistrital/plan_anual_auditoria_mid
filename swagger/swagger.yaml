@@ -716,6 +716,23 @@ paths:
         resueltos.
       tags:
         - Plan Mejoramiento Auditor
+  /plan-mejoramiento:
+    get:
+      operationId: PlanMejoramientoController_getAll
+      parameters:
+        - name: filter
+          required: false
+          in: query
+          description: Filtro opcional.
+          schema: {}
+      responses:
+        '200':
+          description: Lista obtenida con éxito.
+        '404':
+          description: No se encontraron registros.
+      summary: Obtiene planes de mejoramiento con estado resuelto.
+      tags:
+        - Plan Mejoramiento
   /responsable-accion:
     get:
       operationId: ResponsableAccionController_getAll
