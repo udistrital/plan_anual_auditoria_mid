@@ -394,7 +394,7 @@ export class AuditoriaService {
     const dependenciaNombres = this.getDependenciaNombres(todosDepIds);
   
     // 5. Enriquecimiento
-    await this.enriquecerAuditorias(result.Data, false);
+    await this.enriquecerAuditorias(result.Data);
   
     result.Data.forEach((auditoria: any) => {
       const ids = this.asegurarArray(auditoria.dependencia_id);
