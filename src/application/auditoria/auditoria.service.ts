@@ -617,12 +617,12 @@ export class AuditoriaService {
     if ('dependencia_id' in firstElement) {
       observables['dependencia_id'] = this.dominiosService.getDependencias();
       if (!Array.isArray(data.Data)) {
-        this.asegurarArray(data.Data.dependencia_id)
+        await Promise.all(this.asegurarArray(data.Data.dependencia_id)
           .filter((dep_id) => dep_id != null)
-          .forEach(async (dep_id) => {
+          .map(async (dep_id) => {
             const datos = await this.getDatosTerceros(dep_id);
             this.datosTerceros.push(datos);
-          });
+          }));
       }
     }
 
