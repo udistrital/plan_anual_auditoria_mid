@@ -73,6 +73,7 @@ export class AuditadoService {
 
       const dependenciaOk =
         !documento.metadatos ||
+        Object.keys(documento.metadatos).length === 0 ||
         dependenciasAuditado.includes(
           documento.metadatos?.dependencia_id,
         );
