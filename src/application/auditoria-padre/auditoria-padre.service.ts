@@ -43,12 +43,6 @@ export class AuditoriaPadreService {
   
     const data = await this.traerDataCrud(id, null);
   
-    if (!data?.Data) {
-      throw new NotFoundException(
-        `Auditoría padre con id ${id} no encontrada`,
-      );
-    }
-  
     if (await this.identificarCampo(data)) {
       await this.reemplazarCampos(data);
     }
