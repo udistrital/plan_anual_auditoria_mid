@@ -36,10 +36,6 @@ export class AuditorService {
       null,
     );
 
-    if (data?.Data == null) {
-      throw new NotFoundException(`No se encontró auditor con id ${id}`);
-    }
-
     await this.reemplazarCampos(data);
 
     return data;

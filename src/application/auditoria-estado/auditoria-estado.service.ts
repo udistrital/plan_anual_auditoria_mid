@@ -24,10 +24,6 @@ export class AuditoriaEstadoService {
       queryParams,
     );
 
-    if (!data?.Data || data.Data.length === 0) {
-      throw new NotFoundException('No se encontraron estados');
-    }
-
     if (await this.identificarCampo(data)) {
       await this.reemplazarCampos(data);
     }
@@ -45,12 +41,6 @@ export class AuditoriaEstadoService {
       id,
       null,
     );
-
-    if (!data?.Data) {
-      throw new NotFoundException(
-        `Estado de auditoría con id ${id} no encontrado`,
-      );
-    }
 
     if (await this.identificarCampo(data)) {
       await this.reemplazarCampos(data);

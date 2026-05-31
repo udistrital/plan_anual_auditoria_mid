@@ -37,10 +37,18 @@ export class PlantillaInformeSeguimientoService {
 
   private async organizarData(auditoria: any) {
     try {
+      if (!auditoria?._id) {
+        throw new Error('No se encontró la auditoría para generar la plantilla');
+      }
+
       const informe = await this.obtenerInformeSeguimiento(auditoria._id);
+      if (!informe?._id) {
+        throw new Error('No se encontró el informe asociado a la auditoría');
+      }
+
       const temas = await this.obtenerTemasInforme(informe._id);
       const temasReestructurados = await this.reestructurarTemas(temas);
-      const [anio, mes, dia] = informe.fecha_emision.split('T')[0].split('-');
+      const [anio, mes, dia] = (informe.fecha_emision ?? '').split('T')[0].split('-');
       const [
         tituloInforme,
         dependencias,
@@ -88,7 +96,7 @@ export class PlantillaInformeSeguimientoService {
       // Relacionar cada líder y responsable con su respectiva dependencia para evitar confusiones en la plantilla
       dependencias.forEach((dependencia: any, indice: number) => {
         if (dependencia?.Nombre)
-          dependencia.Nombre += ` (${indice + 1})`; 
+          dependencia.Nombre += ` (${indice + 1})`;
       });
       lideres.forEach((lider: any, indice: number) => {
         if (lider?.NombreCompleto)
@@ -104,7 +112,7 @@ export class PlantillaInformeSeguimientoService {
         data: {
           logoUDistrital: logoUDistrital,
           logoSIGUD: logoSIGUD,
-          consecutivo: auditoria.no_auditoria,
+          consecutivo: auditoria.consecutivo_no_auditoria,
           fecha_emision: {
             dia: dia,
             mes: mes,
@@ -113,28 +121,26 @@ export class PlantillaInformeSeguimientoService {
           informe: {
             titulo: tituloInforme,
             dependencia: dependencias
-                .filter((mp: any) => mp)
-                .map((mp: any) => mp.Nombre)
-                .join(', '),
+              .filter((mp: any) => mp)
+              .map((mp: any) => mp.Nombre)
+              .join(', '),
             lider: lideres
-                .filter((l: any) => l)
-                .map((l: any) => l.NombreCompleto)
-                .join(', ') ?? '',
+              .filter((l: any) => l)
+              .map((l: any) => l.NombreCompleto)
+              .join(', ') ?? '',
             responsable: responsables
-                .filter((r: any) => r)
-                .map((r: any) => r.NombreCompleto)
-                .join(', ') ?? '',
-          objetivos: auditoria.objetivo,
+              .filter((r: any) => r)
+              .map((r: any) => r.NombreCompleto)
+              .join(', ') ?? '',
             objetivo: auditoria.objetivo,
             alcance: auditoria.alcance,
             criterios: auditoria.criterio,
             muestra: informe.muestra,
           },
-          aspectos_generales: informe.aspectos_generales,
+          aspectos_generales: this.normalizarTextoEditor(informe.aspecto_general),
           temas: temasReestructurados,
-          informe_final: informe.informe_final || '',
-          observaciones_conclusiones: informe.observaciones_conclusiones || '',
-          notas: informe.notas || '',
+          observaciones_conclusiones: this.normalizarTextoEditor(informe.observacion_conclusion),
+          notas: this.normalizarTextoEditor(informe.nota),
           jefe_oci:
             jefeOci ||
             'No se encontró el jefe de la Oficina Asesora de Control Interno',
@@ -149,6 +155,18 @@ export class PlantillaInformeSeguimientoService {
       newError.stack = error.stack;
       throw newError;
     }
+  }
+
+  private normalizarTextoEditor(valor: string | null | undefined): string {
+    if (!valor) return '';
+    return valor
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>\s*<p>/gi, '\n')
+      .replace(/<[^>]*>/g, '')
+      .replace(/\s+\n/g, '\n')
+      .replace(/\n\s+/g, '\n')
+      .trim();
   }
 
   private async obtenerInformeSeguimiento(idAuditoria: string) {
