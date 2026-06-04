@@ -661,6 +661,27 @@ paths:
           description: Informes de la auditoría obtenidos
       summary: Obtener informes por auditoría
       tags: *ref_9
+  /informe/auditoria/{auditoriaId}/numeracion-hallazgo:
+    put:
+      description: >-
+        Calcula y persiste el número jerárquico {tema}.{subtema}.{hallazgo}
+        (no_hallazgo) en los hallazgos activos del informe de la auditoría.
+        Idempotente.
+      operationId: InformeController_actualizarNumeracionHallazgo
+      parameters:
+        - name: auditoriaId
+          required: true
+          in: path
+          description: ID de la auditoría
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 'Resumen: { total, sellados, fallidos }'
+        '404':
+          description: Informe no encontrado
+      summary: Asignar/recalcular la numeración de hallazgos del informe
+      tags: *ref_9
   /auditado/{personaId}/documento:
     get:
       operationId: AuditadoController_filtrarDocumentosPorDependencia
@@ -750,6 +771,67 @@ paths:
       summary: Obtiene los responsables de acción con nombre de dependencia resuelto.
       tags:
         - Responsable Acción
+  /gestion-accion:
+    get:
+      operationId: GestionAccionesController_getAll
+      parameters:
+        - name: offset
+          required: false
+          in: query
+          schema: {}
+        - name: limit
+          required: false
+          in: query
+          schema: {}
+        - name: hasta
+          required: false
+          in: query
+          description: Fecha inicio máxima (ISO).
+          schema: {}
+        - name: desde
+          required: false
+          in: query
+          description: Fecha inicio mínima (ISO).
+          schema: {}
+        - name: dependencia
+          required: false
+          in: query
+          schema: {}
+        - name: auditor
+          required: false
+          in: query
+          schema: {}
+        - name: no_accion
+          required: false
+          in: query
+          schema: {}
+        - name: no_hallazgo
+          required: false
+          in: query
+          schema: {}
+        - name: nombre_auditoria
+          required: false
+          in: query
+          schema: {}
+        - name: no_auditoria
+          required: false
+          in: query
+          schema: {}
+        - name: vigencia_id
+          required: true
+          in: query
+          description: Vigencia a consultar.
+          schema: {}
+      responses:
+        '200':
+          description: Lista obtenida con éxito.
+        '404':
+          description: Error en la consulta.
+      summary: >-
+        Lista las acciones de mejora de una vigencia con auditoría, hallazgo,
+        auditores y dependencias resueltos.
+      tags:
+        - Gestión de Acciones
 info:
   title: Plan Anual Auditoria MID
   description: API MID para la gestion de planes de auditorias, auditorias y actividades
