@@ -81,16 +81,6 @@ async function construirHojaExcel(workbook: ExcelJS.Workbook, name: string, rows
     });
   });
 
-  // Set the column widths based on the calculated maximums
-  for (let i = 0; i < columnCount; i++) {
-    worksheet.getColumn(i + 1).width = columnWidths[i] + 2; // Add some padding to the column width
-  }
-
-  // Apply bold font and center alignment to the header row (first row) of the worksheet
-  const headerRow = worksheet.getRow(1);
-  headerRow.font = { bold: true };
-  headerRow.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-
   // Create a grid border style using the rowCount and columnCount give the cells top-left alignment with wrapping
   const borderStyle = {
     top: { style: 'thin' as const },
@@ -106,4 +96,14 @@ async function construirHojaExcel(workbook: ExcelJS.Workbook, name: string, rows
       cell.alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
     }
   }
+  
+  // Set the column widths based on the calculated maximums
+  for (let i = 0; i < columnCount; i++) {
+    worksheet.getColumn(i + 1).width = columnWidths[i] + 2; // Add some padding to the column width
+  }
+
+  // Apply bold font and center alignment to the header row (first row) of the worksheet
+  const headerRow = worksheet.getRow(1);
+  headerRow.font = { bold: true };
+  headerRow.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
 }
