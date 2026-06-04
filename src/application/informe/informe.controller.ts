@@ -1,4 +1,4 @@
-import { Controller, Get, Param, HttpStatus, Query } from '@nestjs/common';
+import { Controller, Get, Put, Param, HttpStatus, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { InformeService } from './informe.service';
 
@@ -56,5 +56,25 @@ export class InformeController {
     @Param('auditoriaId') auditoriaId: string,
   ) {
     return await this.informeService.getByAuditoria(auditoriaId);
+  }
+
+  @Put('auditoria/:auditoriaId/numeracion-hallazgo')
+  @ApiOperation({
+    summary: 'Asignar/recalcular la numeración de hallazgos del informe',
+    description:
+      'Calcula y persiste el número jerárquico {tema}.{subtema}.{hallazgo} (no_hallazgo) en los hallazgos activos del informe de la auditoría. Idempotente.',
+  })
+  @ApiParam({
+    name: 'auditoriaId',
+    type: 'string',
+    description: 'ID de la auditoría',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Resumen: { total, sellados, fallidos }',
+  })
+  @ApiResponse({ status: 404, description: 'Informe no encontrado' })
+  async actualizarNumeracionHallazgo(@Param('auditoriaId') auditoriaId: string) {
+    return await this.informeService.sellarHallazgos(auditoriaId);
   }
 }
