@@ -13,6 +13,7 @@ import {
 } from 'src/shared/utils/base64.utils';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
+import { ConstruirExcelInterface, construirExcel } from 'src/shared/utils/construirExcel';
 
 const { TIPO_PARAMETRO, MESES } = environment;
 
@@ -292,6 +293,23 @@ export class CargueMasivoService {
   }
 
   /**
+   * Exports the given tabular data to an Excel file and returns it in Base64 format.
+   * @param data An object containing the tabular data to be exported.
+   * @returns A promise that resolves with the exported Excel file in Base64 format.
+   * @throws An error if the export process fails, with a message indicating the failure and the original error stack trace.
+   */
+  async exportarLibroExcel(data: ConstruirExcelInterface): Promise<string> {
+    try {
+      const tablaExportadaBuffer = await construirExcel(data);
+      return arrayBufferToBase64(tablaExportadaBuffer);
+    } catch (error) {
+      const newError = new Error('Failed to export auditorias to Excel');
+      this.addErrorCause(newError, error);
+      throw newError;
+    }
+  }
+
+  /**
    * Adds the stack trace of a cause error to a new error's stack trace, ensuring that the original error information is preserved and accessible in the new error.
    * @param newError The new error to which the cause's stack trace will be added.
    * @param cause The original error whose stack trace is to be added to the new error.
@@ -306,4 +324,5 @@ export class CargueMasivoService {
         ? '\nCaused by: ' + causeString
         : '';
   }
+
 }

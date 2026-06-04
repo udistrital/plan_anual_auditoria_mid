@@ -19,6 +19,7 @@ import { environment } from 'src/config/configuration';
 import { NuxeoService } from 'src/shared/services/nuxeo.service';
 import { AuditoriaPadreService } from '../auditoria-padre/auditoria-padre.service';
 import { firstValueFrom } from 'rxjs';
+import { ConstruirExcelInterface } from 'src/shared/utils/construirExcel';
 
 @ApiTags('Cargue Masivo')
 @Controller('cargue-masivo')
@@ -108,6 +109,100 @@ export class CargueMasivoController {
         plantillaResponse,
       );
     return { base64: tablaExportada };
+  }
+
+  @Post('exportar-excel')
+  @ApiOperation({ summary: 'Exportar libro a un archivo de Excel' })
+  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: 'Error interno.' })
+  @ApiBody({
+    description: 'Datos necesarios para generar el plan de mejoramiento.',
+    schema: {
+      type: 'object',
+      properties: {
+        worksheets: {
+          type: 'array',
+          description: 'Lista de hojas de cálculo a generar.',
+          items: {
+            type: 'object',
+            description: 'Datos de una hoja de cálculo, incluyendo su nombre y las filas a incluir.',
+            properties: {
+              name: {
+                type: 'string',
+                description: 'Nombre de la hoja de cálculo.',
+              },
+              rows: {
+                type: 'array',
+                description: 'Filas de la hoja de cálculo',
+                items: {
+                  type: 'array',
+                  description: 'Una fila de la hoja de cálculo',
+                  items: {
+                    type: 'string',
+                    description: 'Valor de la celda en formato string.',
+                  },
+                },
+              },       
+            },
+          }
+        }
+      }
+    },
+    examples: {
+      example1: {
+        summary: 'Ejemplo de datos para generar un libro de Excel con dos hojas de cálculo.',
+        value: {
+          worksheets: [
+            {
+              name: 'Hoja1',
+              rows: [
+                ['Encabezado1', 'Encabezado2', 'Encabezado3'],
+                ['Dato1', 'Dato2', 'Dato3'],
+                ['Dato4', 'Dato5', 'Dato6']
+              ]
+            },
+            {
+              name: 'Hoja2',
+              rows: [
+                ['ColumnaA', 'ColumnaB'],
+                ['ValorA1', 'ValorB1'],
+                ['ValorA2', 'ValorB2']
+              ]
+            }
+          ]
+        }
+      }
+    }
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Archivo de plan de mejoramiento descargado exitosamente.',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            base64: {
+              type: 'string',
+              description: 'Archivo de plan de mejoramiento en formato Base64.',
+            },
+          },
+        },
+      },
+    },
+  })
+  async exportarLibroExcel(
+    @Body() datos: ConstruirExcelInterface,
+  ): Promise<{ base64: string }> {
+    try {
+      const tablaExportada = await this.cargueMasivoService.exportarLibroExcel(datos);
+      return { base64: tablaExportada };
+    } catch (error) {
+      console.error('Error al exportar el libro a Excel:', error);
+      throw new HttpException(
+        'Error al exportar el libro a Excel',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
   }
 
   @Post('auditorias')
