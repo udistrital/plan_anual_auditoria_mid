@@ -10,6 +10,7 @@ export const productionConfig = {
     PLAN_ANUAL_AUDITORIA: '699624983a96467a89e4292f',
     INFORME_AUDITORIA_INTERNA: '6a1cb75c94c94f4afae56be6',
     INFORME_SEGUIMIENTO: '6a1cb7ee94c94f4afae56bea',
+    PLAN_MEJORAMIENTO: '6a21cbd573276beecaede2dc'
   },
 
   TIPO_PARAMETRO: {

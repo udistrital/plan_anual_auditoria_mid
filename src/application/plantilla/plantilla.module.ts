@@ -6,6 +6,7 @@ import { PlantillaCartaPresentacionService } from './services/plantilla-carta-pr
 import { PlantillaProgramaAuditoriaService } from './services/plantilla-programa-auditoria.service';
 import { PlantillaInformeSeguimientoService } from './services/plantilla-informe-seguimiento.service';
 import { PlantillaInformeAuditoriaService } from './services/plantilla-informe-auditoria.service';
+import { PlantillaPlanMejoramientoService } from './services/plantilla-plan-mejoramiento.service';
 import { DominiosModule } from 'src/shared/utils/dominios/dominios.module';
 import { AuditoriaModule } from '../auditoria/auditoria.module';
 import { ServicesModule } from 'src/shared/services/services.module';
@@ -23,6 +24,7 @@ import 'moment/locale/es';
     PlantillaProgramaAuditoriaService,
     PlantillaInformeSeguimientoService,
     PlantillaInformeAuditoriaService,
+    PlantillaPlanMejoramientoService,
     {
       provide: 'MOMENT',
       useFactory: () => {

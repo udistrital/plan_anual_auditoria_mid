@@ -19,6 +19,7 @@ import { PlantillaCartaPresentacionService } from './services/plantilla-carta-pr
 import { PlantillaProgramaAuditoriaService } from './services/plantilla-programa-auditoria.service';
 import { PlantillaInformeSeguimientoService } from './services/plantilla-informe-seguimiento.service';
 import { PlantillaInformeAuditoriaService } from './services/plantilla-informe-auditoria.service';
+import { PlantillaPlanMejoramientoService } from './services/plantilla-plan-mejoramiento.service';
 
 @ApiTags('Plantilla')
 @Controller('plantilla')
@@ -30,6 +31,7 @@ export class PlantillaController {
     private readonly plantillaProgramaAuditoria: PlantillaProgramaAuditoriaService,
     private readonly plantillaInformeSeguimiento: PlantillaInformeSeguimientoService,
     private readonly plantillaInformeAuditoria: PlantillaInformeAuditoriaService,
+    private readonly plantillaPlanMejoramiento: PlantillaPlanMejoramientoService
   ) {}
 
   @Get(':id')
@@ -94,6 +96,8 @@ export class PlantillaController {
         return this.plantillaInformeSeguimiento.get(id);
       case 'informe-auditoria':
         return this.plantillaInformeAuditoria.get(id);
+      case 'plan-mejoramiento':
+        return this.plantillaPlanMejoramiento.get(id);
       default:
         throw new NotFoundException(
           `No se encontró el tipo de plantilla: ${tipo}`,
