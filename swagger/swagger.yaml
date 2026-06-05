@@ -366,6 +366,80 @@ paths:
           description: Error interno.
       summary: Descargar auditorías en formato Excel
       tags: *ref_5
+  /cargue-masivo/exportar-excel:
+    post:
+      operationId: CargueMasivoController_exportarLibroExcel
+      parameters: []
+      requestBody:
+        required: true
+        description: Datos necesarios para generar el plan de mejoramiento.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                worksheets:
+                  type: array
+                  description: Lista de hojas de cálculo a generar.
+                  items:
+                    type: object
+                    description: >-
+                      Datos de una hoja de cálculo, incluyendo su nombre y las
+                      filas a incluir.
+                    properties:
+                      name:
+                        type: string
+                        description: Nombre de la hoja de cálculo.
+                      rows:
+                        type: array
+                        description: Filas de la hoja de cálculo
+                        items:
+                          type: array
+                          description: Una fila de la hoja de cálculo
+                          items:
+                            type: string
+                            description: Valor de la celda en formato string.
+            examples:
+              example1:
+                summary: >-
+                  Ejemplo de datos para generar un libro de Excel con dos hojas
+                  de cálculo.
+                value:
+                  worksheets:
+                    - name: Hoja1
+                      rows:
+                        - - Encabezado1
+                          - Encabezado2
+                          - Encabezado3
+                        - - Dato1
+                          - Dato2
+                          - Dato3
+                        - - Dato4
+                          - Dato5
+                          - Dato6
+                    - name: Hoja2
+                      rows:
+                        - - ColumnaA
+                          - ColumnaB
+                        - - ValorA1
+                          - ValorB1
+                        - - ValorA2
+                          - ValorB2
+      responses:
+        '200':
+          description: Archivo de plan de mejoramiento descargado exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  base64:
+                    type: string
+                    description: Archivo de plan de mejoramiento en formato Base64.
+        '500':
+          description: Error interno.
+      summary: Exportar libro a un archivo de Excel
+      tags: *ref_5
   /cargue-masivo/auditorias:
     post:
       operationId: CargueMasivoController_cargueMasivo
@@ -771,67 +845,6 @@ paths:
       summary: Obtiene los responsables de acción con nombre de dependencia resuelto.
       tags:
         - Responsable Acción
-  /gestion-accion:
-    get:
-      operationId: GestionAccionesController_getAll
-      parameters:
-        - name: offset
-          required: false
-          in: query
-          schema: {}
-        - name: limit
-          required: false
-          in: query
-          schema: {}
-        - name: hasta
-          required: false
-          in: query
-          description: Fecha inicio máxima (ISO).
-          schema: {}
-        - name: desde
-          required: false
-          in: query
-          description: Fecha inicio mínima (ISO).
-          schema: {}
-        - name: dependencia
-          required: false
-          in: query
-          schema: {}
-        - name: auditor
-          required: false
-          in: query
-          schema: {}
-        - name: no_accion
-          required: false
-          in: query
-          schema: {}
-        - name: no_hallazgo
-          required: false
-          in: query
-          schema: {}
-        - name: nombre_auditoria
-          required: false
-          in: query
-          schema: {}
-        - name: no_auditoria
-          required: false
-          in: query
-          schema: {}
-        - name: vigencia_id
-          required: true
-          in: query
-          description: Vigencia a consultar.
-          schema: {}
-      responses:
-        '200':
-          description: Lista obtenida con éxito.
-        '404':
-          description: Error en la consulta.
-      summary: >-
-        Lista las acciones de mejora de una vigencia con auditoría, hallazgo,
-        auditores y dependencias resueltos.
-      tags:
-        - Gestión de Acciones
 info:
   title: Plan Anual Auditoria MID
   description: API MID para la gestion de planes de auditorias, auditorias y actividades
