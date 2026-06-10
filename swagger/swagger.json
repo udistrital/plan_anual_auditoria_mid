@@ -1262,6 +1262,60 @@
         ]
       }
     },
+    "/plan-mejoramiento-estado": {
+      "get": {
+        "operationId": "PlanMejoramientoEstadoController_getAll",
+        "parameters": [
+          {
+            "name": "filter",
+            "required": false,
+            "in": "query",
+            "description": "Filtro opcional.",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista obtenida con éxito."
+          },
+          "404": {
+            "description": "No se encontraron estados."
+          }
+        },
+        "summary": "Obtiene todos los estados de planes de mejoramiento.",
+        "tags": [
+          "Plan Mejoramiento Estado"
+        ]
+      }
+    },
+    "/plan-mejoramiento-estado/{id}": {
+      "get": {
+        "operationId": "PlanMejoramientoEstadoController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID del estado del plan de mejoramiento.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado obtenido con éxito."
+          },
+          "404": {
+            "description": "No se encontró el estado."
+          }
+        },
+        "summary": "Obtiene un estado de plan de mejoramiento por ID.",
+        "tags": [
+          "Plan Mejoramiento Estado"
+        ]
+      }
+    },
     "/plan-mejoramiento": {
       "get": {
         "operationId": "PlanMejoramientoController_getAll",
@@ -1311,6 +1365,94 @@
         "summary": "Obtiene los responsables de acción con nombre de dependencia resuelto.",
         "tags": [
           "Responsable Acción"
+        ]
+      }
+    },
+    "/gestion-accion": {
+      "get": {
+        "operationId": "GestionAccionesController_getAll",
+        "parameters": [
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "hasta",
+            "required": false,
+            "in": "query",
+            "description": "Fecha inicio máxima (ISO).",
+            "schema": {}
+          },
+          {
+            "name": "desde",
+            "required": false,
+            "in": "query",
+            "description": "Fecha inicio mínima (ISO).",
+            "schema": {}
+          },
+          {
+            "name": "dependencia",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "auditor",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "no_accion",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "no_hallazgo",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "nombre_auditoria",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "no_auditoria",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "vigencia_id",
+            "required": true,
+            "in": "query",
+            "description": "Vigencia a consultar.",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista obtenida con éxito."
+          },
+          "404": {
+            "description": "Error en la consulta."
+          }
+        },
+        "summary": "Lista las acciones de mejora de una vigencia con auditoría, hallazgo, auditores y dependencias resueltos.",
+        "tags": [
+          "Gestión de Acciones"
         ]
       }
     }

@@ -17,6 +17,7 @@ import { AuditorModule } from './application/auditor/auditor.module';
 import { InformeModule } from './application/informe/informe.module';
 import { AuditoriaEstadoModule } from './application/auditoria-estado/auditoria-estado.module';
 import { AuditadoModule } from './application/auditado/auditado.module';
+import { PlanMejoramientoEstadoModule } from './application/plan-mejoramiento-estado/plan-mejoramiento-estado.module';
 import { LoggerModule } from 'nestjs-pino';
 import { env } from './config/configuration';
 import { ServicesModule } from './shared/services/services.module';
@@ -53,6 +54,7 @@ import { ServicesModule } from './shared/services/services.module';
     InformeModule,
     AuditadoModule,
     PlanMejoramientoAuditorModule,
+    PlanMejoramientoEstadoModule,
     PlanMejoramientoModule,
     ResponsableAccionModule,
     GestionAccionesModule,
