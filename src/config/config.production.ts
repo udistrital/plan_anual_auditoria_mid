@@ -23,6 +23,7 @@ export const productionConfig = {
     TIPO_PROCESO: 104,
     MACROPROCESO: 108,
     PROCESO: 109,
+    ACCION_ESTADOS: 0,
   },
 
   TIPO_EVALUACION: {

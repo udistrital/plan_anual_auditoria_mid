@@ -879,6 +879,40 @@ paths:
       summary: Obtiene los responsables de acción con nombre de dependencia resuelto.
       tags:
         - Responsable Acción
+  /accion-mejora:
+    get:
+      operationId: AccionMejoraController_getAll
+      parameters:
+        - name: query
+          required: false
+          in: query
+          description: Filtro opcional.
+          schema: {}
+      responses:
+        '200':
+          description: Lista obtenida con éxito.
+        '404':
+          description: No se encontraron registros.
+      summary: Obtiene acciones de mejora con estado resuelto.
+      tags:
+        - Acción Mejora
+  /accion-mejora-estado:
+    get:
+      operationId: AccionMejoraEstadoController_getAll
+      parameters:
+        - name: query
+          required: false
+          in: query
+          description: Filtro opcional.
+          schema: {}
+      responses:
+        '200':
+          description: Lista obtenida con éxito.
+        '404':
+          description: No se encontraron registros.
+      summary: Obtiene estados de acciones de mejora con estado resuelto.
+      tags:
+        - Acción Mejora Estado
   /gestion-accion:
     get:
       operationId: GestionAccionesController_getAll
