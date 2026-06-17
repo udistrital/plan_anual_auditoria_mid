@@ -25,6 +25,7 @@ export const developmentConfig = {
     PROCESO: 149,
     CARGO_LIDER: 150,
     CARGO_RESPONSABLE: 151,
+    ACCION_ESTADOS: 171,
   },
 
   TIPO_EVALUACION: {
