@@ -11,11 +11,15 @@ import { CargueMasivoModule } from './application/cargue-masivo/cargue-masivo.mo
 import { PlanMejoramientoAuditorModule } from './application/plan-mejoramiento-auditor/plan-mejoramiento-auditor.module';
 import { PlanMejoramientoModule } from './application/plan-mejoramiento/plan-mejoramiento.module';
 import { ResponsableAccionModule } from './application/responsable-accion/responsable-accion.module';
+import { AccionMejoraModule } from './application/accion-mejora/accion-mejora.module';
+import { AccionMejoraEstadoModule } from './application/accion-mejora-estado/accion-mejora-estado.module';
+import { GestionAccionesModule } from './application/gestion-acciones/gestion-acciones.module';
 import { PlanEstadoModule } from './application/plan-estado/plan-estado.module';
 import { AuditorModule } from './application/auditor/auditor.module';
 import { InformeModule } from './application/informe/informe.module';
 import { AuditoriaEstadoModule } from './application/auditoria-estado/auditoria-estado.module';
 import { AuditadoModule } from './application/auditado/auditado.module';
+import { PlanMejoramientoEstadoModule } from './application/plan-mejoramiento-estado/plan-mejoramiento-estado.module';
 import { LoggerModule } from 'nestjs-pino';
 import { env } from './config/configuration';
 import { ServicesModule } from './shared/services/services.module';
@@ -52,8 +56,12 @@ import { ServicesModule } from './shared/services/services.module';
     InformeModule,
     AuditadoModule,
     PlanMejoramientoAuditorModule,
+    PlanMejoramientoEstadoModule,
     PlanMejoramientoModule,
     ResponsableAccionModule,
+    AccionMejoraModule,
+    AccionMejoraEstadoModule,
+    GestionAccionesModule,
     ServicesModule,
   ],
   controllers: [AppController],

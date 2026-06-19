@@ -92,15 +92,11 @@ export class PlantillaInformeAuditoriaService {
             criterios: auditoria.criterio,
             muestra: informe.muestra,
           },
-          aspectos_generales: this.normalizarTextoEditor(
-            informe.aspecto_general,
-          ),
+          aspectos_generales: informe.aspecto_general,
           temas: temasReestructurados,
-          informe_final: this.normalizarTextoEditor(informe.informe_final),
-          observaciones_conclusiones: this.normalizarTextoEditor(
-            informe.observacion_conclusion,
-          ),
-          notas: this.normalizarTextoEditor(informe.nota),
+          informe_final: (informe.informe_final),
+          observaciones_conclusiones: informe.observacion_conclusion,
+          notas: (informe.nota),
           jefe_oci:
             jefeOci ||
             'No se encontró el jefe de la Oficina Asesora de Control Interno',
@@ -115,21 +111,6 @@ export class PlantillaInformeAuditoriaService {
       newError.stack = error.stack;
       throw newError;
     }
-  }
-
-  private normalizarTextoEditor(valor: string | null | undefined): string {
-    if (!valor) {
-      return '';
-    }
-
-    return valor
-      .replace(/&nbsp;/gi, ' ')
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<\/p>\s*<p>/gi, '\n')
-      .replace(/<[^>]*>/g, '')
-      .replace(/\s+\n/g, '\n')
-      .replace(/\n\s+/g, '\n')
-      .trim();
   }
 
   private async obtenerInformeAuditoria(idAuditoria: string) {
