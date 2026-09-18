@@ -1,3 +1,5 @@
 allowBuilds:
   '@nestjs/core': false
+  '@parcel/watcher': false
   '@scarf/scarf': false
+  unrs-resolver: true # Es necesario para la construcción de la librería unrs-resolver

@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "module": "node16",
+    "module": "nodenext",
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
@@ -8,7 +8,7 @@
     "allowSyntheticDefaultImports": true,
     "allowJs": true,
     "esModuleInterop": true,
-    "moduleResolution": "node16",
+    "moduleResolution": "nodenext",
     "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
