@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+import { AppModule, ObserveInstrument } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
 import { LoggerService } from './shared/services/logger.service';
@@ -9,7 +9,7 @@ import * as yaml from 'js-yaml';
 import { env } from './config/configuration';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create(AppModule, { bufferLogs: true, instrument: ObserveInstrument });
   app.useLogger(app.get(Logger));
   app.useGlobalFilters(app.get(LoggerService));
   const port = env().PLAN_AUDITORIA_MID_PORT;

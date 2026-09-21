@@ -1,5 +1,5 @@
 /** The ExcelJS library for handling Excel files */
-const ExcelJS = require('exceljs');
+import ExcelJS from 'exceljs';
 
 /** Index of the row where the data starts in the Excel template (1-based index) */
 const dataSheetStartRowIndex = 2; // because row 1 has the header titles
