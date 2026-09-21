@@ -7,7 +7,7 @@ steps:
     image: node:current-alpine
     commands:
       - npm install -g pnpm
-      - pnpm install
+      - pnpm install --frozen-lockfile
     when:
       branch:
         - develop
@@ -20,7 +20,7 @@ steps:
     image: node:current-alpine
     commands:
       - npm install -g pnpm
-      - pnpm install
+      - pnpm install --frozen-lockfile
       - pnpm run build
     when:
       branch:
