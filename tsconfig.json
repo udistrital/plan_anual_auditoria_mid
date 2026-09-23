@@ -6,6 +6,7 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
+    "useUnknownInCatchVariables": false,
     "allowJs": true,
     "esModuleInterop": true,
     "moduleResolution": "nodenext",
