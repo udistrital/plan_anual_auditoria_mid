@@ -19,7 +19,7 @@ describe('AuditoriaService', () => {
   };
 
   const mockConfigService = {
-    get: jest.fn((string) => ''),
+    get: jest.fn().mockImplementation(() => 'testhost/'),
   };
 
   const mockAuditorService = {
@@ -204,9 +204,9 @@ describe('AuditoriaService', () => {
         query: 'TerceroPrincipalId:1,Activo:true,CargoId:312',
         fields: 'DependenciaId',
       };
-      expect(mockHttpService.get).toHaveBeenCalledWith(
+      expect(mockHttpService.get).toHaveBeenCalledWith(expect.stringContaining(
         'vinculacion?' + new URLSearchParams(mockQueryParams).toString()
-      );
+      ));
       // verificar que se llamó a traerDataCrud para auditoria-padre con filtro por dependencia y tipo_evaluacion
       expect(mockCrudService.traerDataCrud).toHaveBeenCalledWith(
         'auditoria-padre',
