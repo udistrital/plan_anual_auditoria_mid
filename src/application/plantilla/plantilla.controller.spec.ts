@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PlantillaController } from './plantilla.controller';
 import { PlantillaService } from './services/plantilla.service';
-import { PlantillaPlanTrabajoService } from './services/plantilla-plan-trabajo.service';
+import { PlantillaPlanMejoramientoService } from './services/plantilla-plan-mejoramiento.service';
 import { PlantillaSolicitudInformacionService } from './services/plantilla-solicitud-informacion.service';
 import { PlantillaCartaPresentacionService } from './services/plantilla-carta-presentacion.service';
 import { PlantillaProgramaAuditoriaService } from './services/plantilla-programa-auditoria.service';
@@ -22,7 +22,7 @@ describe('PlantillaController', () => {
           },
         },
         {
-          provide: PlantillaPlanTrabajoService,
+          provide: PlantillaPlanMejoramientoService,
           useValue: {
             get: jest.fn(),
           },
