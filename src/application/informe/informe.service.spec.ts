@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpService } from '@nestjs/axios';
 import { InformeService } from './informe.service';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
+import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
 
 describe('InformeService', () => {
   let service: InformeService;
@@ -9,6 +11,14 @@ describe('InformeService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InformeService,
+        {
+          provide: AuditoriaCrudService,
+          useValue: {}
+        },
+        {
+          provide: AuditoriaService,
+          useValue: {}
+        },
         {
           provide: HttpService,
           useValue: {

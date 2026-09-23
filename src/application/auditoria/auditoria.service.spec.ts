@@ -6,6 +6,9 @@ import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
 import { of, throwError } from 'rxjs';
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
+import { TercerosService } from 'src/shared/services/terceros.service';
+import { ConfigService } from '@nestjs/config';
 
 describe('AuditoriaService', () => {
   let service: AuditoriaService;
@@ -13,6 +16,10 @@ describe('AuditoriaService', () => {
 
   const mockHttpService = {
     get: jest.fn(),
+  };
+
+  const mockConfigService = {
+    get: jest.fn().mockImplementation(() => 'testhost/'),
   };
 
   const mockAuditorService = {
@@ -32,10 +39,13 @@ describe('AuditoriaService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuditoriaService,
+        TercerosHelperService,
+        TercerosService,
         { provide: HttpService, useValue: mockHttpService },
         { provide: AuditorService, useValue: mockAuditorService },
         { provide: DominiosService, useValue: mockDominiosService },
         { provide: AuditoriaCrudService, useValue: mockCrudService },
+        { provide: ConfigService, useValue: mockConfigService },
       ],
     }).compile();
 
@@ -73,6 +83,7 @@ describe('AuditoriaService', () => {
           if (resource === 'auditoria/auditor') {
             return Promise.resolve({
               Data: [{ _id: 'h1', auditoria_padre_id: 'p1' }],
+              MetaData: { Count: 1 },
             });
           }
           // para enriquecerAuditorias -> auditoria-estado
@@ -164,6 +175,7 @@ describe('AuditoriaService', () => {
           if (resource === 'auditoria') {
             return Promise.resolve({
               Data: [{ _id: 'h2', auditoria_padre_id: 'p1', titulo: 'HijaD' }],
+              MetaData: { Count: 1 },
             });
           }
           if (resource === 'auditoria-estado') {
@@ -188,11 +200,13 @@ describe('AuditoriaService', () => {
       expect(res.Data[0].dependencia_id).toBe(42);
       expect(res.MetaData.Count).toBe(1);
       // verificar que se consultaron las vinculaciones del tercero con los params correctos
-      expect(mockHttpService.get).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'vinculacion?query=TerceroPrincipalId:1,Activo:true,CargoId:312&fields=DependenciaId',
-        ),
-      );
+      let mockQueryParams = {
+        query: 'TerceroPrincipalId:1,Activo:true,CargoId:312',
+        fields: 'DependenciaId',
+      };
+      expect(mockHttpService.get).toHaveBeenCalledWith(expect.stringContaining(
+        'vinculacion?' + new URLSearchParams(mockQueryParams).toString()
+      ));
       // verificar que se llamó a traerDataCrud para auditoria-padre con filtro por dependencia y tipo_evaluacion
       expect(mockCrudService.traerDataCrud).toHaveBeenCalledWith(
         'auditoria-padre',

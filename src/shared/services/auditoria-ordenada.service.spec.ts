@@ -3,6 +3,8 @@ import { HttpService } from '@nestjs/axios';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { of, throwError } from 'rxjs';
 import { AuditoriaOrdenadaService } from './auditoria-ordenada.service';
+import { AuditoriaCrudService } from './auditoria-crud.service';
+import { ConfigService } from '@nestjs/config';
 
 describe('AuditoriaOrdenadaService', () => {
   let service: AuditoriaOrdenadaService;
@@ -16,7 +18,9 @@ describe('AuditoriaOrdenadaService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuditoriaOrdenadaService,
+        AuditoriaCrudService,
         { provide: HttpService, useValue: mockHttpService },
+        { provide: ConfigService, useValue: { get: jest.fn() } },
       ],
     }).compile();
 
@@ -97,16 +101,15 @@ describe('AuditoriaOrdenadaService', () => {
     });
 
     it('debe lanzar excepción cuando falla obtener auditorías', async () => {
+      const newError = new Error('Network error');
       mockHttpService.get.mockReturnValueOnce(
-        throwError(() => new Error('Network error')),
+        throwError(() => newError),
       );
 
-      await expect(service.getAuditoriasOrdenadas('123')).rejects.toThrow(
-        HttpException,
-      );
-      await expect(service.getAuditoriasOrdenadas('123')).rejects.toThrow(
-        'Error al obtener auditorías',
-      );
+      await expect(service.getAuditoriasOrdenadas('123')).rejects.toMatchObject({
+        response: 'Error al obtener los datos del servicio externo: Network error',
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      });
     });
 
     it('debe lanzar excepción cuando falla obtener plan', async () => {
