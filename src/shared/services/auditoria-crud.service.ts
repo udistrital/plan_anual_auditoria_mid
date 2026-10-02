@@ -35,8 +35,16 @@ export class AuditoriaCrudService {
       url += `?${queryString}`;
     }
 
-    const response = await lastValueFrom(this.httpService.get(url));
-    return response.data;
+    try {
+      const response = await lastValueFrom(this.httpService.get(url));
+      return response.data;
+    }
+    catch (error) {
+      throw new HttpException(
+        `Error al obtener los datos del servicio externo: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   /**

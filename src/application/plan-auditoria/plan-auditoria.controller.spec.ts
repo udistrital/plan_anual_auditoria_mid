@@ -1,21 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PlanAuditoriaController } from './plan-auditoria.controller';
 import { PlanAuditoriaService } from './plan-auditoria.service';
+import { GeneracionAuditoriaService } from 'src/shared/services/generacion-auditoria.service';
 
 describe('PlanAuditoriaController', () => {
   let controller: PlanAuditoriaController;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [PlanAuditoriaController],
       providers: [
-        {
-          provide: PlanAuditoriaService,
-          useValue: {
-            getAll: jest.fn(),
-            getOne: jest.fn(),
-          },
-        },
+        PlanAuditoriaController,
+        { provide: PlanAuditoriaService, useValue: {} },
+        { provide: GeneracionAuditoriaService, useValue: {} },
       ],
     }).compile();
 

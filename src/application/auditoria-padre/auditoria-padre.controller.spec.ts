@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuditoriaPadreController } from './auditoria-padre.controller';
 import { AuditoriaPadreService } from './auditoria-padre.service';
 import { HttpStatus } from '@nestjs/common';
+import { GeneracionAuditoriaService } from 'src/shared/services/generacion-auditoria.service';
 
 describe('AuditoriaPadreController', () => {
   let controller: AuditoriaPadreController;
@@ -23,12 +24,13 @@ describe('AuditoriaPadreController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [AuditoriaPadreController],
       providers: [
+        AuditoriaPadreController,
         {
           provide: AuditoriaPadreService,
           useValue: mockAuditoriaPadreService,
         },
+        { provide: GeneracionAuditoriaService, useValue: {} },
       ],
     }).compile();
 
