@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PlantillaService } from './services/plantilla.service';
 import { HttpService } from '@nestjs/axios';
 import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
+import { PlantillasMidService } from 'src/shared/services/plantillas-mid.service';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
 
 describe('PlantillaService', () => {
   let service: PlantillaService;
@@ -24,6 +26,14 @@ describe('PlantillaService', () => {
             getDependencias: jest.fn(),
           },
         },
+        {
+          provide: PlantillasMidService,
+          useValue: {},
+        },
+        {
+          provide: AuditoriaCrudService,
+          useValue: {},
+        }
       ],
     }).compile();
 
