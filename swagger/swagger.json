@@ -1685,6 +1685,138 @@
           "Formulación de Planes"
         ]
       }
+    },
+    "/plan-mejoramiento/formulacion/auditor/{personaId}/resumen": {
+      "get": {
+        "operationId": "FormulacionPlanesController_getResumenAuditor",
+        "parameters": [
+          {
+            "name": "personaId",
+            "required": true,
+            "in": "path",
+            "description": "ID de la persona (tercero) del auditor.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "alcance",
+            "required": false,
+            "in": "query",
+            "description": "asignadas (por defecto) o todas las de la institución.",
+            "schema": {
+              "enum": [
+                "asignadas",
+                "todas"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "tipo_evaluacion_id",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "vigencia_id",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resumen obtenido con éxito."
+          },
+          "404": {
+            "description": "Error en la consulta."
+          }
+        },
+        "summary": "Conteos de auditorías finalizadas que revisa el auditor, por estado de su plan de mejoramiento.",
+        "tags": [
+          "Formulación de Planes"
+        ]
+      }
+    },
+    "/plan-mejoramiento/formulacion/auditor/{personaId}": {
+      "get": {
+        "operationId": "FormulacionPlanesController_getAllAuditor",
+        "parameters": [
+          {
+            "name": "personaId",
+            "required": true,
+            "in": "path",
+            "description": "ID de la persona (tercero) del auditor.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "busqueda",
+            "required": false,
+            "in": "query",
+            "description": "Texto sobre dependencia o título.",
+            "schema": {}
+          },
+          {
+            "name": "estado_ids",
+            "required": false,
+            "in": "query",
+            "description": "Estados del plan separados por coma.",
+            "schema": {}
+          },
+          {
+            "name": "alcance",
+            "required": false,
+            "in": "query",
+            "description": "asignadas (por defecto) o todas las de la institución.",
+            "schema": {
+              "enum": [
+                "asignadas",
+                "todas"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "tipo_evaluacion_id",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "vigencia_id",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista obtenida con éxito."
+          },
+          "404": {
+            "description": "Error en la consulta."
+          }
+        },
+        "summary": "Lista las auditorías finalizadas que revisa el auditor con el estado, plazo y avance de dictamen de su plan.",
+        "tags": [
+          "Formulación de Planes"
+        ]
+      }
     }
   },
   "info": {

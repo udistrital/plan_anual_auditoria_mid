@@ -51,6 +51,11 @@ const respuestasCrud: Record<string, any[]> = {
       auditoria_id: 'a3',
       estado_id: ESTADO.RECHAZADO_PLAN_MEJORAMIENTO,
     },
+    {
+      _id: 'p4',
+      auditoria_id: 'a4',
+      estado_id: ESTADO.RECHAZADO_PLAN_MEJORAMIENTO,
+    },
   ],
   'plan-mejoramiento-auditor': [{ plan_mejoramiento_id: 'p2', auditor_id: 10 }],
   hallazgo: [
@@ -63,6 +68,66 @@ const respuestasCrud: Record<string, any[]> = {
     { plan_mejoramiento_id: 'p3' },
   ],
 };
+
+/**
+ * Respuestas que dependen de la consulta, con clave "endpoint|fragmento de query".
+ * Se revisan antes que respuestasCrud.
+ */
+const respuestasPorConsulta: Record<string, any[]> = {
+  // Planes asignados al auditor 10
+  'plan-mejoramiento-auditor|auditor_id:10': [{ plan_mejoramiento_id: 'p2' }],
+  // Estado actual de cada plan
+  'plan-mejoramiento-estado|actual:true': [
+    {
+      plan_mejoramiento_id: 'p2',
+      fecha_ejecucion_estado: '2025-02-12T10:00:00Z',
+    },
+    {
+      plan_mejoramiento_id: 'p4',
+      fecha_ejecucion_estado: '2025-02-10T10:00:00Z',
+    },
+  ],
+  'accion-mejora|plan_mejoramiento_id__in': [
+    {
+      plan_mejoramiento_id: 'p2',
+      estado_id: environment.ACCION_MEJORA_ESTADO.APROBADA,
+    },
+    {
+      plan_mejoramiento_id: 'p2',
+      estado_id: environment.ACCION_MEJORA_ESTADO.PENDIENTE_REVISION,
+    },
+    {
+      plan_mejoramiento_id: 'p4',
+      estado_id: environment.ACCION_MEJORA_ESTADO.RECHAZADA,
+    },
+  ],
+};
+
+/**
+ * Auditorías de toda la institución para la vista del auditor (persona 10):
+ * a1 la tiene como auditor de la auditoría, a2 como auditor del plan, a4 no le pertenece.
+ */
+const auditoriasInstitucion = [
+  {
+    ...auditorias[1],
+    auditores: [{ auditor_id: 10, auditor_nombre: 'Carlos Parra' }],
+    fecha_inicio: '2025-01-10',
+    fecha_fin: '2025-01-30',
+  },
+  {
+    ...auditorias[0],
+    auditores: [{ auditor_id: 20, auditor_nombre: 'María Camargo' }],
+  },
+  {
+    _id: 'a4',
+    consecutivo_no_auditoria: 4,
+    titulo: 'Bienestar',
+    dependencia_nombre: 'Bienestar Universitario',
+    vigencia_nombre: '2025',
+    tipo_evaluacion_nombre: 'Auditoría Interna',
+    auditores: [{ auditor_id: 30, auditor_nombre: 'Juan Rojas' }],
+  },
+];
 
 /** Respuesta del CRUD resumen-plan-mejoramiento (conteos ya calculados en MongoDB). */
 const conteosCrud = {
@@ -78,16 +143,23 @@ const conteosCrud = {
 
 describe('FormulacionPlanesService', () => {
   let service: FormulacionPlanesService;
-  const auditoriaService = { getByDependencia: jest.fn() };
+  const auditoriaService = { getByDependencia: jest.fn(), getAll: jest.fn() };
   const auditoriaCrudService = {
-    traerDataCrud: jest.fn((endpoint: string) =>
-      Promise.resolve({
-        Data:
-          endpoint === 'resumen-plan-mejoramiento'
-            ? conteosCrud
-            : (respuestasCrud[endpoint] ?? []),
-      }),
-    ),
+    traerDataCrud: jest.fn((endpoint: string, _id: any, params: any) => {
+      if (endpoint === 'resumen-plan-mejoramiento') {
+        return Promise.resolve({ Data: conteosCrud });
+      }
+      const consulta = String(params?.query ?? '');
+      const clave = Object.keys(respuestasPorConsulta).find(
+        (k) =>
+          k.startsWith(`${endpoint}|`) && consulta.includes(k.split('|')[1]),
+      );
+      return Promise.resolve({
+        Data: clave
+          ? respuestasPorConsulta[clave]
+          : (respuestasCrud[endpoint] ?? []),
+      });
+    }),
   };
   const getDependenciasByPersona = jest.fn();
   const query = { vigencia_id: '1', tipo_evaluacion_id: '6770' };
@@ -97,6 +169,10 @@ describe('FormulacionPlanesService', () => {
       Data: auditorias.map((a) => ({ ...a })),
     });
     auditoriaService.getByDependencia.mockClear();
+    auditoriaService.getAll.mockResolvedValue({
+      Data: auditoriasInstitucion.map((a) => ({ ...a })),
+    });
+    auditoriaService.getAll.mockClear();
     auditoriaCrudService.traerDataCrud.mockClear();
     getDependenciasByPersona.mockReset().mockResolvedValue([32, 45]);
 
@@ -206,7 +282,7 @@ describe('FormulacionPlanesService', () => {
     const consultaRechazos = auditoriaCrudService.traerDataCrud.mock.calls.find(
       ([endpoint]) => endpoint === 'plan-mejoramiento-estado',
     );
-    expect(consultaRechazos?.[2].query).toContain(
+    expect(consultaRechazos?.[2]?.query).toContain(
       `estado_id:${ESTADO.RECHAZADO_PLAN_MEJORAMIENTO}`,
     );
   });
@@ -242,5 +318,98 @@ describe('FormulacionPlanesService', () => {
       312,
       expect.anything(),
     );
+  });
+
+  describe('vista del auditor', () => {
+    it('el resumen cuenta solo las auditorías asignadas y devuelve los dos totales', async () => {
+      const { Data } = await service.getResumenAuditor(10, query);
+
+      expect(Data).toEqual({
+        total_auditorias: 2,
+        sin_formular: 1,
+        en_formulacion: 1,
+        en_revision: 0,
+        con_observaciones: 0,
+        aprobados: 0,
+        total_asignadas: 2,
+        total_institucion: 3,
+      });
+      expect(auditoriaService.getAll).toHaveBeenCalledWith({
+        query: `vigencia_id:1,tipo_evaluacion_id:6770,activo:true,estado_id:${environment.AUDITORIA_ESTADO.APROBADO_INFORME_FINAL_JEFE}`,
+        limit: 0,
+      });
+    });
+
+    it('con alcance "todas" el resumen cuenta todas las auditorías de la institución', async () => {
+      const { Data } = await service.getResumenAuditor(10, {
+        ...query,
+        alcance: 'todas',
+      });
+
+      expect(Data).toMatchObject({
+        total_auditorias: 3,
+        con_observaciones: 1,
+        total_asignadas: 2,
+        total_institucion: 3,
+      });
+    });
+
+    it('marca como asignadas las auditorías del auditor de la auditoría o del plan', async () => {
+      const { Data, MetaData } = await service.getAllAuditor(10, {
+        ...query,
+        alcance: 'todas',
+      });
+
+      expect(MetaData.Count).toBe(3);
+      expect(Data.map((f) => [f.auditoria_id, f.asignada])).toEqual([
+        ['a1', true],
+        ['a2', true],
+        ['a4', false],
+      ]);
+    });
+
+    it('agrega fechas, fecha del estado actual y avance de acciones', async () => {
+      const { Data } = await service.getAllAuditor(10, query);
+      const [sinPlan, creando] = Data;
+
+      expect(sinPlan).toMatchObject({
+        fecha_inicio: '2025-01-10',
+        fecha_fin: '2025-01-30',
+        fecha_estado: null,
+        total_acciones: 0,
+        acciones_aprobadas: 0,
+      });
+      expect(creando).toMatchObject({
+        plan_mejoramiento_id: 'p2',
+        fecha_estado: '2025-02-12T10:00:00Z',
+        total_acciones: 2,
+        acciones_aprobadas: 1,
+      });
+    });
+
+    it('filtra por estado y pagina antes de consultar auditores y conteos', async () => {
+      const { Data, MetaData } = await service.getAllAuditor(10, {
+        ...query,
+        alcance: 'todas',
+        estado_ids: String(ESTADO.RECHAZADO_PLAN_MEJORAMIENTO),
+      });
+
+      expect(MetaData.Count).toBe(1);
+      expect(Data).toHaveLength(1);
+      expect(Data[0]).toMatchObject({ auditoria_id: 'a4', asignada: false });
+
+      const consultaHallazgos =
+        auditoriaCrudService.traerDataCrud.mock.calls.find(
+          ([endpoint]) => endpoint === 'hallazgo',
+        );
+      expect(consultaHallazgos?.[2]?.query).toContain('auditoria_id__in:a4,');
+    });
+
+    it('no consulta nada sin vigencia o tipo de evaluación', async () => {
+      const { Data } = await service.getResumenAuditor(10, {});
+
+      expect(Data.total_institucion).toBe(0);
+      expect(auditoriaService.getAll).not.toHaveBeenCalled();
+    });
   });
 });

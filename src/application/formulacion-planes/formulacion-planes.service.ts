@@ -10,9 +10,10 @@ const {
   TIPO_PARAMETRO,
   AUDITORIA_ESTADO,
   PLAN_MEJORAMIENTO_ESTADO: ESTADO,
+  ACCION_MEJORA_ESTADO,
 } = environment;
 
-/** Agrupación de estados del plan que usan los indicadores de la vista. */
+/** Agrupación de estados del plan que usan los indicadores de la vista del auditado. */
 const ESTADOS_POR_GRUPO = {
   sin_formular: [ESTADO.SIN_PLAN_MEJORAMIENTO],
   en_formulacion: [
@@ -23,6 +24,18 @@ const ESTADOS_POR_GRUPO = {
   aprobados: [ESTADO.APROBADO_PLAN_MEJORAMIENTO, ESTADO.FIN_PLAN_MEJORAMIENTO],
 };
 
+/** El auditor ve los planes rechazados aparte: son los que tienen observaciones suyas. */
+const ESTADOS_POR_GRUPO_AUDITOR = {
+  sin_formular: [ESTADO.SIN_PLAN_MEJORAMIENTO],
+  en_formulacion: [ESTADO.CREANDO_PLAN_MEJORAMIENTO],
+  en_revision: [ESTADO.REVISION_PLAN_MEJORAMIENTO_AUDITOR],
+  con_observaciones: [ESTADO.RECHAZADO_PLAN_MEJORAMIENTO],
+  aprobados: [ESTADO.APROBADO_PLAN_MEJORAMIENTO, ESTADO.FIN_PLAN_MEJORAMIENTO],
+};
+
+/** asignadas: auditorías donde la persona es auditor de la auditoría o del plan. */
+export type AlcanceAuditor = 'asignadas' | 'todas';
+
 interface FiltrosFormulacion {
   vigencia_id: number;
   tipo_evaluacion_id: number;
@@ -30,6 +43,7 @@ interface FiltrosFormulacion {
   busqueda?: string;
   limit?: number;
   offset?: number;
+  alcance: AlcanceAuditor;
 }
 
 export interface FilaFormulacion {
@@ -48,6 +62,24 @@ export interface FilaFormulacion {
   total_observaciones: number;
 }
 
+export interface FilaFormulacionAuditor extends FilaFormulacion {
+  fecha_inicio: string | null;
+  fecha_fin: string | null;
+  /** Fecha del estado actual del plan (radicación, devolución o aprobación). */
+  fecha_estado: string | null;
+  total_acciones: number;
+  acciones_aprobadas: number;
+  asignada: boolean;
+}
+
+interface AuditoriasAuditor {
+  /** Auditorías visibles según el alcance pedido. */
+  auditorias: any[];
+  planPorAuditoria: Map<string, any>;
+  asignadas: Set<string>;
+  total_institucion: number;
+}
+
 @Injectable()
 export class FormulacionPlanesService {
   constructor(
@@ -57,6 +89,8 @@ export class FormulacionPlanesService {
     private readonly dominiosService: DominiosService,
   ) {}
 
+  // ── Auditado ──────────────────────────────────────────────
+
   /** Conteos de la vigencia para los indicadores y los chips de acceso rápido. */
   async getResumen(personaId: number, cargoId: number, query: any) {
     const { total_auditorias, por_estado } = await this.consultarConteos(
@@ -65,11 +99,9 @@ export class FormulacionPlanesService {
       this.parsearFiltros(query),
     );
     // El CRUD cuenta; aquí solo se suman sus conteos según el grupo de cada estado
-    const cantidadPorEstado = new Map<number | null, number>(
+    const sumar = this.sumadorPorEstado(
       por_estado.map((e) => [e.estado_id, e.cantidad]),
     );
-    const sumar = (estados: (number | null)[]) =>
-      estados.reduce((total, e) => total + (cantidadPorEstado.get(e) ?? 0), 0);
 
     return {
       Success: true,
@@ -120,48 +152,308 @@ export class FormulacionPlanesService {
   /** Auditorías finalizadas del auditado con el estado de su plan, filtradas y paginadas. */
   async getAll(personaId: number, cargoId: number, query: any) {
     const filtros = this.parsearFiltros(query);
-    const filas = await this.construirFilas(personaId, cargoId, filtros);
-
-    const filtradas = this.aplicarFiltrosEnMemoria(filas, filtros);
-    const total = filtradas.length;
-    const paginadas = this.paginar(filtradas, filtros.limit, filtros.offset);
-
-    return {
-      Success: true,
-      Status: 200,
-      Message: 'Consulta de auditorías exitosa.',
-      Data: paginadas,
-      MetaData: { Count: total },
-    };
-  }
-
-  private async construirFilas(
-    personaId: number,
-    cargoId: number,
-    filtros: FiltrosFormulacion,
-  ): Promise<FilaFormulacion[]> {
-    if (!filtros.vigencia_id || !filtros.tipo_evaluacion_id) return [];
+    if (!filtros.vigencia_id || !filtros.tipo_evaluacion_id) {
+      return this.respuestaFilas([], 0);
+    }
 
     // Mismo criterio que la tabla de planes: auditorías de la dependencia con informe final aprobado
     const auditoriasRes = await this.auditoriaService.getByDependencia(
       personaId,
       cargoId,
+      { query: this.queryAuditoriasFinalizadas(filtros), limit: 0 },
+    );
+    const auditorias: any[] = auditoriasRes?.Data ?? [];
+    const planPorAuditoria = await this.construirMapPlanes(
+      auditorias.map((a) => String(a._id)),
+    );
+
+    const { pagina, total } = this.filtrarYPaginar(
+      auditorias,
+      planPorAuditoria,
+      filtros,
+    );
+    return this.respuestaFilas(
+      await this.construirFilas(pagina, planPorAuditoria),
+      total,
+    );
+  }
+
+  // ── Auditor OCI ───────────────────────────────────────────
+
+  /** Conteos por grupo de estado y totales del selector "Mis asignadas / Todas". */
+  async getResumenAuditor(personaId: number, query: any) {
+    const { auditorias, planPorAuditoria, asignadas, total_institucion } =
+      await this.consultarAuditoriasAuditor(
+        personaId,
+        this.parsearFiltros(query),
+      );
+
+    const cantidadPorEstado = new Map<number, number>();
+    for (const auditoria of auditorias) {
+      const estadoId = this.estadoDelPlan(
+        planPorAuditoria.get(String(auditoria._id)),
+      );
+      cantidadPorEstado.set(
+        estadoId,
+        (cantidadPorEstado.get(estadoId) ?? 0) + 1,
+      );
+    }
+    const sumar = this.sumadorPorEstado([...cantidadPorEstado]);
+
+    return {
+      Success: true,
+      Status: 200,
+      Message: 'Consulta de resumen exitosa.',
+      Data: {
+        total_auditorias: auditorias.length,
+        sin_formular: sumar(ESTADOS_POR_GRUPO_AUDITOR.sin_formular),
+        en_formulacion: sumar(ESTADOS_POR_GRUPO_AUDITOR.en_formulacion),
+        en_revision: sumar(ESTADOS_POR_GRUPO_AUDITOR.en_revision),
+        con_observaciones: sumar(ESTADOS_POR_GRUPO_AUDITOR.con_observaciones),
+        aprobados: sumar(ESTADOS_POR_GRUPO_AUDITOR.aprobados),
+        total_asignadas: asignadas.size,
+        total_institucion,
+      },
+    };
+  }
+
+  /** Auditorías finalizadas que revisa el auditor, con plazo y avance de dictamen de su plan. */
+  async getAllAuditor(personaId: number, query: any) {
+    const filtros = this.parsearFiltros(query);
+    const { auditorias, planPorAuditoria, asignadas } =
+      await this.consultarAuditoriasAuditor(personaId, filtros);
+
+    const { pagina, total } = this.filtrarYPaginar(
+      auditorias,
+      planPorAuditoria,
+      filtros,
+    );
+    const filas = await this.construirFilas(pagina, planPorAuditoria);
+    return this.respuestaFilas(
+      await this.agregarDatosAuditor(filas, pagina, asignadas),
+      total,
+    );
+  }
+
+  /**
+   * Auditorías finalizadas de la institución, marcando las asignadas a la persona.
+   * Con alcance "asignadas" solo devuelve esas; los dos totales salen de la misma consulta.
+   */
+  private async consultarAuditoriasAuditor(
+    personaId: number,
+    filtros: FiltrosFormulacion,
+  ): Promise<AuditoriasAuditor> {
+    const vacio: AuditoriasAuditor = {
+      auditorias: [],
+      planPorAuditoria: new Map(),
+      asignadas: new Set(),
+      total_institucion: 0,
+    };
+    if (!filtros.vigencia_id || !filtros.tipo_evaluacion_id) return vacio;
+
+    const auditoriasRes = await this.auditoriaService.getAll({
+      query: this.queryAuditoriasFinalizadas(filtros),
+      limit: 0,
+    });
+    const todas: any[] = auditoriasRes?.Data ?? [];
+    if (todas.length === 0) return vacio;
+
+    const planPorAuditoria = await this.construirMapPlanes(
+      todas.map((a) => String(a._id)),
+    );
+    const planesDelAuditor = await this.consultarPlanesDelAuditor(
+      personaId,
+      [...planPorAuditoria.values()].map((p) => String(p._id)),
+    );
+
+    const asignadas = new Set<string>(
+      todas
+        .filter(
+          (a) =>
+            (a.auditores ?? []).some(
+              (auditor: any) => Number(auditor.auditor_id) === personaId,
+            ) ||
+            planesDelAuditor.has(
+              String(planPorAuditoria.get(String(a._id))?._id),
+            ),
+        )
+        .map((a) => String(a._id)),
+    );
+
+    return {
+      auditorias:
+        filtros.alcance === 'todas'
+          ? todas
+          : todas.filter((a) => asignadas.has(String(a._id))),
+      planPorAuditoria,
+      asignadas,
+      total_institucion: todas.length,
+    };
+  }
+
+  /** Planes (de los indicados) en los que la persona es auditor asignado. */
+  private async consultarPlanesDelAuditor(
+    personaId: number,
+    planIds: string[],
+  ): Promise<Set<string>> {
+    if (planIds.length === 0) return new Set();
+
+    const res = await this.auditoriaCrudService.traerDataCrud(
+      'plan-mejoramiento-auditor',
+      null,
       {
-        query: [
-          `vigencia_id:${filtros.vigencia_id}`,
-          `tipo_evaluacion_id:${filtros.tipo_evaluacion_id}`,
-          'activo:true',
-          `estado_id:${AUDITORIA_ESTADO.APROBADO_INFORME_FINAL_JEFE}`,
-        ].join(','),
+        query: `plan_mejoramiento_id__in:${planIds.join('|')},auditor_id:${personaId},activo:true`,
+        fields: 'plan_mejoramiento_id',
         limit: 0,
       },
     );
-    const auditorias: any[] = auditoriasRes?.Data ?? [];
+    return new Set(
+      (res?.Data ?? [])
+        .map((a: any) => this.idDeRef(a.plan_mejoramiento_id))
+        .filter(Boolean),
+    );
+  }
+
+  /** Agrega a las filas de la página la fecha del estado actual y el avance de dictamen. */
+  private async agregarDatosAuditor(
+    filas: FilaFormulacion[],
+    pagina: any[],
+    asignadas: Set<string>,
+  ): Promise<FilaFormulacionAuditor[]> {
+    const planIds = filas
+      .map((f) => f.plan_mejoramiento_id)
+      .filter(Boolean) as string[];
+    const [fechaPorPlan, accionesPorPlan] = await Promise.all([
+      this.construirMapFechaEstado(planIds),
+      this.contarAccionesPorPlan(planIds),
+    ]);
+    const auditoriaPorId = new Map(pagina.map((a) => [String(a._id), a]));
+
+    return filas.map((fila) => {
+      const auditoria = auditoriaPorId.get(fila.auditoria_id);
+      const planId = fila.plan_mejoramiento_id;
+      const acciones = planId ? accionesPorPlan.get(planId) : undefined;
+      return {
+        ...fila,
+        fecha_inicio: auditoria?.fecha_inicio ?? null,
+        fecha_fin: auditoria?.fecha_fin ?? null,
+        fecha_estado: planId ? (fechaPorPlan.get(planId) ?? null) : null,
+        total_acciones: acciones?.total ?? 0,
+        acciones_aprobadas: acciones?.aprobadas ?? 0,
+        asignada: asignadas.has(fila.auditoria_id),
+      };
+    });
+  }
+
+  private async construirMapFechaEstado(
+    planIds: string[],
+  ): Promise<Map<string, string>> {
+    const map = new Map<string, string>();
+    if (planIds.length === 0) return map;
+
+    const res = await this.auditoriaCrudService.traerDataCrud(
+      'plan-mejoramiento-estado',
+      null,
+      {
+        query: `plan_mejoramiento_id__in:${planIds.join('|')},actual:true,activo:true`,
+        fields: 'plan_mejoramiento_id,fecha_ejecucion_estado',
+        limit: 0,
+      },
+    );
+    for (const estado of res?.Data ?? []) {
+      const planId = this.idDeRef(estado.plan_mejoramiento_id);
+      if (planId && estado.fecha_ejecucion_estado) {
+        map.set(planId, estado.fecha_ejecucion_estado);
+      }
+    }
+    return map;
+  }
+
+  private async contarAccionesPorPlan(
+    planIds: string[],
+  ): Promise<Map<string, { total: number; aprobadas: number }>> {
+    const map = new Map<string, { total: number; aprobadas: number }>();
+    if (planIds.length === 0) return map;
+
+    const res = await this.auditoriaCrudService.traerDataCrud(
+      'accion-mejora',
+      null,
+      {
+        query: `plan_mejoramiento_id__in:${planIds.join('|')},activo:true`,
+        fields: 'plan_mejoramiento_id,estado_id',
+        limit: 0,
+      },
+    );
+    for (const accion of res?.Data ?? []) {
+      const planId = this.idDeRef(accion.plan_mejoramiento_id);
+      if (!planId) continue;
+      const conteo = map.get(planId) ?? { total: 0, aprobadas: 0 };
+      conteo.total++;
+      if (accion.estado_id === ACCION_MEJORA_ESTADO.APROBADA)
+        conteo.aprobadas++;
+      map.set(planId, conteo);
+    }
+    return map;
+  }
+
+  // ── Comunes ───────────────────────────────────────────────
+
+  private queryAuditoriasFinalizadas(filtros: FiltrosFormulacion): string {
+    return [
+      `vigencia_id:${filtros.vigencia_id}`,
+      `tipo_evaluacion_id:${filtros.tipo_evaluacion_id}`,
+      'activo:true',
+      `estado_id:${AUDITORIA_ESTADO.APROBADO_INFORME_FINAL_JEFE}`,
+    ].join(',');
+  }
+
+  /**
+   * Filtra, ordena por número de auditoría y pagina antes de armar las filas,
+   * para consultar auditores y conteos solo de la página pedida.
+   */
+  private filtrarYPaginar(
+    auditorias: any[],
+    planPorAuditoria: Map<string, any>,
+    f: FiltrosFormulacion,
+  ): { pagina: any[]; total: number } {
+    const busqueda = f.busqueda?.toLowerCase();
+    const filtradas = auditorias
+      .filter((auditoria) => {
+        const estadoId = this.estadoDelPlan(
+          planPorAuditoria.get(String(auditoria._id)),
+        );
+        return (
+          (!f.estado_ids.length || f.estado_ids.includes(estadoId)) &&
+          (!busqueda ||
+            `${this.unirTexto(auditoria.dependencia_nombre)} ${auditoria.titulo ?? ''}`
+              .toLowerCase()
+              .includes(busqueda))
+        );
+      })
+      .sort(
+        (a, b) =>
+          Number(a.consecutivo_no_auditoria ?? 0) -
+          Number(b.consecutivo_no_auditoria ?? 0),
+      );
+
+    return {
+      pagina: this.paginar(filtradas, f.limit, f.offset),
+      total: filtradas.length,
+    };
+  }
+
+  /** Filas de la tabla, en el mismo orden de las auditorías recibidas. */
+  private async construirFilas(
+    auditorias: any[],
+    planPorAuditoria: Map<string, any>,
+  ): Promise<FilaFormulacion[]> {
     if (auditorias.length === 0) return [];
 
     const auditoriaIds = auditorias.map((a) => String(a._id));
-    const planPorAuditoria = await this.construirMapPlanes(auditoriaIds);
-    const planIds = [...planPorAuditoria.values()].map((p) => String(p._id));
+    const planIds = auditoriaIds
+      .map((id) => planPorAuditoria.get(id))
+      .filter(Boolean)
+      .map((p) => String(p._id));
 
     const [auditoresPorPlan, hallazgosPorAuditoria, rechazosPorPlan, estados] =
       await Promise.all([
@@ -176,42 +468,66 @@ export class FormulacionPlanesService {
         this.construirMapEstados(),
       ]);
 
-    return auditorias
-      .map((auditoria) => {
-        const auditoriaId = String(auditoria._id);
-        const plan = planPorAuditoria.get(auditoriaId);
-        const planId = plan ? String(plan._id) : null;
-        const estadoId = plan?.estado_id ?? ESTADO.SIN_PLAN_MEJORAMIENTO;
+    return auditorias.map((auditoria) => {
+      const auditoriaId = String(auditoria._id);
+      const plan = planPorAuditoria.get(auditoriaId);
+      const planId = plan ? String(plan._id) : null;
+      const estadoId = this.estadoDelPlan(plan);
 
-        return {
-          auditoria_id: auditoriaId,
-          no_auditoria:
-            auditoria.consecutivo_no_auditoria != null
-              ? String(auditoria.consecutivo_no_auditoria)
-              : '',
-          vigencia_nombre: auditoria.vigencia_nombre ?? '',
-          titulo: auditoria.titulo ?? '',
-          tipo_evaluacion_nombre: auditoria.tipo_evaluacion_nombre ?? '',
-          auditores_auditoria: (auditoria.auditores ?? [])
-            .map((a: any) => a.auditor_nombre)
-            .filter(Boolean),
-          auditores_plan: planId ? (auditoresPorPlan.get(planId) ?? []) : [],
-          dependencia_nombre: this.unirTexto(auditoria.dependencia_nombre),
-          plan_mejoramiento_id: planId,
-          estado_plan_id: estadoId,
-          estado_plan_nombre:
-            estados.get(estadoId) ?? 'Sin Plan de Mejoramiento',
-          total_hallazgos: hallazgosPorAuditoria.get(auditoriaId) ?? 0,
-          total_observaciones: planId ? (rechazosPorPlan.get(planId) ?? 0) : 0,
-        };
-      })
-      .sort((a, b) => Number(a.no_auditoria) - Number(b.no_auditoria));
+      return {
+        auditoria_id: auditoriaId,
+        no_auditoria:
+          auditoria.consecutivo_no_auditoria != null
+            ? String(auditoria.consecutivo_no_auditoria)
+            : '',
+        vigencia_nombre: auditoria.vigencia_nombre ?? '',
+        titulo: auditoria.titulo ?? '',
+        tipo_evaluacion_nombre: auditoria.tipo_evaluacion_nombre ?? '',
+        auditores_auditoria: (auditoria.auditores ?? [])
+          .map((a: any) => a.auditor_nombre)
+          .filter(Boolean),
+        auditores_plan: planId ? (auditoresPorPlan.get(planId) ?? []) : [],
+        dependencia_nombre: this.unirTexto(auditoria.dependencia_nombre),
+        plan_mejoramiento_id: planId,
+        estado_plan_id: estadoId,
+        estado_plan_nombre: estados.get(estadoId) ?? 'Sin Plan de Mejoramiento',
+        total_hallazgos: hallazgosPorAuditoria.get(auditoriaId) ?? 0,
+        total_observaciones: planId ? (rechazosPorPlan.get(planId) ?? 0) : 0,
+      };
+    });
+  }
+
+  private respuestaFilas<T>(filas: T[], total: number) {
+    return {
+      Success: true,
+      Status: 200,
+      Message: 'Consulta de auditorías exitosa.',
+      Data: filas,
+      MetaData: { Count: total },
+    };
+  }
+
+  /** Devuelve una función que suma las cantidades de los estados indicados. */
+  private sumadorPorEstado(
+    cantidades: [number | null, number][],
+  ): (estados: (number | null)[]) => number {
+    const cantidadPorEstado = new Map(cantidades);
+    return (estados) =>
+      estados.reduce((total, e) => total + (cantidadPorEstado.get(e) ?? 0), 0);
+  }
+
+  /** Sin plan activo la auditoría cuenta como "Sin plan de mejoramiento". */
+  private estadoDelPlan(plan: any): number {
+    return plan?.estado_id ?? ESTADO.SIN_PLAN_MEJORAMIENTO;
   }
 
   /** Plan activo de cada auditoría (el primero, igual que la tabla de planes). */
   private async construirMapPlanes(
     auditoriaIds: string[],
   ): Promise<Map<string, any>> {
+    const map = new Map<string, any>();
+    if (auditoriaIds.length === 0) return map;
+
     const res = await this.auditoriaCrudService.traerDataCrud(
       'plan-mejoramiento',
       null,
@@ -221,7 +537,6 @@ export class FormulacionPlanesService {
         limit: 0,
       },
     );
-    const map = new Map<string, any>();
     for (const plan of res?.Data ?? []) {
       const auditoriaId = this.idDeRef(plan.auditoria_id);
       if (auditoriaId && !map.has(auditoriaId)) map.set(auditoriaId, plan);
@@ -303,26 +618,7 @@ export class FormulacionPlanesService {
     );
   }
 
-  private aplicarFiltrosEnMemoria(
-    filas: FilaFormulacion[],
-    f: FiltrosFormulacion,
-  ): FilaFormulacion[] {
-    const busqueda = f.busqueda?.toLowerCase();
-    return filas.filter(
-      (fila) =>
-        (!f.estado_ids.length || f.estado_ids.includes(fila.estado_plan_id)) &&
-        (!busqueda ||
-          `${fila.dependencia_nombre} ${fila.titulo}`
-            .toLowerCase()
-            .includes(busqueda)),
-    );
-  }
-
-  private paginar(
-    filas: FilaFormulacion[],
-    limit?: number,
-    offset?: number,
-  ): FilaFormulacion[] {
+  private paginar<T>(filas: T[], limit?: number, offset?: number): T[] {
     if (!limit || limit <= 0) return filas;
     const inicio = offset ?? 0;
     return filas.slice(inicio, inicio + limit);
@@ -341,6 +637,7 @@ export class FormulacionPlanesService {
       busqueda: query?.busqueda?.trim() || undefined,
       limit: query?.limit != null ? Number(query.limit) : undefined,
       offset: query?.offset != null ? Number(query.offset) : undefined,
+      alcance: query?.alcance === 'todas' ? 'todas' : 'asignadas',
     };
   }
 

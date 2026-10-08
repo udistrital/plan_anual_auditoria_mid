@@ -79,6 +79,12 @@ export const productionConfig = {
     FIN_PLAN_MEJORAMIENTO: 5336,
   },
 
+  ACCION_MEJORA_ESTADO: {
+    PENDIENTE_REVISION: 0,
+    APROBADA: 0,
+    RECHAZADA: 0,
+  },
+
   CARGO: {
     JEFE_DEPENDENCIA_ID: 312,
     ASISTENTE_DEPENDENCIA_ID: 320,
