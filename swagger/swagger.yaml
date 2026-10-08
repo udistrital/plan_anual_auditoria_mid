@@ -1008,6 +1008,91 @@ paths:
         auditores y dependencias resueltos.
       tags:
         - Gestión de Acciones
+  /plan-mejoramiento/formulacion/auditado/{personaId}/{cargoId}/resumen:
+    get:
+      operationId: FormulacionPlanesController_getResumen
+      parameters:
+        - name: personaId
+          required: true
+          in: path
+          description: ID de la persona (tercero).
+          schema:
+            type: number
+        - name: cargoId
+          required: true
+          in: path
+          description: ID del cargo (312 o 320).
+          schema:
+            type: number
+        - name: tipo_evaluacion_id
+          required: true
+          in: query
+          schema: {}
+        - name: vigencia_id
+          required: true
+          in: query
+          schema: {}
+      responses:
+        '200':
+          description: Resumen obtenido con éxito.
+        '404':
+          description: Error en la consulta.
+      summary: >-
+        Conteos de auditorías finalizadas del auditado por estado de su plan de
+        mejoramiento.
+      tags: &ref_12
+        - Formulación de Planes
+  /plan-mejoramiento/formulacion/auditado/{personaId}/{cargoId}:
+    get:
+      operationId: FormulacionPlanesController_getAll
+      parameters:
+        - name: personaId
+          required: true
+          in: path
+          description: ID de la persona (tercero).
+          schema:
+            type: number
+        - name: cargoId
+          required: true
+          in: path
+          description: ID del cargo (312 o 320).
+          schema:
+            type: number
+        - name: offset
+          required: false
+          in: query
+          schema: {}
+        - name: limit
+          required: false
+          in: query
+          schema: {}
+        - name: busqueda
+          required: false
+          in: query
+          description: Texto sobre dependencia o título.
+          schema: {}
+        - name: estado_ids
+          required: false
+          in: query
+          description: Estados del plan separados por coma.
+          schema: {}
+        - name: tipo_evaluacion_id
+          required: true
+          in: query
+          schema: {}
+        - name: vigencia_id
+          required: true
+          in: query
+          schema: {}
+      responses:
+        '200':
+          description: Lista obtenida con éxito.
+        '404':
+          description: Error en la consulta.
+      summary: >-
+        Lista las auditorías finalizadas del auditado con el estado, auditores,
+        hallazgos y observaciones de su plan.
+      tags: *ref_12
 info:
   title: Plan Anual Auditoria MID
   description: API MID para la gestion de planes de auditorias, auditorias y actividades

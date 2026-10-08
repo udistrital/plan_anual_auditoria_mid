@@ -14,6 +14,7 @@ import { ResponsableAccionModule } from './application/responsable-accion/respon
 import { AccionMejoraModule } from './application/accion-mejora/accion-mejora.module';
 import { AccionMejoraEstadoModule } from './application/accion-mejora-estado/accion-mejora-estado.module';
 import { GestionAccionesModule } from './application/gestion-acciones/gestion-acciones.module';
+import { FormulacionPlanesModule } from './application/formulacion-planes/formulacion-planes.module';
 import { PlanEstadoModule } from './application/plan-estado/plan-estado.module';
 import { AuditorModule } from './application/auditor/auditor.module';
 import { InformeModule } from './application/informe/informe.module';
@@ -67,6 +68,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     AccionMejoraModule,
     AccionMejoraEstadoModule,
     GestionAccionesModule,
+    FormulacionPlanesModule,
     ServicesModule,
     ObserveModule.forRoot({
       appKey: process.env.OBSERVE_APP_KEY,
