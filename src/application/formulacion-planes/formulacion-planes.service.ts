@@ -65,6 +65,10 @@ export interface FilaFormulacion {
 export interface FilaFormulacionAuditor extends FilaFormulacion {
   fecha_inicio: string | null;
   fecha_fin: string | null;
+  /** Aprobación del informe final: desde ahí corre la formulación del plan. */
+  fecha_aprobacion_informe: string | null;
+  /** Plazo de formulación del plan (apertura + 8 días hábiles). */
+  fecha_limite: string | null;
   /** Fecha del estado actual del plan (radicación, devolución o aprobación). */
   fecha_estado: string | null;
   total_acciones: number;
@@ -72,12 +76,19 @@ export interface FilaFormulacionAuditor extends FilaFormulacion {
   asignada: boolean;
 }
 
+/** Respuesta de resumen-plan-mejoramiento (CRUD); estado_id null = sin plan activo. */
+interface ConteosPorEstado {
+  total_auditorias: number;
+  por_estado: { estado_id: number | null; cantidad: number }[];
+}
+
+const SIN_CONTEOS: ConteosPorEstado = { total_auditorias: 0, por_estado: [] };
+
 interface AuditoriasAuditor {
   /** Auditorías visibles según el alcance pedido. */
   auditorias: any[];
   planPorAuditoria: Map<string, any>;
   asignadas: Set<string>;
-  total_institucion: number;
 }
 
 @Injectable()
@@ -118,35 +129,44 @@ export class FormulacionPlanesService {
     };
   }
 
-  /** Conteo de auditorías finalizadas por estado de su plan, calculado en el CRUD. */
+  /** Conteos del auditado: auditorías de sus dependencias. */
   private async consultarConteos(
     personaId: number,
     cargoId: number,
     filtros: FiltrosFormulacion,
-  ): Promise<{
-    total_auditorias: number;
-    por_estado: { estado_id: number | null; cantidad: number }[];
-  }> {
-    const vacio = { total_auditorias: 0, por_estado: [] };
-    if (!filtros.vigencia_id || !filtros.tipo_evaluacion_id) return vacio;
+  ): Promise<ConteosPorEstado> {
+    if (!filtros.vigencia_id || !filtros.tipo_evaluacion_id) return SIN_CONTEOS;
 
     const dependenciaIds = await this.tercerosHelper.getDependenciasByPersona(
       personaId,
       cargoId,
     );
-    if (!dependenciaIds?.length) return vacio;
+    if (!dependenciaIds?.length) return SIN_CONTEOS;
 
+    return this.consultarConteosCrud(filtros, {
+      dependencia_ids: dependenciaIds.join('|'),
+    });
+  }
+
+  /**
+   * Conteo de auditorías finalizadas por estado de su plan, calculado en el CRUD.
+   * El alcance de cada vista llega en `alcance` (dependencia_ids, auditor_id o ninguno).
+   */
+  private async consultarConteosCrud(
+    filtros: FiltrosFormulacion,
+    alcance: { dependencia_ids?: string; auditor_id?: number },
+  ): Promise<ConteosPorEstado> {
     const res = await this.auditoriaCrudService.traerDataCrud(
       'resumen-plan-mejoramiento',
       null,
       {
         vigencia_id: filtros.vigencia_id,
         tipo_evaluacion_id: filtros.tipo_evaluacion_id,
-        dependencia_ids: dependenciaIds.join('|'),
         estado_auditoria_id: AUDITORIA_ESTADO.APROBADO_INFORME_FINAL_JEFE,
+        ...alcance,
       },
     );
-    return res?.Data ?? vacio;
+    return res?.Data ?? SIN_CONTEOS;
   }
 
   /** Auditorías finalizadas del auditado con el estado de su plan, filtradas y paginadas. */
@@ -180,39 +200,35 @@ export class FormulacionPlanesService {
 
   // ── Auditor OCI ───────────────────────────────────────────
 
-  /** Conteos por grupo de estado y totales del selector "Mis asignadas / Todas". */
+  /**
+   * Conteos por grupo de estado, calculados en el CRUD con la misma regla de
+   * "asignada" que consultarAuditoriasAuditor usa para el listado.
+   */
   async getResumenAuditor(personaId: number, query: any) {
-    const { auditorias, planPorAuditoria, asignadas, total_institucion } =
-      await this.consultarAuditoriasAuditor(
-        personaId,
-        this.parsearFiltros(query),
-      );
-
-    const cantidadPorEstado = new Map<number, number>();
-    for (const auditoria of auditorias) {
-      const estadoId = this.estadoDelPlan(
-        planPorAuditoria.get(String(auditoria._id)),
-      );
-      cantidadPorEstado.set(
-        estadoId,
-        (cantidadPorEstado.get(estadoId) ?? 0) + 1,
-      );
-    }
-    const sumar = this.sumadorPorEstado([...cantidadPorEstado]);
+    const filtros = this.parsearFiltros(query);
+    const { total_auditorias, por_estado } =
+      !filtros.vigencia_id || !filtros.tipo_evaluacion_id
+        ? SIN_CONTEOS
+        : await this.consultarConteosCrud(
+            filtros,
+            filtros.alcance === 'todas' ? {} : { auditor_id: personaId },
+          );
+    const sumar = this.sumadorPorEstado(
+      por_estado.map((e) => [e.estado_id, e.cantidad]),
+    );
 
     return {
       Success: true,
       Status: 200,
       Message: 'Consulta de resumen exitosa.',
       Data: {
-        total_auditorias: auditorias.length,
-        sin_formular: sumar(ESTADOS_POR_GRUPO_AUDITOR.sin_formular),
+        total_auditorias,
+        // null: auditorías sin plan activo
+        sin_formular: sumar([...ESTADOS_POR_GRUPO_AUDITOR.sin_formular, null]),
         en_formulacion: sumar(ESTADOS_POR_GRUPO_AUDITOR.en_formulacion),
         en_revision: sumar(ESTADOS_POR_GRUPO_AUDITOR.en_revision),
         con_observaciones: sumar(ESTADOS_POR_GRUPO_AUDITOR.con_observaciones),
         aprobados: sumar(ESTADOS_POR_GRUPO_AUDITOR.aprobados),
-        total_asignadas: asignadas.size,
-        total_institucion,
       },
     };
   }
@@ -230,14 +246,20 @@ export class FormulacionPlanesService {
     );
     const filas = await this.construirFilas(pagina, planPorAuditoria);
     return this.respuestaFilas(
-      await this.agregarDatosAuditor(filas, pagina, asignadas),
+      await this.agregarDatosAuditor(
+        filas,
+        pagina,
+        planPorAuditoria,
+        asignadas,
+      ),
       total,
     );
   }
 
   /**
    * Auditorías finalizadas de la institución, marcando las asignadas a la persona.
-   * Con alcance "asignadas" solo devuelve esas; los dos totales salen de la misma consulta.
+   * Con alcance "asignadas" solo devuelve esas. La regla de "asignada" debe coincidir
+   * con la de resumen-plan-mejoramiento (CRUD), que calcula los conteos del resumen.
    */
   private async consultarAuditoriasAuditor(
     personaId: number,
@@ -247,7 +269,6 @@ export class FormulacionPlanesService {
       auditorias: [],
       planPorAuditoria: new Map(),
       asignadas: new Set(),
-      total_institucion: 0,
     };
     if (!filtros.vigencia_id || !filtros.tipo_evaluacion_id) return vacio;
 
@@ -287,7 +308,6 @@ export class FormulacionPlanesService {
           : todas.filter((a) => asignadas.has(String(a._id))),
       planPorAuditoria,
       asignadas,
-      total_institucion: todas.length,
     };
   }
 
@@ -314,19 +334,22 @@ export class FormulacionPlanesService {
     );
   }
 
-  /** Agrega a las filas de la página la fecha del estado actual y el avance de dictamen. */
+  /** Agrega a las filas de la página las fechas, el plazo y el avance de dictamen. */
   private async agregarDatosAuditor(
     filas: FilaFormulacion[],
     pagina: any[],
+    planPorAuditoria: Map<string, any>,
     asignadas: Set<string>,
   ): Promise<FilaFormulacionAuditor[]> {
     const planIds = filas
       .map((f) => f.plan_mejoramiento_id)
       .filter(Boolean) as string[];
-    const [fechaPorPlan, accionesPorPlan] = await Promise.all([
-      this.construirMapFechaEstado(planIds),
-      this.contarAccionesPorPlan(planIds),
-    ]);
+    const [aprobacionPorAuditoria, fechaPorPlan, accionesPorPlan] =
+      await Promise.all([
+        this.construirMapAprobacionInforme(filas.map((f) => f.auditoria_id)),
+        this.construirMapFechaEstado(planIds),
+        this.contarAccionesPorPlan(planIds),
+      ]);
     const auditoriaPorId = new Map(pagina.map((a) => [String(a._id), a]));
 
     return filas.map((fila) => {
@@ -337,12 +360,40 @@ export class FormulacionPlanesService {
         ...fila,
         fecha_inicio: auditoria?.fecha_inicio ?? null,
         fecha_fin: auditoria?.fecha_fin ?? null,
+        fecha_aprobacion_informe:
+          aprobacionPorAuditoria.get(fila.auditoria_id) ?? null,
+        fecha_limite:
+          planPorAuditoria.get(fila.auditoria_id)?.fecha_limite ?? null,
         fecha_estado: planId ? (fechaPorPlan.get(planId) ?? null) : null,
         total_acciones: acciones?.total ?? 0,
         acciones_aprobadas: acciones?.aprobadas ?? 0,
         asignada: asignadas.has(fila.auditoria_id),
       };
     });
+  }
+
+  /** Fecha de aprobación del informe final de cada auditoría (la más reciente si hay varias). */
+  private async construirMapAprobacionInforme(
+    auditoriaIds: string[],
+  ): Promise<Map<string, string>> {
+    const map = new Map<string, string>();
+    if (auditoriaIds.length === 0) return map;
+
+    const res = await this.auditoriaCrudService.traerDataCrud('informe', null, {
+      query: `auditoria_id__in:${auditoriaIds.join('|')},activo:true,fecha_aprobacion_informe__isnull:false`,
+      fields: 'auditoria_id,fecha_aprobacion_informe',
+      limit: 0,
+    });
+    for (const informe of res?.Data ?? []) {
+      const auditoriaId = this.idDeRef(informe.auditoria_id);
+      const fecha = informe.fecha_aprobacion_informe;
+      if (!auditoriaId || !fecha) continue;
+      const anterior = map.get(auditoriaId);
+      if (!anterior || new Date(fecha) > new Date(anterior)) {
+        map.set(auditoriaId, fecha);
+      }
+    }
+    return map;
   }
 
   private async construirMapFechaEstado(
@@ -458,7 +509,13 @@ export class FormulacionPlanesService {
     const [auditoresPorPlan, hallazgosPorAuditoria, rechazosPorPlan, estados] =
       await Promise.all([
         this.construirMapAuditoresPorPlan(planIds),
-        this.contarPorReferencia('hallazgo', 'auditoria_id', auditoriaIds),
+        // Los hallazgos rechazados en el preinforme no llegan al informe ni al plan.
+        this.contarPorReferencia(
+          'hallazgo',
+          'auditoria_id',
+          auditoriaIds,
+          'rechazado__not:true',
+        ),
         this.contarPorReferencia(
           'plan-mejoramiento-estado',
           'plan_mejoramiento_id',
@@ -533,7 +590,7 @@ export class FormulacionPlanesService {
       null,
       {
         query: `auditoria_id__in:${auditoriaIds.join('|')},activo:true`,
-        fields: '_id,auditoria_id,estado_id',
+        fields: '_id,auditoria_id,estado_id,fecha_limite',
         limit: 0,
       },
     );

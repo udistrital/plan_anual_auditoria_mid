@@ -45,6 +45,7 @@ const respuestasCrud: Record<string, any[]> = {
       _id: 'p2',
       auditoria_id: 'a2',
       estado_id: ESTADO.CREANDO_PLAN_MEJORAMIENTO,
+      fecha_limite: '2025-02-14T10:00:00Z',
     },
     {
       _id: 'p3',
@@ -66,6 +67,12 @@ const respuestasCrud: Record<string, any[]> = {
   'plan-mejoramiento-estado': [
     { plan_mejoramiento_id: 'p3' },
     { plan_mejoramiento_id: 'p3' },
+  ],
+  // a2 tiene dos informes aprobados: se toma el más reciente
+  informe: [
+    { auditoria_id: 'a1', fecha_aprobacion_informe: '2025-01-31T10:00:00Z' },
+    { auditoria_id: 'a2', fecha_aprobacion_informe: '2025-01-20T10:00:00Z' },
+    { auditoria_id: 'a2', fecha_aprobacion_informe: '2025-02-03T10:00:00Z' },
   ],
 };
 
@@ -321,37 +328,39 @@ describe('FormulacionPlanesService', () => {
   });
 
   describe('vista del auditor', () => {
-    it('el resumen cuenta solo las auditorías asignadas y devuelve los dos totales', async () => {
+    it('el resumen pide al CRUD solo las auditorías asignadas al auditor', async () => {
       const { Data } = await service.getResumenAuditor(10, query);
 
       expect(Data).toEqual({
-        total_auditorias: 2,
-        sin_formular: 1,
+        total_auditorias: 6,
+        // null (sin plan) se suma a sin_formular
+        sin_formular: 3,
         en_formulacion: 1,
         en_revision: 0,
-        con_observaciones: 0,
-        aprobados: 0,
-        total_asignadas: 2,
-        total_institucion: 3,
+        con_observaciones: 1,
+        aprobados: 1,
       });
-      expect(auditoriaService.getAll).toHaveBeenCalledWith({
-        query: `vigencia_id:1,tipo_evaluacion_id:6770,activo:true,estado_id:${environment.AUDITORIA_ESTADO.APROBADO_INFORME_FINAL_JEFE}`,
-        limit: 0,
-      });
+      expect(auditoriaCrudService.traerDataCrud).toHaveBeenCalledTimes(1);
+      expect(auditoriaCrudService.traerDataCrud).toHaveBeenCalledWith(
+        'resumen-plan-mejoramiento',
+        null,
+        {
+          vigencia_id: 1,
+          tipo_evaluacion_id: 6770,
+          estado_auditoria_id:
+            environment.AUDITORIA_ESTADO.APROBADO_INFORME_FINAL_JEFE,
+          auditor_id: 10,
+        },
+      );
+      expect(auditoriaService.getAll).not.toHaveBeenCalled();
     });
 
-    it('con alcance "todas" el resumen cuenta todas las auditorías de la institución', async () => {
-      const { Data } = await service.getResumenAuditor(10, {
-        ...query,
-        alcance: 'todas',
-      });
+    it('con alcance "todas" el resumen no filtra por auditor', async () => {
+      await service.getResumenAuditor(10, { ...query, alcance: 'todas' });
 
-      expect(Data).toMatchObject({
-        total_auditorias: 3,
-        con_observaciones: 1,
-        total_asignadas: 2,
-        total_institucion: 3,
-      });
+      const [, , params] = auditoriaCrudService.traerDataCrud.mock.calls[0];
+      expect(params).not.toHaveProperty('auditor_id');
+      expect(params).not.toHaveProperty('dependencia_ids');
     });
 
     it('marca como asignadas las auditorías del auditor de la auditoría o del plan', async () => {
@@ -368,23 +377,35 @@ describe('FormulacionPlanesService', () => {
       ]);
     });
 
-    it('agrega fechas, fecha del estado actual y avance de acciones', async () => {
+    it('agrega fechas, plazo de formulación, fecha del estado actual y avance de acciones', async () => {
       const { Data } = await service.getAllAuditor(10, query);
       const [sinPlan, creando] = Data;
 
       expect(sinPlan).toMatchObject({
         fecha_inicio: '2025-01-10',
         fecha_fin: '2025-01-30',
+        fecha_aprobacion_informe: '2025-01-31T10:00:00Z',
+        fecha_limite: null,
         fecha_estado: null,
         total_acciones: 0,
         acciones_aprobadas: 0,
       });
       expect(creando).toMatchObject({
         plan_mejoramiento_id: 'p2',
+        fecha_aprobacion_informe: '2025-02-03T10:00:00Z',
+        fecha_limite: '2025-02-14T10:00:00Z',
         fecha_estado: '2025-02-12T10:00:00Z',
         total_acciones: 2,
         acciones_aprobadas: 1,
       });
+
+      const consultaInformes =
+        auditoriaCrudService.traerDataCrud.mock.calls.find(
+          ([endpoint]) => endpoint === 'informe',
+        );
+      expect(consultaInformes?.[2]?.query).toContain(
+        'fecha_aprobacion_informe__isnull:false',
+      );
     });
 
     it('filtra por estado y pagina antes de consultar auditores y conteos', async () => {
@@ -403,13 +424,14 @@ describe('FormulacionPlanesService', () => {
           ([endpoint]) => endpoint === 'hallazgo',
         );
       expect(consultaHallazgos?.[2]?.query).toContain('auditoria_id__in:a4,');
+      expect(consultaHallazgos?.[2]?.query).toContain('rechazado__not:true');
     });
 
     it('no consulta nada sin vigencia o tipo de evaluación', async () => {
       const { Data } = await service.getResumenAuditor(10, {});
 
-      expect(Data.total_institucion).toBe(0);
-      expect(auditoriaService.getAll).not.toHaveBeenCalled();
+      expect(Data.total_auditorias).toBe(0);
+      expect(auditoriaCrudService.traerDataCrud).not.toHaveBeenCalled();
     });
   });
 });
