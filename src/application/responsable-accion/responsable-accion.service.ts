@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
+import { environment } from 'src/config/configuration';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
+import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
 import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
 
 @Injectable()
@@ -8,6 +10,7 @@ export class ResponsableAccionService {
   constructor(
     private readonly auditoriaCrudService: AuditoriaCrudService,
     private readonly dominiosService: DominiosService,
+    private readonly tercerosHelper: TercerosHelperService,
   ) {}
 
   async getAll(queryParams: any) {
@@ -25,8 +28,21 @@ export class ResponsableAccionService {
     );
 
     for (const elemento of data.Data) {
-      if (elemento?.dependencia_id != null) {
-        elemento.dependencia_nombre = dependenciasMap.get(elemento.dependencia_id) ?? null;
+      const dep_id = elemento?.dependencia_id ?? null
+      if (dep_id) {
+        elemento.dependencia_nombre = dependenciasMap.get(dep_id) ?? null;
+        const [jefe_dep, asistente_dep] = await Promise.all([
+          this.tercerosHelper.getTerceroVinculado(
+            dep_id,
+            environment.CARGO.JEFE_DEPENDENCIA_ID,
+          ),
+          this.tercerosHelper.getTerceroVinculado(
+            dep_id,
+            environment.CARGO.ASISTENTE_DEPENDENCIA_ID,
+          ),
+        ]);
+        elemento.jefe_nombre = jefe_dep?.NombreCompleto;
+        elemento.asistente_nombre = asistente_dep?.NombreCompleto;
       }
     }
 

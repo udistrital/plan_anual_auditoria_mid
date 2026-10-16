@@ -3,11 +3,15 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { of, throwError } from 'rxjs';
 import { AuditoriaCrudService } from './auditoria-crud.service';
+import { ConfigService } from '@nestjs/config';
 
 describe('AuditoriaCrudService', () => {
   let service: AuditoriaCrudService;
   const httpServiceMock = {
     get: jest.fn(),
+  };
+  const mockConfigService = {
+    get: jest.fn().mockImplementation(() => 'testhost/'),
   };
 
   beforeEach(async () => {
@@ -18,6 +22,10 @@ describe('AuditoriaCrudService', () => {
           provide: HttpService,
           useValue: httpServiceMock,
         },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
+        }
       ],
     }).compile();
 
@@ -67,7 +75,7 @@ describe('AuditoriaCrudService', () => {
     await expect(
       service.traerDataCrud(endpoint, null, null),
     ).rejects.toMatchObject({
-      response: 'Error al obtener los datos del servicio externo',
+      response: 'Error al obtener los datos del servicio externo: Request failed',
       status: HttpStatus.INTERNAL_SERVER_ERROR,
     });
   });

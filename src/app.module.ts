@@ -20,9 +20,13 @@ import { InformeModule } from './application/informe/informe.module';
 import { AuditoriaEstadoModule } from './application/auditoria-estado/auditoria-estado.module';
 import { AuditadoModule } from './application/auditado/auditado.module';
 import { PlanMejoramientoEstadoModule } from './application/plan-mejoramiento-estado/plan-mejoramiento-estado.module';
+import { HallazgoRemisionModule } from './application/hallazgo-remision/hallazgo-remision.module';
 import { LoggerModule } from 'nestjs-pino';
 import { env } from './config/configuration';
 import { ServicesModule } from './shared/services/services.module';
+import { createObserveModule } from '@nestjs/observe';
+
+export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
 @Module({
   imports: [
@@ -57,12 +61,18 @@ import { ServicesModule } from './shared/services/services.module';
     AuditadoModule,
     PlanMejoramientoAuditorModule,
     PlanMejoramientoEstadoModule,
+    HallazgoRemisionModule,
     PlanMejoramientoModule,
     ResponsableAccionModule,
     AccionMejoraModule,
     AccionMejoraEstadoModule,
     GestionAccionesModule,
     ServicesModule,
+    ObserveModule.forRoot({
+      appKey: process.env.OBSERVE_APP_KEY,
+      appSecret: process.env.OBSERVE_APP_SECRET,
+      serviceId: 'plan_anual_auditoria_mid2',
+    }),
   ],
   controllers: [AppController],
   providers: [

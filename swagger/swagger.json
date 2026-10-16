@@ -1316,6 +1316,60 @@
         ]
       }
     },
+    "/hallazgo-remision": {
+      "get": {
+        "operationId": "HallazgoRemisionController_getAll",
+        "parameters": [
+          {
+            "name": "filter",
+            "required": false,
+            "in": "query",
+            "description": "Filtro opcional.",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista obtenida con éxito."
+          },
+          "404": {
+            "description": "No se encontraron remisiones."
+          }
+        },
+        "summary": "Obtiene todas las remisiones de hallazgos.",
+        "tags": [
+          "Hallazgo Remisión"
+        ]
+      }
+    },
+    "/hallazgo-remision/{id}": {
+      "get": {
+        "operationId": "HallazgoRemisionController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID de la remisión del hallazgo.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Remisión obtenida con éxito."
+          },
+          "404": {
+            "description": "No se encontró la remisión."
+          }
+        },
+        "summary": "Obtiene una remisión de hallazgo por ID.",
+        "tags": [
+          "Hallazgo Remisión"
+        ]
+      }
+    },
     "/plan-mejoramiento": {
       "get": {
         "operationId": "PlanMejoramientoController_getAll",

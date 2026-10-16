@@ -1,10 +1,13 @@
+import { firstValueFrom } from 'rxjs';
 import { Injectable } from '@nestjs/common';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
 import { environment } from 'src/config/configuration';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
+import { NuxeoService } from 'src/shared/services/nuxeo.service';
 import { OikosService } from 'src/shared/services/oikos.service';
 import { PlantillasMidService } from 'src/shared/services/plantillas-mid.service';
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
+const fs = require('fs');
 
 const {
   PLANTILLAS,
@@ -23,6 +26,7 @@ export class PlantillaInformeAuditoriaService {
     private readonly auditoriaService: AuditoriaService,
     private readonly tercerosService: TercerosHelperService,
     private readonly oikosService: OikosService,
+    private readonly nuxeoService: NuxeoService
   ) {}
 
   async get(idAuditoria: string) {
@@ -55,7 +59,8 @@ export class PlantillaInformeAuditoriaService {
         this.obtenerComponentesInforme('hallazgo' , informe._id),
       ]);
 
-      const temasReestructurados = await this.reestructurarTemas(temas, hallazgos);
+      const temasProcesados = await this.procesarDescripcionTemas(temas);
+      const temasReestructurados = await this.reestructurarTemas(temasProcesados, hallazgos);
       const [anio, mes, dia] = informe.fecha_emision.split('T')[0].split('-');
       const [tituloInforme, jefeOci, auditorResponsable, dependencias] =
         await Promise.all([
@@ -253,5 +258,33 @@ export class PlantillaInformeAuditoriaService {
       });
     }
     return respuestaDependencias;
+  }
+
+  private comprobarNuxeoEnlace(descripcion_titulo: string): boolean {
+    return descripcion_titulo?.startsWith('NuxeoEnlace') ?? false;
+  }
+
+  private async procesarDescripcionTemas(temas: any[]) {
+    const temasProcesados = [];
+
+    for (const tema of temas) {
+      if (this.comprobarNuxeoEnlace(tema.descripcion_titulo)) {
+        temasProcesados.push({
+          ...tema,
+          descripcion_titulo: await this.obtenerContenidoNuxeo(tema.descripcion_titulo),
+        });
+      } else {
+        temasProcesados.push(tema);
+      }
+    }
+    return temasProcesados;
+  }
+
+  private async obtenerContenidoNuxeo(descripcion_titulo: string) {
+    const indice = descripcion_titulo.indexOf(":");
+    const uuid = descripcion_titulo.substring(indice + 1);
+    const documento = await firstValueFrom(this.nuxeoService.obtenerPorUUID(uuid,));
+    const bytes = Uint8Array.from(atob(documento), c => c.charCodeAt(0));
+    return new TextDecoder('utf-8').decode(bytes);
   }
 }

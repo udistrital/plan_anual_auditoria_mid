@@ -1,13 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { firstValueFrom, of, throwError } from 'rxjs';
-import { DominiosModule } from './dominios.module';
 import { DominiosService } from './dominios.service';
-import { ParametrosService } from 'src/shared/services/parametros/parametros.service';
+import { ParametrosService } from 'src/shared/services/parametros.service';
 import { OikosService } from 'src/shared/services/oikos.service';
 import { environment } from 'src/config/configuration';
-import { ParametrosModule } from 'src/shared/services/parametros/parametros.module';
-import { OikosModule } from 'src/shared/services/oikos/oikos.module';
 import { DOMINIOS_CONFIG } from './dominios.config';
+import { HttpService } from '@nestjs/axios';
+import { ConfigService } from '@nestjs/config';
 
 describe('DominiosService', () => {
   let service: DominiosService;
@@ -17,13 +16,25 @@ describe('DominiosService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [DominiosModule, ParametrosModule, OikosModule],
+      providers: [
+        DominiosService,
+        ParametrosService,
+        OikosService,
+        {
+          provide: HttpService,
+          useValue: {}
+        },
+        {
+          provide: ConfigService,
+          useValue: {}
+        },
+      ],
     }).compile();
 
     const parametrosService = module.get<ParametrosService>(ParametrosService);
     const oikosService = module.get<OikosService>(OikosService);
     parametrosServiceGet = jest.spyOn(parametrosService, 'get');
-    oikosServiceGet = jest.spyOn(oikosService, 'get');
+    oikosServiceGet = jest.spyOn(oikosService, 'traerData');
 
     service = module.get<DominiosService>(DominiosService);
   });
@@ -81,7 +92,7 @@ describe('DominiosService', () => {
     expect(result.tipoParametroId).toBe(mockTipoParametroId);
     expect(result.parametros).toEqual(mockParametros);
     expect(parametrosServiceGet).toHaveBeenCalledWith(
-      `parametro?query=Activo:true,TipoParametroId:${mockTipoParametroId}&fields=Id,Nombre&limit=0`,
+      "parametro", null, { fields: "Id,Nombre", limit: 0, query: `Activo:true,TipoParametroId:${mockTipoParametroId}` }
     );
   });
 
@@ -116,7 +127,7 @@ describe('DominiosService', () => {
     expect(result.tipoParametroId).toBeUndefined();
     expect(result.parametros).toEqual(mockDependencias);
     expect(oikosServiceGet).toHaveBeenCalledWith(
-      `dependencia?query=Activo:true&fields=Id,Nombre,CorreoElectronico&limit=0`,
+      "dependencia", null, { fields: "Id,Nombre,CorreoElectronico", limit: 0, query: "Activo:true" }
     );
   });
 

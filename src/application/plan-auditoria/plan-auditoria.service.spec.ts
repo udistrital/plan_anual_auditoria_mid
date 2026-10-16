@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PlanAuditoriaService } from './plan-auditoria.service';
 import { HttpService } from '@nestjs/axios';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
+import { ParametrosService } from 'src/shared/services/parametros.service';
+import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
 
 describe('PlanAuditoriaService', () => {
   let service: PlanAuditoriaService;
@@ -22,6 +24,14 @@ describe('PlanAuditoriaService', () => {
             traerDataCrud: jest.fn(),
           },
         },
+        {
+          provide: ParametrosService,
+          useValue: {},
+        },
+        {
+          provide: TercerosHelperService,
+          useValue: {},
+        }
       ],
     }).compile();
 

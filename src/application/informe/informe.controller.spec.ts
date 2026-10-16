@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { HttpService } from '@nestjs/axios';
 import { InformeController } from './informe.controller';
 import { InformeService } from './informe.service';
+import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
+import { AuditoriaService } from '../auditoria/auditoria.service';
 
 describe('InformeController', () => {
   let controller: InformeController;
@@ -11,15 +13,9 @@ describe('InformeController', () => {
       controllers: [InformeController],
       providers: [
         InformeService,
-        {
-          provide: HttpService,
-          useValue: {
-            get: jest.fn(),
-            post: jest.fn(),
-            put: jest.fn(),
-            delete: jest.fn(),
-          },
-        },
+        { provide: HttpService, useValue: {}, },
+        { provide: AuditoriaCrudService, useValue: {}, },
+        { provide: AuditoriaService, useValue: {}, }
       ],
     }).compile();
 
