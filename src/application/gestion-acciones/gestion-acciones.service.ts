@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
@@ -9,6 +9,8 @@ const { TIPO_PARAMETRO } = environment;
 
 interface FiltrosGestionAcciones {
   vigencia_id: number;
+  /** Estados del plan permitidos, separados por "|" (p. ej. aprobado|finalizado). */
+  estado_plan_id?: string;
   no_auditoria?: string;
   nombre_auditoria?: string;
   no_hallazgo?: string;
@@ -51,7 +53,10 @@ export class GestionAccionesService {
     }
 
     // Planes de la vigencia
-    const planes = await this.obtenerPlanesPorVigencia(filtros.vigencia_id);
+    const planes = await this.obtenerPlanesPorVigencia(
+      filtros.vigencia_id,
+      filtros.estado_plan_id,
+    );
     if (planes.length === 0) {
       return this.respuesta([], 0);
     }
@@ -96,12 +101,19 @@ export class GestionAccionesService {
     return this.respuesta(paginadas, total);
   }
 
-  private async obtenerPlanesPorVigencia(vigenciaId: number): Promise<any[]> {
+  private async obtenerPlanesPorVigencia(
+    vigenciaId: number,
+    estadoPlanId?: string,
+  ): Promise<any[]> {
+    const condiciones = [`vigencia_id:${vigenciaId}`, 'activo:true'];
+    if (estadoPlanId) {
+      condiciones.push(`estado_id__in:${estadoPlanId}`);
+    }
     const res = await this.auditoriaCrudService.traerDataCrud(
       'plan-mejoramiento',
       null,
       {
-        query: `vigencia_id:${vigenciaId},activo:true`,
+        query: condiciones.join(','),
         fields: '_id,auditoria_id,estado_id',
         limit: 0,
       },
@@ -335,8 +347,16 @@ export class GestionAccionesService {
   }
 
   private parsearFiltros(query: any): FiltrosGestionAcciones {
+    const estadoPlanId = query.estado_plan_id?.trim() || undefined;
+    // El valor se inserta en el query del CRUD: solo se aceptan ids numéricos separados por "|"
+    if (estadoPlanId && !/^\d+(\|\d+)*$/.test(estadoPlanId)) {
+      throw new BadRequestException(
+        'estado_plan_id debe ser una lista de ids numéricos separados por "|".',
+      );
+    }
     return {
       vigencia_id: query.vigencia_id ? Number(query.vigencia_id) : 0,
+      estado_plan_id: estadoPlanId,
       no_auditoria: query.no_auditoria?.trim() || undefined,
       nombre_auditoria: query.nombre_auditoria?.trim() || undefined,
       no_hallazgo: query.no_hallazgo?.trim() || undefined,
