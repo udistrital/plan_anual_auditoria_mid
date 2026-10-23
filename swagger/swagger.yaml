@@ -993,6 +993,13 @@ paths:
           required: false
           in: query
           schema: {}
+        - name: estado_plan_id
+          required: false
+          in: query
+          description: >-
+            Estados del plan de mejoramiento a incluir, separados por "|" (p.
+            ej. aprobado|finalizado). Sin el filtro se listan todos.
+          schema: {}
         - name: vigencia_id
           required: true
           in: query
@@ -1001,6 +1008,8 @@ paths:
       responses:
         '200':
           description: Lista obtenida con éxito.
+        '400':
+          description: Parámetros inválidos (estado_plan_id).
         '404':
           description: Error en la consulta.
       summary: >-
