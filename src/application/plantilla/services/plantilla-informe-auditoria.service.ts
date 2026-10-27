@@ -7,7 +7,6 @@ import { NuxeoService } from 'src/shared/services/nuxeo.service';
 import { OikosService } from 'src/shared/services/oikos.service';
 import { PlantillasMidService } from 'src/shared/services/plantillas-mid.service';
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
-const fs = require('fs');
 
 const {
   PLANTILLAS,
