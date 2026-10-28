@@ -1396,6 +1396,98 @@
         ]
       }
     },
+    "/plan-mejoramiento/{id}/numerar-acciones": {
+      "post": {
+        "operationId": "PlanMejoramientoController_numerarPlanAprobado",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID del plan de mejoramiento.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Números de acción del plan."
+          },
+          "400": {
+            "description": "Plan no aprobado, sin acciones o con numeración parcial."
+          },
+          "404": {
+            "description": "Plan de mejoramiento no encontrado."
+          }
+        },
+        "summary": "Asigna no_accion a las acciones de un plan aprobado o finalizado que aún no lo tienen.",
+        "tags": [
+          "Plan Mejoramiento"
+        ]
+      }
+    },
+    "/plan-mejoramiento/{id}/aprobar": {
+      "post": {
+        "operationId": "PlanMejoramientoController_aprobar",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID del plan de mejoramiento.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "usuario_id": {
+                    "type": "number"
+                  },
+                  "usuario_rol": {
+                    "type": "string"
+                  },
+                  "observacion": {
+                    "type": "string"
+                  },
+                  "fase_id": {
+                    "type": "number"
+                  },
+                  "fecha_ejecucion_estado": {
+                    "type": "string"
+                  },
+                  "activo": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Plan aprobado y acciones numeradas."
+          },
+          "400": {
+            "description": "El plan no está en revisión o faltan datos para numerar."
+          },
+          "404": {
+            "description": "Plan de mejoramiento no encontrado."
+          }
+        },
+        "summary": "Aprueba el plan de mejoramiento y genera el no_accion de sus acciones.",
+        "tags": [
+          "Plan Mejoramiento"
+        ]
+      }
+    },
     "/responsable-accion": {
       "get": {
         "operationId": "ResponsableAccionController_getAll",
@@ -1541,6 +1633,13 @@
             "schema": {}
           },
           {
+            "name": "estado_plan_id",
+            "required": false,
+            "in": "query",
+            "description": "Estados del plan de mejoramiento a incluir, separados por \"|\" (p. ej. aprobado|finalizado). Sin el filtro se listan todos.",
+            "schema": {}
+          },
+          {
             "name": "vigencia_id",
             "required": true,
             "in": "query",
@@ -1552,6 +1651,9 @@
           "200": {
             "description": "Lista obtenida con éxito."
           },
+          "400": {
+            "description": "Parámetros inválidos (estado_plan_id)."
+          },
           "404": {
             "description": "Error en la consulta."
           }
@@ -1559,6 +1661,596 @@
         "summary": "Lista las acciones de mejora de una vigencia con auditoría, hallazgo, auditores y dependencias resueltos.",
         "tags": [
           "Gestión de Acciones"
+        ]
+      }
+    },
+    "/gestion-accion/auditado/{personaId}/{cargoId}/resumen": {
+      "get": {
+        "operationId": "GestionAccionesController_getResumenAuditado",
+        "parameters": [
+          {
+            "name": "personaId",
+            "required": true,
+            "in": "path",
+            "description": "ID de la persona (tercero).",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "cargoId",
+            "required": true,
+            "in": "path",
+            "description": "ID del cargo (312 o 320).",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "tipo_evaluacion_id",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "vigencia_id",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resumen obtenido con éxito."
+          },
+          "404": {
+            "description": "Error en la consulta."
+          }
+        },
+        "summary": "Conteos de las acciones de los planes aprobados de las dependencias del auditado, por grupo de estado.",
+        "tags": [
+          "Gestión de Acciones"
+        ]
+      }
+    },
+    "/gestion-accion/auditado/{personaId}/{cargoId}": {
+      "get": {
+        "operationId": "GestionAccionesController_getAllAuditado",
+        "parameters": [
+          {
+            "name": "personaId",
+            "required": true,
+            "in": "path",
+            "description": "ID de la persona (tercero).",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "cargoId",
+            "required": true,
+            "in": "path",
+            "description": "ID del cargo (312 o 320).",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "hasta",
+            "required": false,
+            "in": "query",
+            "description": "Cronograma hasta (ISO).",
+            "schema": {}
+          },
+          {
+            "name": "desde",
+            "required": false,
+            "in": "query",
+            "description": "Cronograma desde (ISO).",
+            "schema": {}
+          },
+          {
+            "name": "auditor",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "dependencia",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "accion_hallazgo",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "no_auditoria",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "grupo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "PENDIENTE_HABILITAR",
+                "CARGUE_ABIERTO",
+                "EN_REVISION",
+                "CALIFICADAS",
+                "EN_RIESGO"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "tipo_evaluacion_id",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "vigencia_id",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista obtenida con éxito."
+          },
+          "404": {
+            "description": "Error en la consulta."
+          }
+        },
+        "summary": "Lista las acciones de los planes aprobados de las dependencias del auditado.",
+        "tags": [
+          "Gestión de Acciones"
+        ]
+      }
+    },
+    "/gestion-accion/auditor/{personaId}/resumen": {
+      "get": {
+        "operationId": "GestionAccionesController_getResumenAuditor",
+        "parameters": [
+          {
+            "name": "personaId",
+            "required": true,
+            "in": "path",
+            "description": "ID de la persona (tercero) del auditor.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "alcance",
+            "required": false,
+            "in": "query",
+            "description": "asignadas (por defecto) o todas las de la institución.",
+            "schema": {
+              "enum": [
+                "asignadas",
+                "todas"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "tipo_evaluacion_id",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "vigencia_id",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resumen obtenido con éxito."
+          },
+          "404": {
+            "description": "Error en la consulta."
+          }
+        },
+        "summary": "Conteos de las acciones de los planes aprobados que ve el auditor, por grupo de estado.",
+        "tags": [
+          "Gestión de Acciones"
+        ]
+      }
+    },
+    "/gestion-accion/auditor/{personaId}": {
+      "get": {
+        "operationId": "GestionAccionesController_getAllAuditor",
+        "parameters": [
+          {
+            "name": "personaId",
+            "required": true,
+            "in": "path",
+            "description": "ID de la persona (tercero) del auditor.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "hasta",
+            "required": false,
+            "in": "query",
+            "description": "Cronograma hasta (ISO).",
+            "schema": {}
+          },
+          {
+            "name": "desde",
+            "required": false,
+            "in": "query",
+            "description": "Cronograma desde (ISO).",
+            "schema": {}
+          },
+          {
+            "name": "auditor",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "dependencia",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "accion_hallazgo",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "no_auditoria",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "grupo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "PENDIENTE_HABILITAR",
+                "CARGUE_ABIERTO",
+                "EN_REVISION",
+                "CALIFICADAS",
+                "EN_RIESGO"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "alcance",
+            "required": false,
+            "in": "query",
+            "description": "asignadas (por defecto) o todas las de la institución.",
+            "schema": {
+              "enum": [
+                "asignadas",
+                "todas"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "tipo_evaluacion_id",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "vigencia_id",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista obtenida con éxito."
+          },
+          "404": {
+            "description": "Error en la consulta."
+          }
+        },
+        "summary": "Lista las acciones de los planes aprobados que ve el auditor, según su alcance.",
+        "tags": [
+          "Gestión de Acciones"
+        ]
+      }
+    },
+    "/plan-mejoramiento/formulacion/auditado/{personaId}/{cargoId}/resumen": {
+      "get": {
+        "operationId": "FormulacionPlanesController_getResumen",
+        "parameters": [
+          {
+            "name": "personaId",
+            "required": true,
+            "in": "path",
+            "description": "ID de la persona (tercero).",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "cargoId",
+            "required": true,
+            "in": "path",
+            "description": "ID del cargo (312 o 320).",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "tipo_evaluacion_id",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "vigencia_id",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resumen obtenido con éxito."
+          },
+          "404": {
+            "description": "Error en la consulta."
+          }
+        },
+        "summary": "Conteos de auditorías finalizadas del auditado por estado de su plan de mejoramiento.",
+        "tags": [
+          "Formulación de Planes"
+        ]
+      }
+    },
+    "/plan-mejoramiento/formulacion/auditado/{personaId}/{cargoId}": {
+      "get": {
+        "operationId": "FormulacionPlanesController_getAll",
+        "parameters": [
+          {
+            "name": "personaId",
+            "required": true,
+            "in": "path",
+            "description": "ID de la persona (tercero).",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "cargoId",
+            "required": true,
+            "in": "path",
+            "description": "ID del cargo (312 o 320).",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "busqueda",
+            "required": false,
+            "in": "query",
+            "description": "Texto sobre dependencia o título.",
+            "schema": {}
+          },
+          {
+            "name": "estado_ids",
+            "required": false,
+            "in": "query",
+            "description": "Estados del plan separados por coma.",
+            "schema": {}
+          },
+          {
+            "name": "tipo_evaluacion_id",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "vigencia_id",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista obtenida con éxito."
+          },
+          "404": {
+            "description": "Error en la consulta."
+          }
+        },
+        "summary": "Lista las auditorías finalizadas del auditado con el estado, auditores, hallazgos y observaciones de su plan.",
+        "tags": [
+          "Formulación de Planes"
+        ]
+      }
+    },
+    "/plan-mejoramiento/formulacion/auditor/{personaId}/resumen": {
+      "get": {
+        "operationId": "FormulacionPlanesController_getResumenAuditor",
+        "parameters": [
+          {
+            "name": "personaId",
+            "required": true,
+            "in": "path",
+            "description": "ID de la persona (tercero) del auditor.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "alcance",
+            "required": false,
+            "in": "query",
+            "description": "asignadas (por defecto) o todas las de la institución.",
+            "schema": {
+              "enum": [
+                "asignadas",
+                "todas"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "tipo_evaluacion_id",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "vigencia_id",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resumen obtenido con éxito."
+          },
+          "404": {
+            "description": "Error en la consulta."
+          }
+        },
+        "summary": "Conteos de auditorías finalizadas que revisa el auditor, por estado de su plan de mejoramiento.",
+        "tags": [
+          "Formulación de Planes"
+        ]
+      }
+    },
+    "/plan-mejoramiento/formulacion/auditor/{personaId}": {
+      "get": {
+        "operationId": "FormulacionPlanesController_getAllAuditor",
+        "parameters": [
+          {
+            "name": "personaId",
+            "required": true,
+            "in": "path",
+            "description": "ID de la persona (tercero) del auditor.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "busqueda",
+            "required": false,
+            "in": "query",
+            "description": "Texto sobre dependencia o título.",
+            "schema": {}
+          },
+          {
+            "name": "estado_ids",
+            "required": false,
+            "in": "query",
+            "description": "Estados del plan separados por coma.",
+            "schema": {}
+          },
+          {
+            "name": "alcance",
+            "required": false,
+            "in": "query",
+            "description": "asignadas (por defecto) o todas las de la institución.",
+            "schema": {
+              "enum": [
+                "asignadas",
+                "todas"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "tipo_evaluacion_id",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "vigencia_id",
+            "required": true,
+            "in": "query",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista obtenida con éxito."
+          },
+          "404": {
+            "description": "Error en la consulta."
+          }
+        },
+        "summary": "Lista las auditorías finalizadas que revisa el auditor con el estado, plazo y avance de dictamen de su plan.",
+        "tags": [
+          "Formulación de Planes"
         ]
       }
     }

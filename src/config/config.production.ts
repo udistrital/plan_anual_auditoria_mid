@@ -66,6 +66,36 @@ export const productionConfig = {
     5319, 5320, 5321, 5322, 5323, 5324, 5325, 5326,
   ],
 
+  AUDITORIA_ESTADO: {
+    APROBADO_INFORME_FINAL_JEFE: 5329,
+  },
+
+  PLAN_MEJORAMIENTO_ESTADO: {
+    SIN_PLAN_MEJORAMIENTO: 5331,
+    CREANDO_PLAN_MEJORAMIENTO: 5332,
+    REVISION_PLAN_MEJORAMIENTO_AUDITOR: 5333,
+    APROBADO_PLAN_MEJORAMIENTO: 5334,
+    RECHAZADO_PLAN_MEJORAMIENTO: 5335,
+    FIN_PLAN_MEJORAMIENTO: 5336,
+  },
+
+  ACCION_MEJORA_ESTADO: {
+    PENDIENTE_REVISION: 0,
+    APROBADA: 0,
+    RECHAZADA: 0,
+  },
+
+  ACCION_MEJORA: {
+    /** documento.tipo_id de los soportes de avance que carga el auditado. */
+    TIPO_DOCUMENTO_SOPORTE_AVANCE: 0,
+    /** Calificación (%) desde la que una acción se considera eficaz. */
+    UMBRAL_EFICACIA: 80,
+    /** Días antes de fecha_fin desde los que una acción no eficaz está en riesgo. */
+    DIAS_RIESGO: 30,
+    /** accion_mejora.tipo_id → nombre (mismos valores de modal-registrar-accion del MF). */
+    TIPOS: { 1: 'Preventiva', 2: 'Correctiva' } as Record<number, string>,
+  },
+
   CARGO: {
     JEFE_DEPENDENCIA_ID: 312,
     ASISTENTE_DEPENDENCIA_ID: 320,
