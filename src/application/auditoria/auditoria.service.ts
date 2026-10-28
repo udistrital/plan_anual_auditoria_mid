@@ -58,6 +58,18 @@ export class AuditoriaService {
       !param.startsWith('estado_id'),
     );
 
+    // 👉 Sin filtros de padre: se consultan primero las hijas
+    if (!queryPadreParts.length) {
+      const result = await this.traerHijasConPadres(
+        'auditoria',
+        null,
+        queryParams,
+        [queryEstado, ...queryHijaParts, 'activo:true'],
+      );
+
+      return this.completarResultado(result);
+    }
+
     // 2. Query auditorías padre
     const queryPadre = {
       query: queryPadreParts
@@ -136,6 +148,67 @@ export class AuditoriaService {
     };
 
     // 7. Enriquecimiento
+    return this.completarResultado(result);
+  }
+
+  /**
+   * Consulta primero las auditorías hijas (paginadas en el CRUD) y luego solo
+   * los padres de esa página. Se usa cuando no hay filtros sobre el padre:
+   * traer todos los padres para armar un auditoria_padre_id__in genera una URL
+   * que excede el límite del proxy (414 Request-URI Too Large).
+   */
+  private async traerHijasConPadres(
+    endpoint: string,
+    id: string | null,
+    queryParams: any,
+    queryHijaParts: (string | undefined)[],
+  ) {
+    const dataHijas = await this.auditoriaCrudService.traerDataCrud(
+      endpoint,
+      id,
+      {
+        ...queryParams,
+        query: queryHijaParts.filter(Boolean).join(','),
+      },
+    );
+
+    const auditorias: any[] = dataHijas?.Data || [];
+    const count = dataHijas?.MetaData?.Count || 0;
+
+    const padresIds = Array.from(
+      new Set(auditorias.map((a) => a?.auditoria_padre_id).filter(Boolean)),
+    );
+
+    if (!padresIds.length) {
+      return { Data: [], MetaData: { Count: count } };
+    }
+
+    const dataPadre = await this.auditoriaCrudService.traerDataCrud(
+      'auditoria-padre',
+      null,
+      {
+        query: `_id__in:${padresIds.join('|')}`,
+        limit: 0,
+        fields:
+          '_id,titulo,tipo_evaluacion_id,macroproceso_id,proceso_id,dependencia_id',
+      },
+    );
+
+    const padresMap = Object.fromEntries(
+      (dataPadre?.Data || []).map((p: any) => [p._id, p]),
+    );
+
+    const auditoriasUnidas = auditorias
+      .filter((a) => padresMap[a?.auditoria_padre_id])
+      .map((a) => ({
+        ...padresMap[a.auditoria_padre_id],
+        ...a,
+      }));
+
+    return { Data: auditoriasUnidas, MetaData: { Count: count } };
+  }
+
+  private async completarResultado(result: any) {
     await this.enriquecerAuditorias(result.Data);
 
     if (await this.identificarCampo(result)) {
@@ -176,6 +249,18 @@ export class AuditoriaService {
       !param.startsWith('proceso_id') &&
       !param.startsWith('auditoria_padre_id'),
     );
+
+    // 👉 Sin filtros de padre: se consultan primero las hijas
+    if (!queryPadreParts.length) {
+      const result = await this.traerHijasConPadres(
+        'auditoria/auditor',
+        personaId,
+        queryParams,
+        [queryEstado, ...queryHijaParts, 'activo:true'],
+      );
+
+      return this.completarResultado(result);
+    }
 
     // 2. Construir query de padres (más declarativo)
     const padreQueryStr = queryPadreParts.join(',');

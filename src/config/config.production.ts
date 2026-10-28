@@ -4,11 +4,11 @@ export const productionConfig = {
   PLANTILLA_CARGUE_MASIVO_AUDITORIAS: '54b6a092-d7d6-45bd-b06f-f6be22a2cdd6',
 
   PLANTILLAS: {
-    CARTA_PRESENTACION: '6752188ddddf9a06db2a0b3c',
+    CARTA_PRESENTACION: '6ad9fbe8ecbd3ab33f8ae231',
     PROGRAMA_TRABAJO: '69970162f2322bbb590c4cd9',
-    SOLICITUD_INFORMACION: '67521530e11c6cfdd818c338',
+    SOLICITUD_INFORMACION: '6ad9fec1ecbd3ab33f8ae238',
     PLAN_ANUAL_AUDITORIA: '699624983a96467a89e4292f',
-    INFORME_AUDITORIA_INTERNA: '6a1cb75c94c94f4afae56be6',
+    INFORME_AUDITORIA_INTERNA: '6ad6ff118478a7245596315a',
     INFORME_SEGUIMIENTO: '6a1cb7ee94c94f4afae56bea',
     PLAN_MEJORAMIENTO: '6a21cbd573276beecaede2dc'
   },
@@ -83,6 +83,17 @@ export const productionConfig = {
     PENDIENTE_REVISION: 0,
     APROBADA: 0,
     RECHAZADA: 0,
+  },
+
+  ACCION_MEJORA: {
+    /** documento.tipo_id de los soportes de avance que carga el auditado. */
+    TIPO_DOCUMENTO_SOPORTE_AVANCE: 0,
+    /** Calificación (%) desde la que una acción se considera eficaz. */
+    UMBRAL_EFICACIA: 80,
+    /** Días antes de fecha_fin desde los que una acción no eficaz está en riesgo. */
+    DIAS_RIESGO: 30,
+    /** accion_mejora.tipo_id → nombre (mismos valores de modal-registrar-accion del MF). */
+    TIPOS: { 1: 'Preventiva', 2: 'Correctiva' } as Record<number, string>,
   },
 
   CARGO: {
