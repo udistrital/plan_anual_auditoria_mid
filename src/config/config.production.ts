@@ -85,6 +85,17 @@ export const productionConfig = {
     RECHAZADA: 0,
   },
 
+  ACCION_MEJORA: {
+    /** documento.tipo_id de los soportes de avance que carga el auditado. */
+    TIPO_DOCUMENTO_SOPORTE_AVANCE: 0,
+    /** Calificación (%) desde la que una acción se considera eficaz. */
+    UMBRAL_EFICACIA: 80,
+    /** Días antes de fecha_fin desde los que una acción no eficaz está en riesgo. */
+    DIAS_RIESGO: 30,
+    /** accion_mejora.tipo_id → nombre (mismos valores de modal-registrar-accion del MF). */
+    TIPOS: { 1: 'Preventiva', 2: 'Correctiva' } as Record<number, string>,
+  },
+
   CARGO: {
     JEFE_DEPENDENCIA_ID: 312,
     ASISTENTE_DEPENDENCIA_ID: 320,

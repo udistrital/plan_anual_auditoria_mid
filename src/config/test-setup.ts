@@ -1,21 +1,17 @@
-import { jest } from '@jest/globals';
+jest.mock('nestjs-pino', () => {
+  class MockPinoLogger {}
+  class MockLoggerModule {}
 
-global.jest = jest;
-
-jest.unstable_mockModule('nestjs-pino', () => {
-	class MockPinoLogger {}
-	class MockLoggerModule {}
-
-	return {
-		InjectPinoLogger: () => () => undefined,
-		PinoLogger: MockPinoLogger,
-		LoggerModule: {
-			forRoot: () => ({
-				module: MockLoggerModule,
-				global: true,
-				providers: [MockPinoLogger],
-				exports: [MockPinoLogger],
-			}),
-		},
-	};
+  return {
+    InjectPinoLogger: () => () => undefined,
+    PinoLogger: MockPinoLogger,
+    LoggerModule: {
+      forRoot: () => ({
+        module: MockLoggerModule,
+        global: true,
+        providers: [MockPinoLogger],
+        exports: [MockPinoLogger],
+      }),
+    },
+  };
 });

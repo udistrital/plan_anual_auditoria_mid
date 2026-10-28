@@ -4,7 +4,7 @@ name: nestjs_api_ci
 
 steps:
   - name: install_dependencies
-    image: node:current-alpine
+    image: node:24.22.1-alpine
     commands:
       - npm install -g pnpm
       - pnpm install --frozen-lockfile
@@ -17,7 +17,7 @@ steps:
         - push
 
   - name: build
-    image: node:current-alpine
+    image: node:24.22.1-alpine
     commands:
       - npm install -g pnpm
       - pnpm install --frozen-lockfile
