@@ -88,6 +88,7 @@ export class PlantillaInformeAuditoriaService {
           informe: {
             titulo: tituloInforme,
             dependencias: dependencias,
+            macroproceso: auditoria.macroproceso,
             proceso: auditoria.proceso,
             dependencia: auditoria.proceso_nombre[0] + ' / ' + auditoria.dependencia_nombre[0],
             lider: auditoria.datos_dependencias[0]?.jefe_nombre,
