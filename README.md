@@ -9,8 +9,9 @@ El API mid permite proporcionar la información completa requerida por el microc
 
 * [nest 12.1.3](https://nestjs.com/)
 * [typescript 6.0.3](https://www.typescriptlang.org/)
-* [node 24.22.1](https://nodejs.org/en/)
-* [pnpm 10.34.6](https://www.npmjs.com/package/pnpm)
+* [node 24.14.1](https://nodejs.org/en/) (mínimo 24.9, ver `.nvmrc`)
+* [pnpm 12](https://www.npmjs.com/package/pnpm)
+* [jest 30.5](https://jestjs.io/) + [ts-jest 29.4](https://kulshekhar.github.io/ts-jest/)
 * [Docker](https://docs.docker.com/engine/install/ubuntu/)
 * [Docker Compose](https://docs.docker.com/compose/)
 
@@ -48,6 +49,29 @@ pnpm install --frozen-lockfile
 # 6. Ejecutar el proyecto
 pnpm run start:dev 
 ```
+
+### Ejecución Pruebas
+
+Las pruebas unitarias usan Jest en CommonJS. NestJS 12 se publica sólo como ES Modules, y Jest sólo puede cargarlo desde CommonJS con **Node 24.9 o superior** y la bandera `--experimental-vm-modules` (ya incluida en los scripts). Con Node 20 la suite no arranca.
+
+```shell
+# 1. Usar la versión de Node del proyecto (.nvmrc)
+nvm use
+
+# 2. Instalar las dependencias según el lockfile
+pnpm install --frozen-lockfile
+
+# 3. Ejecutar las pruebas unitarias
+pnpm run test
+
+# 4. Ejecutar las pruebas con cobertura (genera coverage/lcov.info)
+pnpm run test:cov
+
+# Variante en serie y en modo CI, con cobertura
+pnpm run test:ci
+```
+
+**Cobertura en SonarQube local**: se genera la cobertura con `pnpm run test:cov` y se ejecuta `sonar-scanner` desde la raíz del repositorio contra un SonarQube local, siguiendo la [guía de SonarQube del proyecto](https://github.com/udistrital/sisifo_documentacion/tree/main/utils/sonar). El análisis toma el reporte de `coverage/lcov.info`.
 ## Estado CI
 
 | Develop | Relese | Master |
