@@ -7,10 +7,10 @@ El API mid permite proporcionar la información completa requerida por el microc
 ### Tecnologías Implementadas y Versiones
 <img src="https://nestjs.com/img/logo-small.svg" alt="NestJS Logo" width="40" height="40">
 
-* [nest 12.0.3](https://nestjs.com/)
+* [nest 12.1.3](https://nestjs.com/)
 * [typescript 6.0.3](https://www.typescriptlang.org/)
-* [node 20.20.2](https://nodejs.org/en/)
-* [pnpm 12.4.2](https://www.npmjs.com/package/pnpm)
+* [node 24.22.1](https://nodejs.org/en/)
+* [pnpm 10.34.6](https://www.npmjs.com/package/pnpm)
 * [Docker](https://docs.docker.com/engine/install/ubuntu/)
 * [Docker Compose](https://docs.docker.com/compose/)
 
