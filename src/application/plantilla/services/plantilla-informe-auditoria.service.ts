@@ -7,6 +7,7 @@ import { NuxeoService } from 'src/shared/services/nuxeo.service';
 import { OikosService } from 'src/shared/services/oikos.service';
 import { PlantillasMidService } from 'src/shared/services/plantillas-mid.service';
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
+import { resolverDescripcionesTemas } from 'src/shared/utils/descripcion-nuxeo.util';
 
 const {
   PLANTILLAS,
@@ -260,31 +261,10 @@ export class PlantillaInformeAuditoriaService {
     return respuestaDependencias;
   }
 
-  private comprobarNuxeoEnlace(descripcion_titulo: string): boolean {
-    return descripcion_titulo?.startsWith('NuxeoEnlace') ?? false;
-  }
-
+  // Reemplaza los NuxeoEnlace de las descripciones de temas y subtemas por su HTML del gestor documental
   private async procesarDescripcionTemas(temas: any[]) {
-    const temasProcesados = [];
-
-    for (const tema of temas) {
-      if (this.comprobarNuxeoEnlace(tema.descripcion_titulo)) {
-        temasProcesados.push({
-          ...tema,
-          descripcion_titulo: await this.obtenerContenidoNuxeo(tema.descripcion_titulo),
-        });
-      } else {
-        temasProcesados.push(tema);
-      }
-    }
-    return temasProcesados;
-  }
-
-  private async obtenerContenidoNuxeo(descripcion_titulo: string) {
-    const indice = descripcion_titulo.indexOf(":");
-    const uuid = descripcion_titulo.substring(indice + 1);
-    const documento = await firstValueFrom(this.nuxeoService.obtenerPorUUID(uuid,));
-    const bytes = Uint8Array.from(atob(documento), c => c.charCodeAt(0));
-    return new TextDecoder('utf-8').decode(bytes);
+    return resolverDescripcionesTemas(temas, (uuid) =>
+      firstValueFrom(this.nuxeoService.obtenerPorUUID(uuid)),
+    );
   }
 }
