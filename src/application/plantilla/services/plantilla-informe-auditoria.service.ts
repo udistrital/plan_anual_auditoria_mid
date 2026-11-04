@@ -7,7 +7,6 @@ import { NuxeoService } from 'src/shared/services/nuxeo.service';
 import { OikosService } from 'src/shared/services/oikos.service';
 import { PlantillasMidService } from 'src/shared/services/plantillas-mid.service';
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
-const fs = require('fs');
 
 const {
   PLANTILLAS,
@@ -88,6 +87,7 @@ export class PlantillaInformeAuditoriaService {
           informe: {
             titulo: tituloInforme,
             dependencias: dependencias,
+            macroproceso: auditoria.macroproceso,
             proceso: auditoria.proceso,
             dependencia: auditoria.proceso_nombre[0] + ' / ' + auditoria.dependencia_nombre[0],
             lider: auditoria.datos_dependencias[0]?.jefe_nombre,

@@ -242,4 +242,104 @@ describe('AuditoriaService', () => {
       expect(hijaParams.query).not.toContain('tipo_evaluacion_id:9');
     });
   });
+
+  describe('consulta sin filtros de padre', () => {
+    const mockHijasPrimero = (recursoHijas: string) =>
+      mockCrudService.traerDataCrud.mockImplementation(
+        (resource: string, id: any, params: any) => {
+          if (resource === recursoHijas) {
+            return Promise.resolve({
+              Data: [
+                { _id: 'h1', auditoria_padre_id: 'p1' },
+                { _id: 'h2', auditoria_padre_id: 'p1' },
+                { _id: 'h3', auditoria_padre_id: 'p2' },
+              ],
+              MetaData: { Count: 64 },
+            });
+          }
+          if (resource === 'auditoria-padre') {
+            return Promise.resolve({
+              Data: [
+                { _id: 'p1', titulo: 'Padre 1', tipo_evaluacion_id: 7 },
+                { _id: 'p2', titulo: 'Padre 2', tipo_evaluacion_id: 8 },
+              ],
+            });
+          }
+          if (resource === 'auditoria-estado') {
+            return Promise.resolve({ Data: [{ actual: true, estado_id: 1 }] });
+          }
+          return Promise.resolve({ Data: [] });
+        },
+      );
+
+    beforeEach(() => {
+      mockAuditorService.getAll.mockResolvedValue({ Data: [] });
+      mockDominiosService.getParametros.mockReturnValue(of({ parametros: [] }));
+    });
+
+    it('getAll consulta primero las hijas y solo los padres de la página', async () => {
+      mockHijasPrimero('auditoria');
+
+      const res = await service.getAll({
+        query: 'activo:true,plan_auditoria_id:plan1,estado_id__ne:7060',
+        limit: '5',
+        offset: '0',
+      });
+
+      const calls = mockCrudService.traerDataCrud.mock.calls;
+      const hijaCall = calls.find(([resource]) => resource === 'auditoria');
+      const padreCall = calls.find(([resource]) => resource === 'auditoria-padre');
+
+      expect(calls.indexOf(hijaCall!)).toBeLessThan(calls.indexOf(padreCall!));
+      expect(hijaCall![2]).toEqual(
+        expect.objectContaining({ limit: '5', offset: '0' }),
+      );
+      expect(hijaCall![2].query).toContain('plan_auditoria_id:plan1');
+      expect(hijaCall![2].query).toContain('estado_id__ne:7060');
+      expect(hijaCall![2].query).not.toContain('auditoria_padre_id__in');
+      expect(padreCall![2].query).toBe('_id__in:p1|p2');
+
+      expect(res.MetaData.Count).toBe(64);
+      expect(res.Data.map((a: any) => a._id)).toEqual(['h1', 'h2', 'h3']);
+      expect(res.Data[2].titulo).toBe('Padre 2');
+    });
+
+    it('getByAuditor consulta primero las hijas del auditor', async () => {
+      mockHijasPrimero('auditoria/auditor');
+
+      const res = await service.getByAuditor('personaX', {
+        query: 'activo:true,plan_auditoria_id:plan1',
+      });
+
+      expect(mockCrudService.traerDataCrud).toHaveBeenCalledWith(
+        'auditoria/auditor',
+        'personaX',
+        expect.objectContaining({
+          query: expect.not.stringContaining('auditoria_padre_id__in'),
+        }),
+      );
+      expect(mockCrudService.traerDataCrud).toHaveBeenCalledWith(
+        'auditoria-padre',
+        null,
+        expect.objectContaining({ query: '_id__in:p1|p2' }),
+      );
+      expect(res.Data.length).toBe(3);
+    });
+
+    it('getAll sin hijas no consulta padres', async () => {
+      mockCrudService.traerDataCrud.mockResolvedValue({
+        Data: [],
+        MetaData: { Count: 0 },
+      });
+
+      const res = await service.getAll({ query: 'plan_auditoria_id:plan1' });
+
+      expect(res).toEqual({ Data: [], MetaData: { Count: 0 } });
+      expect(mockCrudService.traerDataCrud).not.toHaveBeenCalledWith(
+        'auditoria-padre',
+        expect.anything(),
+        expect.anything(),
+      );
+    });
+  });
 });
