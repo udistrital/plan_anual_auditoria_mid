@@ -41,12 +41,12 @@ describe('descripcion-nuxeo.util', () => {
         {
           _id: 'sub-1',
           titulo: 'Subtema con imagen',
-          descripcion_titulo: enlaceNuxeo('uuid-sub'),
+          descripcion: enlaceNuxeo('uuid-sub'),
         },
         {
           _id: 'sub-2',
           titulo: 'Subtema en texto',
-          descripcion_titulo: '<p>Texto</p>',
+          descripcion: '<p>Texto</p>',
         },
         { _id: 'sub-3', titulo: 'Subtema sin descripción' },
       ],
@@ -55,7 +55,7 @@ describe('descripcion-nuxeo.util', () => {
     const [resultado] = await resolverDescripcionesTemas<any>([tema], obtener);
 
     expect(resultado.descripcion_titulo).toBe('<p>Contenido uuid-tema</p>');
-    expect(resultado.subtema.map((s: any) => s.descripcion_titulo)).toEqual([
+    expect(resultado.subtema.map((s: any) => s.descripcion)).toEqual([
       '<p>Contenido uuid-sub</p>',
       '<p>Texto</p>',
       undefined,

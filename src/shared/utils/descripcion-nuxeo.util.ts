@@ -33,8 +33,8 @@ async function resolverDescripcion(
 }
 
 /**
- * Reemplaza el `NuxeoEnlace` de `descripcion_titulo` de cada tema y de cada uno de sus subtemas por el
- * HTML del gestor documental.
+ * Reemplaza el `NuxeoEnlace` de `descripcion_titulo` de cada tema y de `descripcion` de cada uno de sus
+ * subtemas por el HTML del gestor documental.
  * - Conserva el orden de los temas y subtemas.
  * - No modifica los objetos recibidos: los que no tienen enlace se devuelven tal cual.
  * - Si el gestor no entrega el documento (`obtener` devuelve ''), la descripción queda vacía y el informe
@@ -54,16 +54,16 @@ export async function resolverDescripcionesTemas<T extends Record<string, any>>(
         ? tema.subtema
         : undefined;
       const conEnlace =
-        subtemas?.some((sub) => esEnlaceNuxeo(sub?.descripcion_titulo)) ??
+        subtemas?.some((sub) => esEnlaceNuxeo(sub?.descripcion)) ??
         false;
       const subtemasResueltos = conEnlace
         ? await Promise.all(
             subtemas!.map(async (sub) =>
-              esEnlaceNuxeo(sub?.descripcion_titulo)
+              esEnlaceNuxeo(sub?.descripcion)
                 ? {
                     ...sub,
-                    descripcion_titulo: await resolverDescripcion(
-                      sub.descripcion_titulo,
+                    descripcion: await resolverDescripcion(
+                      sub.descripcion,
                       obtener,
                     ),
                   }
