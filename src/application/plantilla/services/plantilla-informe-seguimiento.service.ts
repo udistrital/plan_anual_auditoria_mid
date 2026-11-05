@@ -1,10 +1,13 @@
+import { firstValueFrom } from 'rxjs';
 import { Injectable } from '@nestjs/common';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
 import { environment } from 'src/config/configuration';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
+import { NuxeoService } from 'src/shared/services/nuxeo.service';
 import { OikosService } from 'src/shared/services/oikos.service';
 import { PlantillasMidService } from 'src/shared/services/plantillas-mid.service';
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
+import { resolverDescripcionesTemas } from 'src/shared/utils/descripcion-nuxeo.util';
 
 const {
   PLANTILLAS,
@@ -23,6 +26,7 @@ export class PlantillaInformeSeguimientoService {
     private readonly oikosService: OikosService,
     private readonly auditoriaService: AuditoriaService,
     private readonly tercerosService: TercerosHelperService,
+    private readonly nuxeoService: NuxeoService,
   ) {}
 
   async get(idAuditoria: string) {
@@ -47,7 +51,12 @@ export class PlantillaInformeSeguimientoService {
       }
 
       const temas = await this.obtenerTemasInforme(informe._id);
-      const temasReestructurados = await this.reestructurarTemas(temas);
+      // Las descripciones con imágenes están en el gestor documental (NuxeoEnlace): se traen como HTML
+      const temasProcesados = await resolverDescripcionesTemas(temas, (uuid) =>
+        firstValueFrom(this.nuxeoService.obtenerPorUUID(uuid)),
+      );
+      const temasReestructurados =
+        await this.reestructurarTemas(temasProcesados);
       const [anio, mes, dia] = (informe.fecha_emision ?? '').split('T')[0].split('-');
       const [
         tituloInforme,
