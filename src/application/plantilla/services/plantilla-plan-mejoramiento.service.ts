@@ -181,7 +181,8 @@ export class PlantillaPlanMejoramientoService {
         .map((accion) => ({
           numero: indice + 1,
           descripcion: hallazgo.descripcion,
-          causa: hallazgo.criterio,
+          // La causa la escribe la dependencia en cada acción; no sale del criterio de fase 3 (#947)
+          causa: accion.causa ?? '',
           // Acción sin tipo queda en blanco
           tipo_accion: TIPOS_ACCION[accion.tipo_id] ?? '',
           accion_planteada: accion.descripcion,
