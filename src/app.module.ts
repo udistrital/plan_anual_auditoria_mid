@@ -25,9 +25,6 @@ import { HallazgoRemisionModule } from './application/hallazgo-remision/hallazgo
 import { LoggerModule } from 'nestjs-pino';
 import { env } from './config/configuration';
 import { ServicesModule } from './shared/services/services.module';
-import { createObserveModule } from '@nestjs/observe';
-
-export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
 @Module({
   imports: [
@@ -70,11 +67,6 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     GestionAccionesModule,
     FormulacionPlanesModule,
     ServicesModule,
-    ObserveModule.forRoot({
-      appKey: process.env.OBSERVE_APP_KEY,
-      appSecret: process.env.OBSERVE_APP_SECRET,
-      serviceId: 'plan_anual_auditoria_mid2',
-    }),
   ],
   controllers: [AppController],
   providers: [
