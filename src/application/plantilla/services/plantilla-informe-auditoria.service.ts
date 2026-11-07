@@ -8,6 +8,7 @@ import { OikosService } from 'src/shared/services/oikos.service';
 import { PlantillasMidService } from 'src/shared/services/plantillas-mid.service';
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
 import { resolverDescripcionesTemas } from 'src/shared/utils/descripcion-nuxeo.util';
+import { esHtmlVacio } from 'src/shared/utils/html.util';
 
 const {
   PLANTILLAS,
@@ -62,17 +63,20 @@ export class PlantillaInformeAuditoriaService {
       const temasProcesados = await this.procesarDescripcionTemas(temas);
       const temasReestructurados = await this.reestructurarTemas(temasProcesados, hallazgos);
       const [anio, mes, dia] = informe.fecha_emision.split('T')[0].split('-');
-      const [tituloInforme, jefeOci, auditorResponsable, dependencias] =
-        await Promise.all([
-          this.generarTituloInforme(
-            auditoria._id,
-            auditoria.tipo_evaluacion_id,
-            auditoria.titulo,
-          ),
-          this.tercerosService.getJefeOCI(),
-          this.obtenerAuditorResponsable(auditoria._id),
-          this.obtenergrupoDependencias(auditoria.dependencia_id),
-        ]);
+      const esPreliminar = await this.esInformePreliminar(auditoria._id);
+      const tituloInforme = this.generarTituloInforme(
+        auditoria.tipo_evaluacion_id,
+        auditoria.titulo,
+        esPreliminar,
+      );
+      // En el informe preliminar no se expone el auditor responsable
+      const [jefeOci, auditorResponsable, dependencias] = await Promise.all([
+        this.tercerosService.getJefeOCI(),
+        esPreliminar
+          ? Promise.resolve('')
+          : this.obtenerAuditorResponsable(auditoria._id),
+        this.obtenergrupoDependencias(auditoria.dependencia_id),
+      ]);
 
       const infoParaPlantilla = {
         plantilla_id: PLANTILLAS.INFORME_AUDITORIA_INTERNA,
@@ -107,6 +111,7 @@ export class PlantillaInformeAuditoriaService {
             jefeOci ||
             'No se encontró el jefe de la Oficina Asesora de Control Interno',
           auditor_responsable: auditorResponsable,
+          es_preliminar: esPreliminar,
         },
       };
       return infoParaPlantilla;
@@ -146,40 +151,60 @@ export class PlantillaInformeAuditoriaService {
     return respuesta.Data || [];
   }
 
-  private async generarTituloInforme(
-    idAuditoria: string,
+  private generarTituloInforme(
     tipo_evaluacion_id: number,
     auditoriaTitulo: string,
+    esPreliminar: boolean,
   ) {
     const tipo =
       tipo_evaluacion_id === TIPO_EVALUACION.AUDITORIA_INTERNA
         ? 'Auditoria Interna'
         : 'Auditoria de Seguimiento';
 
-    const params = {
-      query: `auditoria_id:${idAuditoria},activo:true,actual:true`,
-      limit: 1,
-    };
-    const estado_id = await this.auditoriaCrudService
-      .traerDataCrud('auditoria-estado', null, params)
-      .then((data) => data.Data);
-
-    const sufijo = ESTADOS_INFORME_AUDITORIA_PRELIMINAR.includes(estado_id)
-      ? 'Preliminar'
-      : 'Final';
+    const sufijo = esPreliminar ? 'Preliminar' : 'Final';
 
     return `${tipo}: ${auditoriaTitulo} - ${sufijo}`;
   }
 
+  // Determina si el estado actual de la auditoría corresponde a un informe preliminar
+  private async esInformePreliminar(idAuditoria: string): Promise<boolean> {
+    const params = {
+      query: `auditoria_id:${idAuditoria},activo:true,actual:true`,
+      limit: 1,
+    };
+    const respuesta = await this.auditoriaCrudService.traerDataCrud(
+      'auditoria-estado',
+      null,
+      params,
+    );
+    const estadoId = Number(respuesta?.Data?.[0]?.estado_id);
+    return ESTADOS_INFORME_AUDITORIA_PRELIMINAR.includes(estadoId);
+  }
+
   private async reestructurarTemas(temas: any[], hallazgos: any[]) {
-    return temas.map(({ subtema, ...data }) => ({
-      ...data,
-      subtemas:
-        subtema?.map((sub: any ) => ({
-          ...sub,
-          hallazgos: hallazgos.filter((h) => h.subtema_id?.toString() === sub._id?.toString()),
-        })) ?? [],
-    }));
+    // La sección "1" del informe está reservada, por eso la numeración arranca en 2
+    return temas.map(({ subtema, ...data }, indiceTema) => {
+      let contadorSubtema = 0;
+      return {
+        ...data,
+        descripcion_titulo: esHtmlVacio(data.descripcion_titulo)
+          ? ''
+          : data.descripcion_titulo,
+        subtemas:
+          subtema?.map((sub: any) => ({
+            ...sub,
+            // Número del subtema ({tema}.{subtema}), en el mismo formato que el de los hallazgos
+            numero:
+              sub.activo === false
+                ? ''
+                : `${indiceTema + 2}.${++contadorSubtema}`,
+            descripcion: esHtmlVacio(sub.descripcion) ? '' : sub.descripcion,
+            hallazgos: hallazgos.filter(
+              (h) => h.subtema_id?.toString() === sub._id?.toString(),
+            ),
+          })) ?? [],
+      };
+    });
   }
 
   private async obtenerAuditorResponsable(
