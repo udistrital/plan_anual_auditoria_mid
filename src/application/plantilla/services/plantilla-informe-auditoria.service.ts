@@ -7,7 +7,10 @@ import { NuxeoService } from 'src/shared/services/nuxeo.service';
 import { OikosService } from 'src/shared/services/oikos.service';
 import { PlantillasMidService } from 'src/shared/services/plantillas-mid.service';
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
-import { resolverDescripcionesTemas } from 'src/shared/utils/descripcion-nuxeo.util';
+import {
+  resolverDescripcionesHallazgos,
+  resolverDescripcionesTemas,
+} from 'src/shared/utils/descripcion-nuxeo.util';
 import { esHtmlVacio } from 'src/shared/utils/html.util';
 
 const {
@@ -18,6 +21,18 @@ const {
   logoUDistrital,
   logoSIGUD
 } = environment;
+
+const SIN_AUDITOR = 'Sin auditor asignado.';
+const SIN_JEFE_OCI =
+  'No se encontró el jefe de la Oficina Asesora de Control Interno';
+const CARGO_AUDITOR = 'Auditor';
+const CARGO_AUDITOR_LIDER = 'Auditor líder';
+const CARGO_JEFE_OCI = 'Jefe Oficina de Control Interno';
+
+interface AuditorInforme {
+  nombre: string;
+  cargo: string;
+}
 
 @Injectable()
 export class PlantillaInformeAuditoriaService {
@@ -60,8 +75,14 @@ export class PlantillaInformeAuditoriaService {
         this.obtenerComponentesInforme('hallazgo' , informe._id),
       ]);
 
-      const temasProcesados = await this.procesarDescripcionTemas(temas);
-      const temasReestructurados = await this.reestructurarTemas(temasProcesados, hallazgos);
+      const [temasProcesados, hallazgosProcesados] = await Promise.all([
+        this.procesarDescripcionTemas(temas),
+        this.procesarDescripcionHallazgos(hallazgos),
+      ]);
+      const temasReestructurados = await this.reestructurarTemas(
+        temasProcesados,
+        hallazgosProcesados,
+      );
       const [anio, mes, dia] = informe.fecha_emision.split('T')[0].split('-');
       const esPreliminar = await this.esInformePreliminar(auditoria._id);
       const tituloInforme = this.generarTituloInforme(
@@ -70,11 +91,11 @@ export class PlantillaInformeAuditoriaService {
         esPreliminar,
       );
       // En el informe preliminar no se expone el auditor responsable
-      const [jefeOci, auditorResponsable, dependencias] = await Promise.all([
+      const [jefeOci, auditores, dependencias] = await Promise.all([
         this.tercerosService.getJefeOCI(),
         esPreliminar
-          ? Promise.resolve('')
-          : this.obtenerAuditorResponsable(auditoria._id),
+          ? Promise.resolve([] as AuditorInforme[])
+          : this.obtenerAuditoresAsignados(auditoria._id),
         this.obtenergrupoDependencias(auditoria.dependencia_id),
       ]);
 
@@ -107,10 +128,19 @@ export class PlantillaInformeAuditoriaService {
           informe_final: (informe.informe_final),
           observaciones_conclusiones: informe.observacion_conclusion,
           notas: (informe.nota),
-          jefe_oci:
-            jefeOci ||
-            'No se encontró el jefe de la Oficina Asesora de Control Interno',
-          auditor_responsable: auditorResponsable,
+          jefe_oci: jefeOci || SIN_JEFE_OCI,
+          auditor_responsable: esPreliminar
+            ? ''
+            : (auditores[0]?.nombre ?? SIN_AUDITOR),
+          // Tabla "Proyectó / Aprobó": solo en el informe final
+          elaboracion: esPreliminar
+            ? null
+            : {
+                proyecto: auditores.length
+                  ? auditores
+                  : [{ nombre: SIN_AUDITOR, cargo: CARGO_AUDITOR }],
+                aprobo: { nombre: jefeOci || SIN_JEFE_OCI, cargo: CARGO_JEFE_OCI },
+              },
           es_preliminar: esPreliminar,
         },
       };
@@ -207,29 +237,30 @@ export class PlantillaInformeAuditoriaService {
     });
   }
 
-  private async obtenerAuditorResponsable(
+  // Auditores activos de la auditoría, con el líder primero. Los que no aparecen en Terceros se omiten
+  private async obtenerAuditoresAsignados(
     auditoriaId: string,
-  ): Promise<string> {
+  ): Promise<AuditorInforme[]> {
     const params = {
       query: `auditoria_id:${auditoriaId},activo:true`,
       limit: 0,
     };
-    const auditores = await this.auditoriaCrudService
+    const auditores: any[] = await this.auditoriaCrudService
       .traerDataCrud('auditor', null, params)
-      .then((data) => data.Data);
-    switch (auditores.length) {
-      case 0:
-        return 'Sin auditor asignado.';
-      case 1:
-        return (await this.tercerosService.getTerceroById(
-            auditores[0].auditor_id,
-          ))?.NombreCompleto || 'Sin auditor asignado.';
-      default:
-        return (await this.tercerosService.getTerceroById(
-            auditores.find((a) => a.auditor_lider)?.auditor_id
-              || auditores[0]?.auditor_id,
-          ))?.NombreCompleto || 'Sin auditor asignado.';
-    }
+      .then((data) => data?.Data ?? []);
+    const ordenados = [
+      ...auditores.filter((a) => a.auditor_lider),
+      ...auditores.filter((a) => !a.auditor_lider),
+    ];
+    const terceros = await Promise.all(
+      ordenados.map((a) => this.tercerosService.getTerceroById(a.auditor_id)),
+    );
+    return ordenados
+      .map((a, i) => ({
+        nombre: terceros[i]?.NombreCompleto,
+        cargo: a.auditor_lider ? CARGO_AUDITOR_LIDER : CARGO_AUDITOR,
+      }))
+      .filter((a): a is AuditorInforme => !!a.nombre);
   }
 
   private async obtenergrupoDependencias(dependencias: any): Promise<any> {
@@ -284,6 +315,13 @@ export class PlantillaInformeAuditoriaService {
       });
     }
     return respuestaDependencias;
+  }
+
+  // Deja en HTML la descripción de cada hallazgo (texto plano, HTML o NuxeoEnlace)
+  private async procesarDescripcionHallazgos(hallazgos: any[]) {
+    return resolverDescripcionesHallazgos(hallazgos, (uuid) =>
+      firstValueFrom(this.nuxeoService.obtenerPorUUID(uuid)),
+    );
   }
 
   // Reemplaza los NuxeoEnlace de las descripciones de temas y subtemas por su HTML del gestor documental
