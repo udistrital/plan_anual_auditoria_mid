@@ -1,11 +1,17 @@
 /**
  * Descripciones de texto enriquecido guardadas en el gestor documental.
  *
- * Cuando una descripción (tema o subtema del informe) tiene imágenes, el MF guarda su HTML en Nuxeo y en
+ * Cuando una descripción (tema, subtema o hallazgo del informe) tiene imágenes, el MF guarda su HTML en Nuxeo y en
  * el CRUD queda `NuxeoEnlace:<uuid>`. Para generar el PDF hay que reemplazar ese enlace por el HTML.
  */
 
+import { esHtml, esHtmlVacio, textoPlanoAHtml } from './html.util';
+
 const PREFIJO_ENLACE = 'NuxeoEnlace';
+
+/** Se muestra en el PDF en lugar de la descripción de un hallazgo que el gestor no entregó. */
+export const DESCRIPCION_HALLAZGO_NO_DISPONIBLE =
+  '<p>Descripción no disponible en el gestor documental.</p>';
 
 /** Devuelve el contenido (base64) del documento con ese uuid, o '' si no se pudo obtener. */
 export type ObtenerContenidoNuxeo = (uuid: string) => Promise<string>;
@@ -54,8 +60,7 @@ export async function resolverDescripcionesTemas<T extends Record<string, any>>(
         ? tema.subtema
         : undefined;
       const conEnlace =
-        subtemas?.some((sub) => esEnlaceNuxeo(sub?.descripcion)) ??
-        false;
+        subtemas?.some((sub) => esEnlaceNuxeo(sub?.descripcion)) ?? false;
       const subtemasResueltos = conEnlace
         ? await Promise.all(
             subtemas!.map(async (sub) =>
@@ -82,5 +87,39 @@ export async function resolverDescripcionesTemas<T extends Record<string, any>>(
         ...(subtemasResueltos !== undefined && { subtema: subtemasResueltos }),
       };
     }),
+  );
+}
+
+/** Convierte a HTML la descripción de un hallazgo, sea cual sea su formato (texto plano, HTML o enlace). */
+async function descripcionHallazgoAHtml(
+  descripcion: unknown,
+  obtener: ObtenerContenidoNuxeo,
+): Promise<string> {
+  if (esEnlaceNuxeo(descripcion)) {
+    const html = await resolverDescripcion(descripcion, obtener);
+    return esHtmlVacio(html) ? DESCRIPCION_HALLAZGO_NO_DISPONIBLE : html;
+  }
+  const valor = typeof descripcion === 'string' ? descripcion : '';
+  if (esHtml(valor)) return esHtmlVacio(valor) ? '' : valor;
+  return textoPlanoAHtml(valor);
+}
+
+/**
+ * Deja en HTML la `descripcion` de cada hallazgo, lista para la plantilla.
+ * - Conserva el orden y no modifica los objetos recibidos.
+ * - A diferencia de tema y subtema, si el gestor no entrega el documento se muestra un aviso visible:
+ *   el hallazgo no tiene otro texto y su descripción es obligatoria. El informe se genera igual.
+ */
+export async function resolverDescripcionesHallazgos<
+  T extends Record<string, any>,
+>(hallazgos: T[], obtener: ObtenerContenidoNuxeo): Promise<T[]> {
+  return Promise.all(
+    (hallazgos ?? []).map(async (hallazgo) => ({
+      ...hallazgo,
+      descripcion: await descripcionHallazgoAHtml(
+        hallazgo.descripcion,
+        obtener,
+      ),
+    })),
   );
 }
