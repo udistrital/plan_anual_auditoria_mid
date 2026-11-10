@@ -3,6 +3,7 @@ import { firstValueFrom } from 'rxjs';
 import { environment } from 'src/config/configuration';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
+import { TercerosService } from 'src/shared/services/terceros.service';
 import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
 import {
   FilaDependenciaEjecutor,
@@ -27,6 +28,7 @@ export class EjecutorDependenciaService {
   constructor(
     private readonly crud: AuditoriaCrudService,
     private readonly tercerosHelper: TercerosHelperService,
+    private readonly tercerosService: TercerosService,
     private readonly dominiosService: DominiosService,
   ) {}
 
@@ -40,15 +42,15 @@ export class EjecutorDependenciaService {
     const filtros = this.parsearFiltros(query);
 
     const registros = await this.consultarAsignacionesVigentes(filtros);
-    const [nombrePorDependencia, nombrePorUsuario] = await Promise.all([
+    const [nombrePorDependencia, datosPorUsuario] = await Promise.all([
       this.mapaNombresDependencia(),
-      this.mapaNombresUsuario(registros.map((r) => r.usuario_id)),
+      this.mapaDatosUsuario(registros.map((r) => r.usuario_id)),
     ]);
 
     const filas = this.agruparPorDependencia(
       registros,
       nombrePorDependencia,
-      nombrePorUsuario,
+      datosPorUsuario,
     );
 
     const filtradas = this.filtrarYPaginar(filas, filtros);
@@ -86,7 +88,10 @@ export class EjecutorDependenciaService {
   private agruparPorDependencia(
     registros: any[],
     nombrePorDependencia: Map<number, string>,
-    nombrePorUsuario: Map<number, string>,
+    datosPorUsuario: Map<
+      number,
+      { nombre: string; correo: string | null; documento: string | null }
+    >,
   ): FilaDependenciaEjecutor[] {
     const porDependencia = new Map<number, FilaDependenciaEjecutor>();
 
@@ -101,11 +106,13 @@ export class EjecutorDependenciaService {
           sin_asignar: false,
         });
       }
+      const datos = datosPorUsuario.get(r.usuario_id);
       porDependencia.get(r.dependencia_id).ejecutores.push({
         _id: String(r._id),
         usuario_id: r.usuario_id,
-        usuario_nombre:
-          nombrePorUsuario.get(r.usuario_id) ?? `Usuario ${r.usuario_id}`,
+        usuario_nombre: datos?.nombre ?? `Usuario ${r.usuario_id}`,
+        usuario_documento: datos?.documento ?? null,
+        usuario_correo: datos?.correo ?? null,
         fecha_asignacion: r.fecha_asignacion ?? null,
       });
     }
@@ -237,8 +244,8 @@ export class EjecutorDependenciaService {
     ] as string[];
     const usuarioPorEd = await this.mapaUsuarioPorEjecutorDependencia(edIds);
 
-    // 3. Nombres de los usuarios involucrados.
-    const nombrePorUsuario = await this.mapaNombresUsuario(
+    // 3. Datos de los usuarios involucrados.
+    const datosPorUsuario = await this.mapaDatosUsuario(
       [...usuarioPorEd.values()].filter((v): v is number => v != null),
     );
 
@@ -257,7 +264,7 @@ export class EjecutorDependenciaService {
         usuario_id: usuarioId,
         usuario_nombre:
           usuarioId != null
-            ? (nombrePorUsuario.get(usuarioId) ?? `Usuario ${usuarioId}`)
+            ? (datosPorUsuario.get(usuarioId)?.nombre ?? `Usuario ${usuarioId}`)
             : 'Usuario desconocido',
       });
     }
@@ -301,31 +308,61 @@ export class EjecutorDependenciaService {
     return map;
   }
 
-  /** Mapa id -> nombre de cada usuario ejecutor (TERCEROS). */
-  private async mapaNombresUsuario(
-    usuarioIds: number[],
-  ): Promise<Map<number, string>> {
-    const map = new Map<number, string>();
+  /** Mapa id -> { nombre, correo, documento } de cada usuario ejecutor (TERCEROS). */
+  private async mapaDatosUsuario(usuarioIds: number[]): Promise<
+    Map<
+      number,
+      { nombre: string; correo: string | null; documento: string | null }
+    >
+  > {
+    const map = new Map<
+      number,
+      { nombre: string; correo: string | null; documento: string | null }
+    >();
     const unicos = [...new Set(usuarioIds.filter(Boolean))];
     await Promise.all(
       unicos.map(async (usuarioId) => {
-        try {
-          const tercero = await this.tercerosHelper.getTerceroById(
-            String(usuarioId),
-          );
-          map.set(usuarioId, tercero?.NombreCompleto ?? `Usuario ${usuarioId}`);
-        } catch {
-          map.set(usuarioId, `Usuario ${usuarioId}`);
-        }
+        const [tercero, documento] = await Promise.all([
+          this.tercerosHelper
+            .getTerceroById(String(usuarioId))
+            .catch(() => null),
+          this.documentoDeTercero(usuarioId),
+        ]);
+        map.set(usuarioId, {
+          nombre: tercero?.NombreCompleto ?? `Usuario ${usuarioId}`,
+          correo: tercero?.UsuarioWSO2 ?? null,
+          documento,
+        });
       }),
     );
     return map;
   }
 
+  /** Número de documento de un tercero (datos_identificacion.Numero). */
+  private async documentoDeTercero(
+    terceroId: number,
+  ): Promise<string | null> {
+    try {
+      const resp = await this.tercerosService.traerData(
+        'datos_identificacion',
+        null,
+        {
+          query: `TerceroId:${terceroId},Activo:true`,
+          fields: 'Numero',
+          limit: 1,
+        },
+      );
+      const registro = Array.isArray(resp) ? resp[0] : (resp?.Data?.[0] ?? resp);
+      return registro?.Numero ?? null;
+    } catch {
+      return null;
+    }
+  }
+
   /**
    * Resuelve los nombres de `vigencia_id` y `estado_id` de cada plan, agregando
    * `vigencia_nombre` y `estado_nombre` sin eliminar los ids (estándar `*_id` +
-   * `*_nombre`, como en auditoria.service.ts).
+   * `*_nombre`).
    */
   private async reemplazarCampos(planes: PlanDependencia[]): Promise<void> {
     if (!(await this.identificarCampo(planes))) return;

@@ -15,11 +15,15 @@ export interface FiltrosEjecutor {
   offset?: number;
 }
 
-/** Ejecutor vigente de una dependencia, con el nombre del usuario resuelto. */
+/** Ejecutor vigente de una dependencia, con el nombre y correo del usuario resueltos. */
 export interface EjecutorConsolidado {
   _id: string;
   usuario_id: number;
   usuario_nombre: string;
+  /** Documento de identidad (datos_identificacion.Numero). */
+  usuario_documento: string | null;
+  /** Correo del usuario (tercero.UsuarioWSO2), usado para gestionar el rol en WSO2. */
+  usuario_correo: string | null;
   fecha_asignacion: string | null;
 }
 

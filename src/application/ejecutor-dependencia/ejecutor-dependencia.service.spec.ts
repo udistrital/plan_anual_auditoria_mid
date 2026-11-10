@@ -3,6 +3,7 @@ import { of } from 'rxjs';
 import { EjecutorDependenciaService } from './ejecutor-dependencia.service';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
+import { TercerosService } from 'src/shared/services/terceros.service';
 import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
 import { environment } from 'src/config/configuration';
 
@@ -124,8 +125,24 @@ describe('EjecutorDependenciaService (mid)', () => {
   };
 
   const getTerceroById = jest.fn((id: string) =>
-    Promise.resolve({ NombreCompleto: `Persona ${id}` }),
+    Promise.resolve({
+      NombreCompleto: `Persona ${id}`,
+      UsuarioWSO2: `persona${id}@udistrital.edu.co`,
+    }),
   );
+
+  // TercerosService.traerData resuelve el documento desde datos_identificacion.
+  const tercerosService = {
+    traerData: jest.fn((endpoint: string, _id: any, params: any) => {
+      if (endpoint === 'datos_identificacion') {
+        const terceroId = String(params?.query ?? '').match(
+          /TerceroId:(\d+)/,
+        )?.[1];
+        return Promise.resolve([{ Numero: `doc-${terceroId}` }]);
+      }
+      return Promise.resolve([]);
+    }),
+  };
 
   // Catálogos de dominios: dependencias (OIKOS) y parámetros (vigencia / estado)
   // resueltos por TipoParametroId a través de DominiosService.
@@ -150,6 +167,7 @@ describe('EjecutorDependenciaService (mid)', () => {
   beforeEach(async () => {
     crud.traerDataCrud.mockClear();
     getTerceroById.mockClear();
+    tercerosService.traerData.mockClear();
     dominiosService.getDependencias.mockClear();
     dominiosService.getParametros.mockClear();
 
@@ -158,6 +176,7 @@ describe('EjecutorDependenciaService (mid)', () => {
         EjecutorDependenciaService,
         { provide: AuditoriaCrudService, useValue: crud },
         { provide: TercerosHelperService, useValue: { getTerceroById } },
+        { provide: TercerosService, useValue: tercerosService },
         { provide: DominiosService, useValue: dominiosService },
       ],
     }).compile();
@@ -184,6 +203,8 @@ describe('EjecutorDependenciaService (mid)', () => {
       expect(dep32.ejecutores[0]).toMatchObject({
         _id: 'ed1',
         usuario_id: 10,
+        usuario_documento: 'doc-10',
+        usuario_correo: 'persona10@udistrital.edu.co',
         fecha_asignacion: '2026-03-01T10:00:00Z',
       });
     });
