@@ -1,6 +1,8 @@
 import {
   decodificarHtmlBase64,
+  DESCRIPCION_HALLAZGO_NO_DISPONIBLE,
   esEnlaceNuxeo,
+  resolverDescripcionesHallazgos,
   resolverDescripcionesTemas,
   uuidDeEnlace,
 } from './descripcion-nuxeo.util';
@@ -90,5 +92,49 @@ describe('descripcion-nuxeo.util', () => {
     expect(await resolverDescripcionesTemas(temas, obtener)).toEqual(temas);
     expect(await resolverDescripcionesTemas([], obtener)).toEqual([]);
     expect(obtener).not.toHaveBeenCalled();
+  });
+
+  describe('resolverDescripcionesHallazgos', () => {
+    it('deja en HTML los tres formatos, en orden y sin modificar el original', async () => {
+      const hallazgos = [
+        { _id: 'h1', descripcion: 'Uno\nDos < 3' },
+        { _id: 'h2', descripcion: '<p>Rico</p>' },
+        { _id: 'h3', descripcion: enlaceNuxeo('uuid-1') },
+      ];
+
+      const resultado = await resolverDescripcionesHallazgos(
+        hallazgos,
+        obtener,
+      );
+
+      expect(resultado.map((h) => h.descripcion)).toEqual([
+        '<p>Uno</p><p>Dos &lt; 3</p>',
+        '<p>Rico</p>',
+        '<p>Contenido uuid-1</p>',
+      ]);
+      expect(hallazgos[0].descripcion).toBe('Uno\nDos < 3');
+      expect(obtener).toHaveBeenCalledTimes(1);
+    });
+
+    it('muestra un aviso visible si el gestor no entrega el documento', async () => {
+      const [hallazgo] = await resolverDescripcionesHallazgos(
+        [{ descripcion: enlaceNuxeo('caido') }],
+        () => Promise.resolve(''),
+      );
+
+      expect(hallazgo.descripcion).toBe(DESCRIPCION_HALLAZGO_NO_DISPONIBLE);
+    });
+
+    it('deja vacío el HTML sin contenido y tolera una lista nula', async () => {
+      const [hallazgo] = await resolverDescripcionesHallazgos(
+        [{ descripcion: '<p><br></p>' }],
+        obtener,
+      );
+
+      expect(hallazgo.descripcion).toBe('');
+      await expect(
+        resolverDescripcionesHallazgos(null as any, obtener),
+      ).resolves.toEqual([]);
+    });
   });
 });

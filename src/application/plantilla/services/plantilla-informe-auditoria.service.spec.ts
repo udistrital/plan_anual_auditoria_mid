@@ -82,4 +82,49 @@ describe('PlantillaInformeAuditoriaService', () => {
       expect(t2.subtemas[0].numero).toBe('3.1');
     });
   });
+
+  describe('obtenerAuditoresAsignados', () => {
+    const tercerosService = { getTerceroById: jest.fn() };
+    const conTerceros = new PlantillaInformeAuditoriaService(
+      {} as any,
+      auditoriaCrudService as any,
+      {} as any,
+      tercerosService as any,
+      {} as any,
+      {} as any,
+    );
+    const nombres: Record<number, string> = { 1: 'Ana', 2: 'Luis', 3: 'Marta' };
+
+    it('devuelve todos los auditores activos con el líder primero', async () => {
+      auditoriaCrudService.traerDataCrud.mockResolvedValue({
+        Data: [
+          { auditor_id: 1 },
+          { auditor_id: 2, auditor_lider: true },
+          { auditor_id: 3 },
+        ],
+      });
+      tercerosService.getTerceroById.mockImplementation(async (id: number) => ({ NombreCompleto: nombres[id] }));
+
+      const auditores = await (conTerceros as any).obtenerAuditoresAsignados('a1');
+
+      expect(auditoriaCrudService.traerDataCrud).toHaveBeenCalledWith('auditor', null, {
+        query: 'auditoria_id:a1,activo:true',
+        limit: 0,
+      });
+      expect(auditores).toEqual([
+        { nombre: 'Luis', cargo: 'Auditor líder' },
+        { nombre: 'Ana', cargo: 'Auditor' },
+        { nombre: 'Marta', cargo: 'Auditor' },
+      ]);
+    });
+
+    it('omite a quien no aparece en Terceros y tolera la lista vacía', async () => {
+      auditoriaCrudService.traerDataCrud.mockResolvedValue({ Data: [{ auditor_id: 1 }, { auditor_id: 9 }] });
+      tercerosService.getTerceroById.mockImplementation(async (id: number) => (nombres[id] ? { NombreCompleto: nombres[id] } : null));
+      await expect((conTerceros as any).obtenerAuditoresAsignados('a1')).resolves.toEqual([{ nombre: 'Ana', cargo: 'Auditor' }]);
+
+      auditoriaCrudService.traerDataCrud.mockResolvedValue({ Data: [] });
+      await expect((conTerceros as any).obtenerAuditoresAsignados('a1')).resolves.toEqual([]);
+    });
+  });
 });
