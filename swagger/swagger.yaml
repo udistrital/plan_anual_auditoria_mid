@@ -17,7 +17,7 @@ paths:
         '200':
           description: Actividades obtenidas.
       summary: Obtener todas las actividades
-      tags: &ref_0
+      tags:
         - Actividad
   /actividad/{id}:
     get:
@@ -32,7 +32,8 @@ paths:
         '200':
           description: Actividad obtenida.
       summary: Obtener actividad por ID
-      tags: *ref_0
+      tags:
+        - Actividad
   /auditoria-estado:
     get:
       operationId: AuditoriaEstadoController_getAll
@@ -48,7 +49,7 @@ paths:
         '404':
           description: No se encontraron estados.
       summary: Obtiene todos los estados de auditorías.
-      tags: &ref_1
+      tags:
         - Auditoria Estado
   /auditoria-estado/{id}:
     get:
@@ -66,7 +67,8 @@ paths:
         '404':
           description: No se encontró el estado.
       summary: Obtiene un estado de auditoría por ID.
-      tags: *ref_1
+      tags:
+        - Auditoria Estado
   /auditoria/auditor/{personaId}:
     get:
       operationId: AuditoriaController_getByAuditor
@@ -83,7 +85,7 @@ paths:
         '404':
           description: Sin resultados.
       summary: Obtener auditorías por auditor
-      tags: &ref_2
+      tags:
         - Auditoria
   /auditoria/auditado/{personaId}/{cargoId}:
     get:
@@ -107,7 +109,8 @@ paths:
         '404':
           description: Sin resultados.
       summary: Obtener auditorías por dependencia del usuario auditado
-      tags: *ref_2
+      tags:
+        - Auditoria
   /auditoria:
     get:
       operationId: AuditoriaController_getAll
@@ -123,7 +126,8 @@ paths:
         '404':
           description: Sin resultados.
       summary: Obtener todas las auditorías
-      tags: *ref_2
+      tags:
+        - Auditoria
   /auditoria/{id}/{planId}:
     delete:
       operationId: AuditoriaController_delete
@@ -148,7 +152,8 @@ paths:
         '500':
           description: Error interno.
       summary: Eliminar auditoría lógicamente
-      tags: *ref_2
+      tags:
+        - Auditoria
   /auditoria/{id}:
     get:
       operationId: AuditoriaController_getById
@@ -165,7 +170,8 @@ paths:
         '404':
           description: Auditoría no encontrada.
       summary: Obtener auditoría por ID
-      tags: *ref_2
+      tags:
+        - Auditoria
   /auditor:
     get:
       operationId: AuditorController_getAll
@@ -181,7 +187,7 @@ paths:
         '404':
           description: Sin resultados.
       summary: Obtener todos los auditores
-      tags: &ref_3
+      tags:
         - Auditor
   /auditor/{id}:
     get:
@@ -199,7 +205,8 @@ paths:
         '404':
           description: No encontrado.
       summary: Obtener auditor por ID
-      tags: *ref_3
+      tags:
+        - Auditor
   /auditoria-padre/ordenadas:
     get:
       operationId: AuditoriaPadreController_getAuditoriasOrdenadas
@@ -225,7 +232,7 @@ paths:
         '400':
           description: Parámetros inválidos.
       summary: Obtener auditorías padre ordenadas
-      tags: &ref_4
+      tags:
         - Auditoria Padre
   /auditoria-padre:
     get:
@@ -242,7 +249,8 @@ paths:
         '404':
           description: Sin resultados.
       summary: Obtener todas las auditorías padre
-      tags: *ref_4
+      tags:
+        - Auditoria Padre
   /auditoria-padre/{id}:
     get:
       operationId: AuditoriaPadreController_getById
@@ -259,7 +267,8 @@ paths:
         '404':
           description: Auditoría padre no encontrada.
       summary: Obtener auditoría padre por ID
-      tags: *ref_4
+      tags:
+        - Auditoria Padre
   /auditoria-padre/{id}/{planId}:
     delete:
       operationId: AuditoriaPadreController_delete
@@ -282,7 +291,8 @@ paths:
         '400':
           description: Parámetros inválidos.
       summary: Eliminar auditoría padre lógicamente
-      tags: *ref_4
+      tags:
+        - Auditoria Padre
   /auditoria-padre/{id}/generar-auditoria:
     post:
       operationId: AuditoriaPadreController_generarUnaAuditoria
@@ -320,7 +330,8 @@ paths:
         '400':
           description: Error en la solicitud.
       summary: Genera una auditoría hija para una auditoría padre específica.
-      tags: *ref_4
+      tags:
+        - Auditoria Padre
   /cargue-masivo/auditorias/plantilla:
     get:
       operationId: CargueMasivoController_descargarPlantillaAuditorias
@@ -339,7 +350,7 @@ paths:
         '500':
           description: Error interno.
       summary: Descargar plantilla de auditorías
-      tags: &ref_5
+      tags:
         - Cargue Masivo
   /cargue-masivo/auditorias/plan/{planId}:
     get:
@@ -365,7 +376,8 @@ paths:
         '500':
           description: Error interno.
       summary: Descargar auditorías en formato Excel
-      tags: *ref_5
+      tags:
+        - Cargue Masivo
   /cargue-masivo/exportar-excel:
     post:
       operationId: CargueMasivoController_exportarLibroExcel
@@ -439,7 +451,8 @@ paths:
         '500':
           description: Error interno.
       summary: Exportar libro a un archivo de Excel
-      tags: *ref_5
+      tags:
+        - Cargue Masivo
   /cargue-masivo/auditorias:
     post:
       operationId: CargueMasivoController_cargueMasivo
@@ -469,7 +482,8 @@ paths:
         '500':
           description: Error interno.
       summary: Carga masiva de auditorías
-      tags: *ref_5
+      tags:
+        - Cargue Masivo
   /cargue-masivo/actividades:
     post:
       operationId: CargueMasivoController_cargueMasivoActividades
@@ -499,7 +513,8 @@ paths:
         '500':
           description: Error interno.
       summary: Carga masiva de actividades
-      tags: *ref_5
+      tags:
+        - Cargue Masivo
   /plan-auditoria:
     get:
       operationId: PlanAuditoriaController_getAll
@@ -515,7 +530,7 @@ paths:
         '404':
           description: No se encontraron planes.
       summary: Obtiene todos los planes de auditoría.
-      tags: &ref_6
+      tags:
         - Plan Auditoría
   /plan-auditoria/{id}:
     get:
@@ -533,7 +548,8 @@ paths:
         '404':
           description: No se encontró el plan.
       summary: Obtiene un plan por ID.
-      tags: *ref_6
+      tags:
+        - Plan Auditoría
   /plan-auditoria/{id}/generar-auditorias:
     post:
       operationId: PlanAuditoriaController_generarAuditorias
@@ -571,7 +587,8 @@ paths:
         '400':
           description: Error en la solicitud.
       summary: Genera auditorías hijas para todas las auditorías padre de un plan.
-      tags: *ref_6
+      tags:
+        - Plan Auditoría
   /plan-estado:
     get:
       operationId: PlanEstadoController_getAll
@@ -587,7 +604,7 @@ paths:
         '404':
           description: No se encontraron estados.
       summary: Obtiene todos los estados de planes.
-      tags: &ref_7
+      tags:
         - Plan Estado
   /plan-estado/{id}:
     get:
@@ -605,7 +622,8 @@ paths:
         '404':
           description: No se encontró el estado.
       summary: Obtiene un estado de plan por ID.
-      tags: *ref_7
+      tags:
+        - Plan Estado
   /plantilla/{id}:
     get:
       operationId: PlantillaController_getById
@@ -636,7 +654,7 @@ paths:
         '200':
           description: Plantilla encontrada.
       summary: Obtener plantilla por ID
-      tags: &ref_8
+      tags:
         - Plantilla
   /plantilla/{tipo}/{idAuditoria}:
     get:
@@ -663,7 +681,8 @@ paths:
         '404':
           description: Tipo de plantilla no encontrado.
       summary: Obtener plantilla dinámica según el tipo de auditoría
-      tags: *ref_8
+      tags:
+        - Plantilla
   /plantilla/docx/{tipo}/{idAuditoria}:
     get:
       operationId: PlantillaController_getPlantillaDOCX
@@ -689,7 +708,8 @@ paths:
         '404':
           description: Tipo de plantilla no encontrado.
       summary: Obtener plantilla dinámica según el tipo de auditoría en formato DOCX
-      tags: *ref_8
+      tags:
+        - Plantilla
   /informe/{id}:
     get:
       description: Retorna el informe con auditoría hallazgos y temas
@@ -707,7 +727,7 @@ paths:
         '404':
           description: Informe no encontrado
       summary: Obtener informe consolidado para edición
-      tags: &ref_9
+      tags:
         - Informe
   /informe:
     get:
@@ -718,7 +738,8 @@ paths:
         '200':
           description: Informes obtenidos exitosamente
       summary: Obtener todos los informes
-      tags: *ref_9
+      tags:
+        - Informe
   /informe/auditoria/{auditoriaId}:
     get:
       description: Lista todos los informes activos de una auditoría específica
@@ -734,7 +755,8 @@ paths:
         '200':
           description: Informes de la auditoría obtenidos
       summary: Obtener informes por auditoría
-      tags: *ref_9
+      tags:
+        - Informe
   /informe/auditoria/{auditoriaId}/numeracion-hallazgo:
     put:
       description: >-
@@ -755,7 +777,8 @@ paths:
         '404':
           description: Informe no encontrado
       summary: Asignar/recalcular la numeración de hallazgos del informe
-      tags: *ref_9
+      tags:
+        - Informe
   /auditado/{personaId}/documento:
     get:
       operationId: AuditadoController_filtrarDocumentosPorDependencia
@@ -826,7 +849,7 @@ paths:
         '404':
           description: No se encontraron estados.
       summary: Obtiene todos los estados de planes de mejoramiento.
-      tags: &ref_10
+      tags:
         - Plan Mejoramiento Estado
   /plan-mejoramiento-estado/{id}:
     get:
@@ -844,7 +867,8 @@ paths:
         '404':
           description: No se encontró el estado.
       summary: Obtiene un estado de plan de mejoramiento por ID.
-      tags: *ref_10
+      tags:
+        - Plan Mejoramiento Estado
   /hallazgo-remision:
     get:
       operationId: HallazgoRemisionController_getAll
@@ -860,7 +884,7 @@ paths:
         '404':
           description: No se encontraron remisiones.
       summary: Obtiene todas las remisiones de hallazgos.
-      tags: &ref_11
+      tags:
         - Hallazgo Remisión
   /hallazgo-remision/{id}:
     get:
@@ -878,7 +902,8 @@ paths:
         '404':
           description: No se encontró la remisión.
       summary: Obtiene una remisión de hallazgo por ID.
-      tags: *ref_11
+      tags:
+        - Hallazgo Remisión
   /plan-mejoramiento:
     get:
       operationId: PlanMejoramientoController_getAll
@@ -894,7 +919,7 @@ paths:
         '404':
           description: No se encontraron registros.
       summary: Obtiene planes de mejoramiento con estado resuelto.
-      tags: &ref_12
+      tags:
         - Plan Mejoramiento
   /plan-mejoramiento/{id}/numerar-acciones:
     post:
@@ -916,7 +941,8 @@ paths:
       summary: >-
         Asigna no_accion a las acciones de un plan aprobado o finalizado que aún
         no lo tienen.
-      tags: *ref_12
+      tags:
+        - Plan Mejoramiento
   /plan-mejoramiento/{id}/aprobar:
     post:
       operationId: PlanMejoramientoController_aprobar
@@ -954,7 +980,8 @@ paths:
         '404':
           description: Plan de mejoramiento no encontrado.
       summary: Aprueba el plan de mejoramiento y genera el no_accion de sus acciones.
-      tags: *ref_12
+      tags:
+        - Plan Mejoramiento
   /responsable-accion:
     get:
       operationId: ResponsableAccionController_getAll
@@ -1074,7 +1101,7 @@ paths:
       summary: >-
         Lista las acciones de mejora de una vigencia con auditoría, hallazgo,
         auditores y dependencias resueltos.
-      tags: &ref_13
+      tags:
         - Gestión de Acciones
   /gestion-accion/auditado/{personaId}/{cargoId}/resumen:
     get:
@@ -1108,7 +1135,8 @@ paths:
       summary: >-
         Conteos de las acciones de los planes aprobados de las dependencias del
         auditado, por grupo de estado.
-      tags: *ref_13
+      tags:
+        - Gestión de Acciones
   /gestion-accion/auditado/{personaId}/{cargoId}:
     get:
       operationId: GestionAccionesController_getAllAuditado
@@ -1186,7 +1214,8 @@ paths:
       summary: >-
         Lista las acciones de los planes aprobados de las dependencias del
         auditado.
-      tags: *ref_13
+      tags:
+        - Gestión de Acciones
   /gestion-accion/auditor/{personaId}/resumen:
     get:
       operationId: GestionAccionesController_getResumenAuditor
@@ -1222,7 +1251,8 @@ paths:
       summary: >-
         Conteos de las acciones de los planes aprobados que ve el auditor, por
         grupo de estado.
-      tags: *ref_13
+      tags:
+        - Gestión de Acciones
   /gestion-accion/auditor/{personaId}:
     get:
       operationId: GestionAccionesController_getAllAuditor
@@ -1303,7 +1333,8 @@ paths:
       summary: >-
         Lista las acciones de los planes aprobados que ve el auditor, según su
         alcance.
-      tags: *ref_13
+      tags:
+        - Gestión de Acciones
   /plan-mejoramiento/formulacion/auditado/{personaId}/{cargoId}/resumen:
     get:
       operationId: FormulacionPlanesController_getResumen
@@ -1336,7 +1367,7 @@ paths:
       summary: >-
         Conteos de auditorías finalizadas del auditado por estado de su plan de
         mejoramiento.
-      tags: &ref_14
+      tags:
         - Formulación de Planes
   /plan-mejoramiento/formulacion/auditado/{personaId}/{cargoId}:
     get:
@@ -1388,7 +1419,8 @@ paths:
       summary: >-
         Lista las auditorías finalizadas del auditado con el estado, auditores,
         hallazgos y observaciones de su plan.
-      tags: *ref_14
+      tags:
+        - Formulación de Planes
   /plan-mejoramiento/formulacion/auditor/{personaId}/resumen:
     get:
       operationId: FormulacionPlanesController_getResumenAuditor
@@ -1424,7 +1456,8 @@ paths:
       summary: >-
         Conteos de auditorías finalizadas que revisa el auditor, por estado de
         su plan de mejoramiento.
-      tags: *ref_14
+      tags:
+        - Formulación de Planes
   /plan-mejoramiento/formulacion/auditor/{personaId}:
     get:
       operationId: FormulacionPlanesController_getAllAuditor
@@ -1478,7 +1511,85 @@ paths:
       summary: >-
         Lista las auditorías finalizadas que revisa el auditor con el estado,
         plazo y avance de dictamen de su plan.
-      tags: *ref_14
+      tags:
+        - Formulación de Planes
+  /accion-mejora/{accionId}/comentario:
+    get:
+      operationId: ComentarioAccionController_listar
+      parameters:
+        - name: accionId
+          required: true
+          in: path
+          description: Id (ObjectId) de la acción de mejora.
+          schema:
+            type: string
+        - name: rol
+          required: false
+          in: query
+          description: >-
+            Código del rol con que consulta, para calcular
+            MetaData.puede_comentar.
+          schema: {}
+        - name: persona_id
+          required: false
+          in: query
+          description: Tercero que consulta, para calcular MetaData.puede_comentar.
+          schema: {}
+        - name: offset
+          required: false
+          in: query
+          description: Desplazamiento (por defecto 0).
+          schema: {}
+        - name: limit
+          required: false
+          in: query
+          description: Comentarios por página (1 a 100, por defecto 20).
+          schema: {}
+      responses:
+        '200':
+          description: >-
+            Comentarios (Data puede ser []); MetaData: { Count, puede_comentar
+            }.
+        '400':
+          description: Id de la acción, limit u offset inválidos.
+        '404':
+          description: La acción de mejora no existe o está inactiva.
+      summary: >-
+        Lista los comentarios del foro de una acción (más recientes primero) con
+        autor, rol y dependencia, e indica si la persona puede comentar.
+      tags:
+        - Foro de la acción de mejora
+    post:
+      operationId: ComentarioAccionController_publicar
+      parameters:
+        - name: accionId
+          required: true
+          in: path
+          description: Id (ObjectId) de la acción de mejora.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrearComentarioAccionDto'
+      responses:
+        '201':
+          description: Comentario creado, con autor, rol y dependencia resueltos.
+        '400':
+          description: Mensaje vacío o de más de 1000 caracteres, usuario o rol inválidos.
+        '403':
+          description: El usuario no participa en el foro de esta acción.
+        '404':
+          description: La acción de mejora no existe o está inactiva.
+        '502':
+          description: El CRUD no registró el comentario.
+      summary: >-
+        Publica un comentario en el foro de la acción. Pueden comentar las
+        dependencias responsables y el personal de Control Interno.
+      tags:
+        - Foro de la acción de mejora
 info:
   title: Plan Anual Auditoria MID
   description: API MID para la gestion de planes de auditorias, auditorias y actividades
@@ -1487,4 +1598,23 @@ info:
 tags: []
 servers: []
 components:
-  schemas: {}
+  schemas:
+    CrearComentarioAccionDto:
+      type: object
+      properties:
+        mensaje:
+          type: string
+          description: Texto plano del comentario (1 a 1000 caracteres)
+          example: Se cargarán las firmas de las actas en el próximo corte.
+        usuario_id:
+          type: number
+          description: Id del tercero que comenta
+          example: 101
+        usuario_rol:
+          type: string
+          description: Código del rol con que comenta
+          example: JEFE_DEPENDENCIA
+      required:
+        - mensaje
+        - usuario_id
+        - usuario_rol
