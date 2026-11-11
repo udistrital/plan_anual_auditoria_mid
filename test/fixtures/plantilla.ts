@@ -20,7 +20,8 @@ export const respuestaNuxeo = (file?: string) => ({
 // Plan de mejoramiento (formato de formulación): documentos como los devuelve el CRUD
 export const crearHallazgoPlan = (overrides: Record<string, any> = {}) => ({
   _id: 'hallazgo-1',
-  descripcion: 'Inconsistencias en registros contables',
+  titulo: 'Inconsistencias en registros contables',
+  descripcion: '<p>Descripción detallada del hallazgo</p>',
   criterio: 'Criterio evaluado en fase 3',
   ...overrides,
 });

@@ -79,6 +79,7 @@ describe('PlantillaPlanMejoramientoService - causa de la acción (#947)', () => 
     const [fila] = await obtenerFilas('auditoria-1', 'plan-1');
 
     expect(fila.causa).toBe('');
+    // Desde #942 la columna «Descripción del Hallazgo» muestra el título
     expect(fila.descripcion).toBe('Inconsistencias en registros contables');
   });
 });
