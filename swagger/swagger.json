@@ -2254,6 +2254,110 @@
         ]
       }
     },
+    "/accion-mejora/{accionId}/comentario": {
+      "get": {
+        "operationId": "ComentarioAccionController_listar",
+        "parameters": [
+          {
+            "name": "accionId",
+            "required": true,
+            "in": "path",
+            "description": "Id (ObjectId) de la acción de mejora.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rol",
+            "required": false,
+            "in": "query",
+            "description": "Código del rol con que consulta, para calcular MetaData.puede_comentar.",
+            "schema": {}
+          },
+          {
+            "name": "persona_id",
+            "required": false,
+            "in": "query",
+            "description": "Tercero que consulta, para calcular MetaData.puede_comentar.",
+            "schema": {}
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "description": "Desplazamiento (por defecto 0).",
+            "schema": {}
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Comentarios por página (1 a 100, por defecto 20).",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Comentarios (Data puede ser []); MetaData: { Count, puede_comentar }."
+          },
+          "400": {
+            "description": "Id de la acción, limit u offset inválidos."
+          },
+          "404": {
+            "description": "La acción de mejora no existe o está inactiva."
+          }
+        },
+        "summary": "Lista los comentarios del foro de una acción (más recientes primero) con autor, rol y dependencia, e indica si la persona puede comentar.",
+        "tags": [
+          "Foro de la acción de mejora"
+        ]
+      },
+      "post": {
+        "operationId": "ComentarioAccionController_publicar",
+        "parameters": [
+          {
+            "name": "accionId",
+            "required": true,
+            "in": "path",
+            "description": "Id (ObjectId) de la acción de mejora.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearComentarioAccionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Comentario creado, con autor, rol y dependencia resueltos."
+          },
+          "400": {
+            "description": "Mensaje vacío o de más de 1000 caracteres, usuario o rol inválidos."
+          },
+          "403": {
+            "description": "El usuario no participa en el foro de esta acción."
+          },
+          "404": {
+            "description": "La acción de mejora no existe o está inactiva."
+          },
+          "502": {
+            "description": "El CRUD no registró el comentario."
+          }
+        },
+        "summary": "Publica un comentario en el foro de la acción. Pueden comentar las dependencias responsables y el personal de Control Interno.",
+        "tags": [
+          "Foro de la acción de mejora"
+        ]
+      }
+    },
     "/ejecutor-dependencia": {
       "get": {
         "operationId": "EjecutorDependenciaController_getEjecutores",
@@ -2370,6 +2474,32 @@
   "tags": [],
   "servers": [],
   "components": {
-    "schemas": {}
+    "schemas": {
+      "CrearComentarioAccionDto": {
+        "type": "object",
+        "properties": {
+          "mensaje": {
+            "type": "string",
+            "description": "Texto plano del comentario (1 a 1000 caracteres)",
+            "example": "Se cargarán las firmas de las actas en el próximo corte."
+          },
+          "usuario_id": {
+            "type": "number",
+            "description": "Id del tercero que comenta",
+            "example": 101
+          },
+          "usuario_rol": {
+            "type": "string",
+            "description": "Código del rol con que comenta",
+            "example": "JEFE_DEPENDENCIA"
+          }
+        },
+        "required": [
+          "mensaje",
+          "usuario_id",
+          "usuario_rol"
+        ]
+      }
+    }
   }
 }

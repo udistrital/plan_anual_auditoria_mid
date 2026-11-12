@@ -15,6 +15,7 @@ import { AccionMejoraModule } from './application/accion-mejora/accion-mejora.mo
 import { AccionMejoraEstadoModule } from './application/accion-mejora-estado/accion-mejora-estado.module';
 import { GestionAccionesModule } from './application/gestion-acciones/gestion-acciones.module';
 import { FormulacionPlanesModule } from './application/formulacion-planes/formulacion-planes.module';
+import { ComentarioAccionModule } from './application/comentario-accion/comentario-accion.module';
 import { EjecutorDependenciaModule } from './application/ejecutor-dependencia/ejecutor-dependencia.module';
 import { PlanEstadoModule } from './application/plan-estado/plan-estado.module';
 import { AuditorModule } from './application/auditor/auditor.module';
@@ -67,6 +68,7 @@ import { ServicesModule } from './shared/services/services.module';
     AccionMejoraEstadoModule,
     GestionAccionesModule,
     FormulacionPlanesModule,
+    ComentarioAccionModule,
     EjecutorDependenciaModule,
     ServicesModule,
   ],
