@@ -180,9 +180,10 @@ export class PlantillaPlanMejoramientoService {
         .filter((accion) => this.idDe(accion.hallazgo_id) === hallazgo._id)
         .map((accion) => ({
           numero: indice + 1,
+          // La causa la escribe la dependencia en cada acción; no sale del criterio de fase 3 (#947)
+          causa: accion.causa ?? '',
           // La columna "Descripción del Hallazgo" muestra el título del hallazgo
           descripcion: hallazgo.titulo,
-          causa: hallazgo.criterio,
           // Acción sin tipo queda en blanco
           tipo_accion: TIPOS_ACCION[accion.tipo_id] ?? '',
           accion_planteada: accion.descripcion,

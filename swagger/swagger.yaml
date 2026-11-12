@@ -1590,6 +1590,81 @@ paths:
         dependencias responsables y el personal de Control Interno.
       tags:
         - Foro de la acción de mejora
+  /ejecutor-dependencia:
+    get:
+      operationId: EjecutorDependenciaController_getEjecutores
+      parameters:
+        - name: offset
+          required: false
+          in: query
+          schema: {}
+        - name: limit
+          required: false
+          in: query
+          schema: {}
+        - name: busqueda
+          required: false
+          in: query
+          description: Texto sobre el nombre o código de la dependencia.
+          schema: {}
+        - name: usuario_id
+          required: false
+          in: query
+          schema: {}
+        - name: dependencia_id
+          required: false
+          in: query
+          schema: {}
+      responses:
+        '200':
+          description: Lista obtenida con éxito.
+        '404':
+          description: Error en la consulta.
+      summary: >-
+        Lista las dependencias con su(s) ejecutor(es) vigente(s), con nombre de
+        dependencia y de usuario.
+      tags:
+        - Ejecutor por Dependencia
+  /ejecutor-dependencia/dependencia/{dependenciaId}/planes:
+    get:
+      operationId: EjecutorDependenciaController_getPlanesPorDependencia
+      parameters:
+        - name: dependenciaId
+          required: true
+          in: path
+          description: Código de la dependencia.
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Lista obtenida con éxito.
+        '404':
+          description: Error en la consulta.
+      summary: >-
+        Planes de mejoramiento de la dependencia (cadena auditoría padre →
+        auditoría → plan).
+      tags:
+        - Ejecutor por Dependencia
+  /ejecutor-dependencia/ejecutor/{usuarioId}/planes:
+    get:
+      operationId: EjecutorDependenciaController_getPlanesPorEjecutor
+      parameters:
+        - name: usuarioId
+          required: true
+          in: path
+          description: ID del usuario (tercero) ejecutor.
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Lista obtenida con éxito.
+        '404':
+          description: Error en la consulta.
+      summary: >-
+        Planes de mejoramiento asignados a un usuario con rol Ejecutor (vía
+        ejecutor_plan).
+      tags:
+        - Ejecutor por Dependencia
 info:
   title: Plan Anual Auditoria MID
   description: API MID para la gestion de planes de auditorias, auditorias y actividades
