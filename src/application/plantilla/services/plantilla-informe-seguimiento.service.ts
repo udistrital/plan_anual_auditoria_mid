@@ -142,6 +142,9 @@ export class PlantillaInformeSeguimientoService {
           },
           informe: {
             titulo: tituloInforme,
+            // Nombres que arma AuditoriaService.getOne desde macroproceso_id y proceso_id
+            macroproceso: auditoria.macroproceso ?? '',
+            proceso: auditoria.proceso ?? '',
             dependencia: dependencias
               .filter((mp: any) => mp)
               .map((mp: any) => mp.Nombre)

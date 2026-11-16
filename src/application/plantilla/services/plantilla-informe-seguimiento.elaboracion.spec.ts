@@ -12,6 +12,12 @@ import { PlantillaInformeSeguimientoService } from './plantilla-informe-seguimie
 describe('PlantillaInformeSeguimientoService - tabla Proyectó / Aprobó', () => {
   let service: PlantillaInformeSeguimientoService;
   let auditoresCrud: any[];
+  const auditoriaData = {
+    _id: 'auditoria-1',
+    titulo: 'Seguimiento',
+    tipo_evaluacion_id: 0,
+    dependencia_id: [],
+  };
   const plantillasMidMock = {
     post: jest.fn(() => Promise.resolve({ Data: 'pdf-base64' })),
   };
@@ -57,16 +63,7 @@ describe('PlantillaInformeSeguimientoService - tabla Proyectó / Aprobó', () =>
         {
           provide: AuditoriaService,
           useValue: {
-            getOne: jest.fn(() =>
-              Promise.resolve({
-                Data: {
-                  _id: 'auditoria-1',
-                  titulo: 'Seguimiento',
-                  tipo_evaluacion_id: 0,
-                  dependencia_id: [],
-                },
-              }),
-            ),
+            getOne: jest.fn(() => Promise.resolve({ Data: auditoriaData })),
           },
         },
         { provide: TercerosHelperService, useValue: tercerosMock },
@@ -137,5 +134,75 @@ describe('PlantillaInformeSeguimientoService - tabla Proyectó / Aprobó', () =>
       'No se encontró el jefe de la Oficina Asesora de Control Interno';
     expect(data.jefe_oci).toBe(respaldo);
     expect(data.elaboracion.aprobo.nombre).toBe(respaldo);
+  });
+});
+
+// La plantilla V3 separa en la primera tabla Macroproceso, Proceso y Dependencia, como el informe de auditoría
+describe('PlantillaInformeSeguimientoService - macroproceso y proceso', () => {
+  it('envía el macroproceso y el proceso de la auditoría, y vacío si no los tiene', async () => {
+    const post = jest.fn<Promise<any>, [string, any]>(() =>
+      Promise.resolve({ Data: 'pdf-base64' }),
+    );
+    const crear = async (auditoria: any) => {
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          PlantillaInformeSeguimientoService,
+          { provide: PlantillasMidService, useValue: { post } },
+          {
+            provide: AuditoriaCrudService,
+            useValue: {
+              traerDataCrud: jest.fn((endpoint: string) =>
+                Promise.resolve({
+                  Data:
+                    endpoint === 'informe'
+                      ? [{ _id: 'informe-1', fecha_emision: '2026-11-16' }]
+                      : [],
+                }),
+              ),
+            },
+          },
+          {
+            provide: AuditoriaService,
+            useValue: {
+              getOne: jest.fn(() => Promise.resolve({ Data: auditoria })),
+            },
+          },
+          {
+            provide: TercerosHelperService,
+            useValue: {
+              getJefeOCI: jest.fn(() => Promise.resolve('JEFE OCI')),
+              getTerceroVinculado: jest.fn(() => Promise.resolve(null)),
+              getTerceroById: jest.fn(() => Promise.resolve(null)),
+            },
+          },
+          { provide: OikosService, useValue: { traerData: jest.fn() } },
+          { provide: NuxeoService, useValue: { obtenerPorUUID: jest.fn() } },
+        ],
+      }).compile();
+      return module.get(PlantillaInformeSeguimientoService);
+    };
+    const base = {
+      _id: 'auditoria-1',
+      titulo: 'S',
+      tipo_evaluacion_id: 0,
+      dependencia_id: [],
+    };
+
+    await (
+      await crear({
+        ...base,
+        macroproceso: 'Evaluación y Control',
+        proceso: 'Gestión de la Evaluación y el Control',
+      })
+    ).get('auditoria-1');
+    await (await crear({ ...base, macroproceso: null })).get('auditoria-1');
+
+    const [conDatos, sinDatos] = post.mock.calls.map(
+      (c: any[]) => c[1].data.informe,
+    );
+    expect(conDatos.macroproceso).toBe('Evaluación y Control');
+    expect(conDatos.proceso).toBe('Gestión de la Evaluación y el Control');
+    expect(sinDatos.macroproceso).toBe('');
+    expect(sinDatos.proceso).toBe('');
   });
 });
