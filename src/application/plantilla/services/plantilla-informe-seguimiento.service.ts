@@ -18,6 +18,18 @@ const {
   logoSIGUD
 } = environment;
 
+const SIN_AUDITOR = 'Sin auditor asignado.';
+const SIN_JEFE_OCI =
+  'No se encontró el jefe de la Oficina Asesora de Control Interno';
+const CARGO_AUDITOR = 'Auditor';
+const CARGO_AUDITOR_LIDER = 'Auditor líder';
+const CARGO_JEFE_OCI = 'Jefe Oficina de Control Interno';
+
+interface AuditorInforme {
+  nombre: string;
+  cargo: string;
+}
+
 @Injectable()
 export class PlantillaInformeSeguimientoService {
   constructor(
@@ -64,7 +76,7 @@ export class PlantillaInformeSeguimientoService {
         lideres,
         responsables,
         jefeOci,
-        auditorResponsable,
+        auditores,
       ] = await Promise.all([
         // titulo informe
         this.generarTituloInforme(
@@ -98,9 +110,10 @@ export class PlantillaInformeSeguimientoService {
         ),
         // jefe oci
         this.tercerosService.getJefeOCI(),
-        // auditor responsable
-        this.obtenerAuditorResponsable(auditoria._id),
+        // auditores asignados (líder primero)
+        this.obtenerAuditoresAsignados(auditoria._id),
       ]);
+      const nombreJefeOci = jefeOci || SIN_JEFE_OCI;
 
       // Relacionar cada líder y responsable con su respectiva dependencia para evitar confusiones en la plantilla
       dependencias.forEach((dependencia: any, indice: number) => {
@@ -150,10 +163,17 @@ export class PlantillaInformeSeguimientoService {
           temas: temasReestructurados,
           observaciones_conclusiones: informe.observacion_conclusion,
           notas: informe.nota,
-          jefe_oci:
-            jefeOci ||
-            'No se encontró el jefe de la Oficina Asesora de Control Interno',
-          auditor_responsable: auditorResponsable,
+          jefe_oci: nombreJefeOci,
+          // Lo usa la plantilla anterior (tabla "Auditor Responsable"); se conserva mientras se despliega la nueva
+          auditor_responsable: auditores[0]?.nombre ?? SIN_AUDITOR,
+          // Tabla "Proyectó / Aprobó". Seguimiento solo tiene informe final, por eso se envía siempre
+          elaboracion: {
+            proyecto: auditores.length
+              ? auditores
+              : [{ nombre: SIN_AUDITOR, cargo: CARGO_AUDITOR }],
+            aprobo: { nombre: nombreJefeOci, cargo: CARGO_JEFE_OCI },
+          },
+          es_preliminar: false,
         },
       };
       return infoParaPlantilla;
@@ -233,28 +253,32 @@ export class PlantillaInformeSeguimientoService {
     }));
   }
 
-  private async obtenerAuditorResponsable(
+  // Auditores activos de la auditoría, con el líder primero. Los que no aparecen en Terceros se omiten,
+  // y una consulta fallida a Terceros no impide generar el informe
+  private async obtenerAuditoresAsignados(
     auditoriaId: string,
-  ): Promise<string> {
+  ): Promise<AuditorInforme[]> {
     const params = {
       query: `auditoria_id:${auditoriaId},activo:true`,
       limit: 0,
     };
-    const auditores = await this.auditoriaCrudService
+    const auditores: any[] = await this.auditoriaCrudService
       .traerDataCrud('auditor', null, params)
-      .then((data) => data.Data);
-    switch (auditores.length) {
-      case 0:
-        return 'Sin auditor asignado.';
-      case 1:
-        return (await this.tercerosService.getTerceroById(
-            auditores[0].auditor_id,
-          ))?.NombreCompleto || 'Sin auditor asignado.';
-      default:
-        return (await this.tercerosService.getTerceroById(
-            auditores.find((a) => a.auditor_lider)?.auditor_id
-              || auditores[0]?.auditor_id,
-          ))?.NombreCompleto || 'Sin auditor asignado.';
-    }
+      .then((data) => data?.Data ?? []);
+    const ordenados = [
+      ...auditores.filter((a) => a?.auditor_id && a.auditor_lider),
+      ...auditores.filter((a) => a?.auditor_id && !a.auditor_lider),
+    ];
+    const terceros = await Promise.all(
+      ordenados.map((a) =>
+        this.tercerosService.getTerceroById(a.auditor_id).catch(() => null),
+      ),
+    );
+    return ordenados
+      .map((a, i) => ({
+        nombre: terceros[i]?.NombreCompleto,
+        cargo: a.auditor_lider ? CARGO_AUDITOR_LIDER : CARGO_AUDITOR,
+      }))
+      .filter((a): a is AuditorInforme => !!a.nombre);
   }
 }
