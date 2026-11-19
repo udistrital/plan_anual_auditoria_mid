@@ -49,6 +49,11 @@ export interface DominiosHallazgoExterno {
 export interface OpcionesValidacionHallazgo {
   /** Número de la primera fila en el origen (en un xlsx con encabezado, 2). Por defecto 1. */
   primeraFila?: number;
+  /**
+   * Número de fila real de cada elemento, cuando no son consecutivos (p. ej. se
+   * omitieron filas vacías del archivo). Tiene prioridad sobre `primeraFila`.
+   */
+  numerosDeFila?: number[];
   maxFilas?: number;
 }
 
@@ -121,7 +126,7 @@ export function validarHallazgosExternos(
   const vistos = new Map<string, number>();
 
   filas.forEach((entrada, indice) => {
-    const fila = primeraFila + indice;
+    const fila = opciones.numerosDeFila?.[indice] ?? primeraFila + indice;
     const antes = errores.length;
     const error = (campo: string, motivo: string) =>
       errores.push({ fila, campo, motivo });

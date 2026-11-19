@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Get,
   Param,
+  HttpCode,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -15,6 +16,8 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { CargueMasivoService } from './cargue-masivo.service';
+import { CargueMasivoExternaService } from './cargue-masivo-externa.service';
+import { ValidacionHallazgosExternosDto } from './dto/validacion-hallazgos-externos.dto';
 import { environment } from 'src/config/configuration';
 import { NuxeoService } from 'src/shared/services/nuxeo.service';
 import { AuditoriaPadreService } from '../auditoria-padre/auditoria-padre.service';
@@ -26,6 +29,7 @@ import { ConstruirExcelInterface } from 'src/shared/utils/construirExcel';
 export class CargueMasivoController {
   constructor(
     private readonly cargueMasivoService: CargueMasivoService,
+    private readonly cargueMasivoExternaService: CargueMasivoExternaService,
     private readonly nuxeoService: NuxeoService,
     private readonly auditoriaPadreService: AuditoriaPadreService,
   ) {}
@@ -232,6 +236,39 @@ export class CargueMasivoController {
     );
     const response = await this.cargueMasivoService.enviar(estructura);
     return response;
+  }
+
+  @Post('auditoria-externa/validacion')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Validar el archivo de hallazgos de una auditoría externa',
+    description:
+      'Lee el archivo xlsx de la plantilla y valida todas sus filas sin guardar nada. ' +
+      'Si todo es válido devuelve los hallazgos para la vista previa; si hay errores no devuelve ninguno y reporta todos por fila y columna.',
+  })
+  @ApiBody({ type: ValidacionHallazgosExternosDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description:
+      'Archivo válido. `Data` trae `total` y `hallazgos` (vigencia, código de auditoría, número, descripción y dependencias con sus nombres).',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description:
+      'Archivo inválido o con errores. El detalle viene en `details.errores`: lista de `{ fila, columna, motivo }`.',
+  })
+  async validarHallazgosExternos(
+    @Body() cuerpo: ValidacionHallazgosExternosDto,
+  ) {
+    const resultado = await this.cargueMasivoExternaService.validarArchivo(
+      cuerpo?.base64data,
+    );
+    return {
+      Success: true,
+      Status: HttpStatus.OK,
+      Message: 'Archivo validado correctamente.',
+      Data: resultado,
+    };
   }
 
   @Post('actividades')

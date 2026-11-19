@@ -154,6 +154,26 @@ describe('validarHallazgosExternos', () => {
     ]);
   });
 
+  it('usa los números de fila reales cuando no son consecutivos', () => {
+    const { errores } = validarHallazgosExternos(
+      [
+        crearFilaHallazgo({ numeral: '1' }),
+        crearFilaHallazgo({ numeral: '1' }),
+      ],
+      dominios,
+      { numerosDeFila: [2, 7] },
+    );
+
+    expect(errores).toEqual([
+      {
+        fila: 7,
+        campo: 'numeral',
+        motivo:
+          'El hallazgo "1" de la auditoría "PAD-2025-01" ya está en la fila 2.',
+      },
+    ]);
+  });
+
   it('rechaza textos que superan el largo permitido', () => {
     const { errores } = validarHallazgosExternos(
       [
