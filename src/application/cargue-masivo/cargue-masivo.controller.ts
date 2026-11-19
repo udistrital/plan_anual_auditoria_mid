@@ -17,6 +17,7 @@ import {
 } from '@nestjs/swagger';
 import { CargueMasivoService } from './cargue-masivo.service';
 import { CargueMasivoExternaService } from './cargue-masivo-externa.service';
+import { PlantillaHallazgosExternosService } from './plantilla-hallazgos-externos.service';
 import { ValidacionHallazgosExternosDto } from './dto/validacion-hallazgos-externos.dto';
 import { environment } from 'src/config/configuration';
 import { NuxeoService } from 'src/shared/services/nuxeo.service';
@@ -30,6 +31,7 @@ export class CargueMasivoController {
   constructor(
     private readonly cargueMasivoService: CargueMasivoService,
     private readonly cargueMasivoExternaService: CargueMasivoExternaService,
+    private readonly plantillaHallazgosExternosService: PlantillaHallazgosExternosService,
     private readonly nuxeoService: NuxeoService,
     private readonly auditoriaPadreService: AuditoriaPadreService,
   ) {}
@@ -236,6 +238,28 @@ export class CargueMasivoController {
     );
     const response = await this.cargueMasivoService.enviar(estructura);
     return response;
+  }
+
+  @Get('auditoria-externa/plantilla')
+  @ApiOperation({
+    summary: 'Descargar la plantilla de hallazgos de una auditoría externa',
+    description:
+      'Devuelve la plantilla en Base64 con las listas de vigencias y de dependencias (varias dependencias en una celda, separadas por |).',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Plantilla descargada exitosamente (`base64`).',
+  })
+  @ApiResponse({
+    status: HttpStatus.SERVICE_UNAVAILABLE,
+    description: 'La plantilla aún no está configurada en este ambiente.',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_GATEWAY,
+    description: 'No se pudo obtener la plantilla del gestor documental.',
+  })
+  async descargarPlantillaHallazgosExternos(): Promise<{ base64: string }> {
+    return this.plantillaHallazgosExternosService.obtener();
   }
 
   @Post('auditoria-externa/validacion')

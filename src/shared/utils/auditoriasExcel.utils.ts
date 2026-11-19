@@ -173,11 +173,22 @@ export async function descargarAuditorias(
   }
 }
 
+/** Opciones para usar `setupValidationDomains` con una plantilla distinta a la de auditorías. */
+export interface OpcionesDominiosValidacion {
+  /** Encabezados de la hoja de datos, en orden de columna (por defecto, los de auditorías). */
+  headers?: string[];
+  /** Filas de la hoja de datos a las que se aplica la validación cuando no se indica `length`. */
+  maxFilasOriginales?: number;
+  /** Encabezados cuya lista solo se escribe en la hoja de dominios, sin validar la celda (p. ej. varios valores por celda). */
+  sinValidacion?: string[];
+}
+
 /**
  * Configures the validation domains in the Excel template based on the provided valid options for each header.
  * @param headersValidacion An object mapping header names to arrays of valid values for data validation.
  * @param rowsLengths An array of objects specifying the length of data rows for each sheet index, used to determine how many rows to apply validation to.
  * @param inputBuffer An ArrayBuffer containing the Excel template file data.
+ * @param opciones Opcional: encabezados, filas y listas sin validación para plantillas distintas a la de auditorías (por defecto se conserva el comportamiento original).
  * @returns A Promise that resolves to an ArrayBuffer containing the Excel file data with configured validation domains.
  * @throws If any issue occurs during the process of configuring validation domains in the Excel file.
  */
@@ -185,7 +196,11 @@ export async function setupValidationDomains(
   headersValidacion: { [header: string]: string[] },
   rowsLengths: { sheetIndex: number; length?: number }[],
   inputBuffer: ArrayBuffer,
+  opciones: OpcionesDominiosValidacion = {},
 ): Promise<ArrayBuffer> {
+  const encabezados = opciones.headers ?? HEADERS;
+  const filasOriginales = opciones.maxFilasOriginales ?? dataSheetOriginalMaxRows;
+  const sinValidacion = new Set(opciones.sinValidacion ?? []);
   try {
     // Load the template workbook from the Base64 string and select the first worksheet
     const workbook = new ExcelJS.Workbook();
@@ -251,14 +266,15 @@ export async function setupValidationDomains(
 
       const maxRowIndex =
         rowsLength == null
-          ? dataSheetOriginalMaxRows
+          ? filasOriginales
           : Math.max(
-              dataSheetOriginalMaxRows,
+              filasOriginales,
               dataSheetStartRowIndex + rowsLength - 1,
             );
 
       Object.keys(headersValidacion).forEach((header) => {
-        const headerColIdx = HEADERS.indexOf(header) + 1;
+        if (sinValidacion.has(header)) return;
+        const headerColIdx = encabezados.indexOf(header) + 1;
         const originColumnLetter = String.fromCharCode(
           64 + validationRanges[header].colIdx,
         );

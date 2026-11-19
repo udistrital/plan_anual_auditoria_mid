@@ -747,6 +747,28 @@
         ]
       }
     },
+    "/cargue-masivo/auditoria-externa/plantilla": {
+      "get": {
+        "description": "Devuelve la plantilla en Base64 con las listas de vigencias y de dependencias (varias dependencias en una celda, separadas por |).",
+        "operationId": "CargueMasivoController_descargarPlantillaHallazgosExternos",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Plantilla descargada exitosamente (`base64`)."
+          },
+          "502": {
+            "description": "No se pudo obtener la plantilla del gestor documental."
+          },
+          "503": {
+            "description": "La plantilla aún no está configurada en este ambiente."
+          }
+        },
+        "summary": "Descargar la plantilla de hallazgos de una auditoría externa",
+        "tags": [
+          "Cargue Masivo"
+        ]
+      }
+    },
     "/cargue-masivo/auditoria-externa/validacion": {
       "post": {
         "description": "Lee el archivo xlsx de la plantilla y valida todas sus filas sin guardar nada. Si todo es válido devuelve los hallazgos para la vista previa; si hay errores no devuelve ninguno y reporta todos por fila y columna.",

@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CargueMasivoController } from './cargue-masivo.controller';
 import { CargueMasivoService } from './cargue-masivo.service';
 import { CargueMasivoExternaService } from './cargue-masivo-externa.service';
+import { PlantillaHallazgosExternosService } from './plantilla-hallazgos-externos.service';
 import { NuxeoService } from 'src/shared/services/nuxeo.service';
 import { AuditoriaPadreService } from '../auditoria-padre/auditoria-padre.service';
 
@@ -24,6 +25,10 @@ describe('CargueMasivoController', () => {
           useValue: {
             validarArchivo: jest.fn(),
           },
+        },
+        {
+          provide: PlantillaHallazgosExternosService,
+          useValue: { obtener: jest.fn() },
         },
         {
           provide: NuxeoService,

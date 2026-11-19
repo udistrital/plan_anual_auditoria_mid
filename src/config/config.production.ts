@@ -2,6 +2,8 @@ export const productionConfig = {
   ID_DEPENDENCIA_OCI: 32,
 
   PLANTILLA_CARGUE_MASIVO_AUDITORIAS: '54b6a092-d7d6-45bd-b06f-f6be22a2cdd6',
+  // TODO(#953): UUID en Nuxeo de plantilla_hallazgos_externos.xlsx (lo sube quien tenga acceso al gestor documental)
+  PLANTILLA_CARGUE_MASIVO_HALLAZGOS_EXTERNOS: '',
 
   PLANTILLAS: {
     CARTA_PRESENTACION: '6aeeaf2fa22bb4e796aabf97',
