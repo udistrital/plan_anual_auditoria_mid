@@ -30,6 +30,18 @@ export const productionConfig = {
     AUDITORIA_INTERNA: 5246,
     SEGUIMIENTO: 5247,
     INFORME: 5248,
+    // TODO(#953): id del parámetro "Auditoría Externa" (lo crea el SQL de Parámetros)
+    AUDITORIA_EXTERNA: 0,
+  },
+
+  ESTADO_AUDITORIA_EXTERNA: {
+    // TODO(#953): id del parámetro "Registrada" (lo crea el SQL de Parámetros)
+    REGISTRADA: 0,
+  },
+
+  DOCUMENTO: {
+    /** documento.tipo_id del informe final en PDF. */
+    TIPO_INFORME_FINAL: 5280,
   },
 
   MESES: {
