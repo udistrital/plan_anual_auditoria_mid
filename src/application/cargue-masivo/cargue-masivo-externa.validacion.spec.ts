@@ -92,6 +92,7 @@ describe('CargueMasivoExternaService.validarArchivo', () => {
 
     expect(resultado.total).toBe(2);
     expect(resultado.hallazgos[0]).toEqual({
+      fila: 2,
       vigencia_pad: 7001,
       vigencia_nombre: '2025',
       codigo_auditoria_pad: 'PAD-1',
@@ -101,6 +102,7 @@ describe('CargueMasivoExternaService.validarArchivo', () => {
       dependencias_nombre: ['Oficina de Control Interno'],
     });
     expect(resultado.hallazgos[1]).toMatchObject({
+      fila: 3,
       vigencia_pad: 7000,
       dependencia_id: [45, 60],
       dependencias_nombre: ['Secretaría General', 'Vicerrectoría Académica'],

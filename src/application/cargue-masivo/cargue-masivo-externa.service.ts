@@ -36,6 +36,8 @@ export interface ErrorArchivoHallazgo {
 }
 
 export interface HallazgoExternoValidado {
+  /** Fila del archivo de donde salió el hallazgo (la 1 es el encabezado). */
+  fila: number;
   vigencia_pad: number;
   vigencia_nombre: string;
   codigo_auditoria_pad: string;
@@ -147,7 +149,8 @@ export class CargueMasivoExternaService {
     const nombreDependencia = new Map(
       dependencias.parametros.map((p) => [p.Id, p.Nombre]),
     );
-    const validados = hallazgos.map<HallazgoExternoValidado>((h) => ({
+    const validados = hallazgos.map<HallazgoExternoValidado>((h, i) => ({
+      fila: filasOrigen[i],
       vigencia_pad: h.vigencia_pad,
       vigencia_nombre:
         nombreVigencia.get(h.vigencia_pad) ?? String(h.vigencia_pad),
