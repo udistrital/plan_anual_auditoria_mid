@@ -1513,16 +1513,10 @@ paths:
         plazo y avance de dictamen de su plan.
       tags:
         - Formulación de Planes
-  /accion-mejora/{accionId}/comentario:
+  /comentario-accion:
     get:
       operationId: ComentarioAccionController_listar
       parameters:
-        - name: accionId
-          required: true
-          in: path
-          description: Id (ObjectId) de la acción de mejora.
-          schema:
-            type: string
         - name: rol
           required: false
           in: query
@@ -1545,13 +1539,19 @@ paths:
           in: query
           description: Comentarios por página (1 a 100, por defecto 20).
           schema: {}
+        - name: accion_mejora_id
+          required: true
+          in: query
+          description: Id (ObjectId) de la acción de mejora cuyo foro se consulta.
+          schema:
+            type: string
       responses:
         '200':
           description: >-
             Comentarios (Data puede ser []); MetaData: { Count, puede_comentar
             }.
         '400':
-          description: Id de la acción, limit u offset inválidos.
+          description: accion_mejora_id ausente o inválido, limit u offset inválidos.
         '404':
           description: La acción de mejora no existe o está inactiva.
       summary: >-
@@ -1561,13 +1561,7 @@ paths:
         - Foro de la acción de mejora
     post:
       operationId: ComentarioAccionController_publicar
-      parameters:
-        - name: accionId
-          required: true
-          in: path
-          description: Id (ObjectId) de la acción de mejora.
-          schema:
-            type: string
+      parameters: []
       requestBody:
         required: true
         content:
@@ -1578,7 +1572,9 @@ paths:
         '201':
           description: Comentario creado, con autor, rol y dependencia resueltos.
         '400':
-          description: Mensaje vacío o de más de 1000 caracteres, usuario o rol inválidos.
+          description: >-
+            accion_mejora_id ausente o inválido, mensaje vacío o de más de 1000
+            caracteres, usuario o rol inválidos.
         '403':
           description: El usuario no participa en el foro de esta acción.
         '404':
@@ -1677,6 +1673,10 @@ components:
     CrearComentarioAccionDto:
       type: object
       properties:
+        accion_mejora_id:
+          type: string
+          description: Id (ObjectId) de la acción de mejora en cuyo foro se comenta
+          example: 6a25babec5406015a57e555d
         mensaje:
           type: string
           description: Texto plano del comentario (1 a 1000 caracteres)
@@ -1690,6 +1690,7 @@ components:
           description: Código del rol con que comenta
           example: JEFE_DEPENDENCIA
       required:
+        - accion_mejora_id
         - mensaje
         - usuario_id
         - usuario_rol
