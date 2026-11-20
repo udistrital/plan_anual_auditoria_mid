@@ -2,6 +2,8 @@ export const developmentConfig = {
   ID_DEPENDENCIA_OCI: 32,
 
   PLANTILLA_CARGUE_MASIVO_AUDITORIAS: '3bec3c19-2aef-449b-9283-fc9d60842c1d',
+  // TODO(#953): UUID en Nuxeo de plantilla_hallazgos_externos.xlsx (lo sube quien tenga acceso al gestor documental)
+  PLANTILLA_CARGUE_MASIVO_HALLAZGOS_EXTERNOS: '',
 
   PLANTILLAS: {
     CARTA_PRESENTACION: '6ad9fbe8ecbd3ab33f8ae231',
@@ -32,6 +34,18 @@ export const developmentConfig = {
     AUDITORIA_INTERNA: 6770,
     SEGUIMIENTO: 6771,
     INFORME: 6772,
+    // TODO(#953): id del parámetro "Auditoría Externa" (lo crea el SQL de Parámetros)
+    AUDITORIA_EXTERNA: 0,
+  },
+
+  ESTADO_AUDITORIA_EXTERNA: {
+    // TODO(#953): id del parámetro "Registrada" (lo crea el SQL de Parámetros)
+    REGISTRADA: 0,
+  },
+
+  DOCUMENTO: {
+    /** documento.tipo_id del informe final en PDF. */
+    TIPO_INFORME_FINAL: 7093,
   },
 
   MESES: {
