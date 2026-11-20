@@ -2,6 +2,12 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class CrearComentarioAccionDto {
   @ApiProperty({
+    description: 'Id (ObjectId) de la acción de mejora en cuyo foro se comenta',
+    example: '6a25babec5406015a57e555d',
+  })
+  accion_mejora_id: string;
+
+  @ApiProperty({
     description: 'Texto plano del comentario (1 a 1000 caracteres)',
     example: 'Se cargarán las firmas de las actas en el próximo corte.',
   })

@@ -307,9 +307,9 @@ export class ComentarioAccionService {
   }
 
   private validarAccionId(accionId: string) {
-    if (!accionId || !OBJECT_ID.test(accionId)) {
+    if (typeof accionId !== 'string' || !OBJECT_ID.test(accionId)) {
       throw new BadRequestException(
-        'El id de la acción de mejora no es válido',
+        'accion_mejora_id es obligatorio y debe ser un id de acción de mejora válido',
       );
     }
   }

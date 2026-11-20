@@ -3,14 +3,12 @@ import {
   Controller,
   Get,
   HttpStatus,
-  Param,
   Post,
   Query,
 } from '@nestjs/common';
 import {
   ApiBody,
   ApiOperation,
-  ApiParam,
   ApiQuery,
   ApiResponse,
   ApiTags,
@@ -19,7 +17,7 @@ import { ComentarioAccionService } from './comentario-accion.service';
 import { CrearComentarioAccionDto } from './dto/crear-comentario-accion.dto';
 
 @ApiTags('Foro de la acción de mejora')
-@Controller('accion-mejora/:accionId/comentario')
+@Controller('comentario-accion')
 export class ComentarioAccionController {
   constructor(
     private readonly comentarioAccionService: ComentarioAccionService,
@@ -30,10 +28,11 @@ export class ComentarioAccionController {
     summary:
       'Lista los comentarios del foro de una acción (más recientes primero) con autor, rol y dependencia, e indica si la persona puede comentar.',
   })
-  @ApiParam({
-    name: 'accionId',
+  @ApiQuery({
+    name: 'accion_mejora_id',
     required: true,
-    description: 'Id (ObjectId) de la acción de mejora.',
+    type: String,
+    description: 'Id (ObjectId) de la acción de mejora cuyo foro se consulta.',
   })
   @ApiQuery({
     name: 'limit',
@@ -63,25 +62,20 @@ export class ComentarioAccionController {
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
-    description: 'Id de la acción, limit u offset inválidos.',
+    description: 'accion_mejora_id ausente o inválido, limit u offset inválidos.',
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
     description: 'La acción de mejora no existe o está inactiva.',
   })
-  async listar(@Param('accionId') accionId: string, @Query() query: any) {
-    return this.comentarioAccionService.listar(accionId, query);
+  async listar(@Query() query: any) {
+    return this.comentarioAccionService.listar(query?.accion_mejora_id, query);
   }
 
   @Post()
   @ApiOperation({
     summary:
       'Publica un comentario en el foro de la acción. Pueden comentar las dependencias responsables y el personal de Control Interno.',
-  })
-  @ApiParam({
-    name: 'accionId',
-    required: true,
-    description: 'Id (ObjectId) de la acción de mejora.',
   })
   @ApiBody({ type: CrearComentarioAccionDto })
   @ApiResponse({
@@ -91,7 +85,7 @@ export class ComentarioAccionController {
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
     description:
-      'Mensaje vacío o de más de 1000 caracteres, usuario o rol inválidos.',
+      'accion_mejora_id ausente o inválido, mensaje vacío o de más de 1000 caracteres, usuario o rol inválidos.',
   })
   @ApiResponse({
     status: HttpStatus.FORBIDDEN,
@@ -105,10 +99,7 @@ export class ComentarioAccionController {
     status: HttpStatus.BAD_GATEWAY,
     description: 'El CRUD no registró el comentario.',
   })
-  async publicar(
-    @Param('accionId') accionId: string,
-    @Body() body: CrearComentarioAccionDto,
-  ) {
-    return this.comentarioAccionService.publicar(accionId, body);
+  async publicar(@Body() body: CrearComentarioAccionDto) {
+    return this.comentarioAccionService.publicar(body?.accion_mejora_id, body);
   }
 }

@@ -14,6 +14,7 @@ import {
 } from '../../../test/fixtures/comentario-accion';
 
 const cuerpo = (cambios: Record<string, any> = {}) => ({
+  accion_mejora_id: ACCION_ID,
   mensaje: '  Se cargarán las firmas en el próximo corte.  ',
   usuario_id: 101,
   usuario_rol: 'AUDITOR',

@@ -132,13 +132,15 @@ describe('ComentarioAccionService.listar', () => {
 
   it.each([
     ['id de acción inválido', 'no-es-objectid', {}],
+    ['accion_mejora_id ausente', undefined, {}],
+    ['accion_mejora_id repetido (arreglo)', [ACCION_ID, ACCION_ID], {}],
     ['limit mayor al máximo', ACCION_ID, { limit: '500' }],
     ['limit cero', ACCION_ID, { limit: '0' }],
     ['offset negativo', ACCION_ID, { offset: '-1' }],
   ])('responde 400 con %s', async (_caso, id, query) => {
     const { service } = await crearEscenario();
 
-    await expect(service.listar(id, query)).rejects.toBeInstanceOf(
+    await expect(service.listar(id as any, query)).rejects.toBeInstanceOf(
       BadRequestException,
     );
   });
