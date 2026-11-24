@@ -3,6 +3,7 @@ import { environment } from 'src/config/configuration';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
 import { PlantillasMidService } from 'src/shared/services/plantillas-mid.service';
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
+import { construirNombreCompleto } from 'src/shared/utils/nombre-completo.util';
 
 interface CartaRenderizada {
   dependencia_id: number | null;
@@ -17,6 +18,8 @@ export interface CartaRenderizadaDOCX {
 }
 
 const { CARGO, logoUDistrital, logoSIGUD } = environment;
+
+const SIN_JEFE_DEPENDENCIA = 'No se encontró al jefe de la dependencia';
 
 @Injectable()
 export class PlantillaCartaPresentacionService {
@@ -46,11 +49,7 @@ export class PlantillaCartaPresentacionService {
         const dependenciaNombre = String(
           nombresDependencias[index] || `Dependencia ${index + 1}`,
         );
-        const jefeDependencia = dependenciaId
-          ? await this.tercerosHelper
-              .getTerceroVinculado(dependenciaId, CARGO.JEFE_DEPENDENCIA_ID)
-              .then((jefe) => jefe?.NombreCompleto)
-          : 'No se encontró al jefe de la dependencia';
+        const jefeDependencia = await this.obtenerNombreJefe(dependenciaId);
         const infoParaPlantilla = await this.organizarData(
           auditoria,
           dependenciaNombre,
@@ -97,11 +96,7 @@ export class PlantillaCartaPresentacionService {
         const dependenciaNombre = String(
           nombresDependencias[index] || `Dependencia ${index + 1}`,
         );
-        const jefeDependencia = dependenciaId
-          ? await this.tercerosHelper
-              .getTerceroVinculado(dependenciaId, CARGO.JEFE_DEPENDENCIA_ID)
-              .then((jefe) => jefe?.NombreCompleto)
-          : 'No se encontró al jefe de la dependencia';
+        const jefeDependencia = await this.obtenerNombreJefe(dependenciaId);
         const infoParaPlantilla = await this.organizarData(
           auditoria,
           dependenciaNombre,
@@ -126,6 +121,17 @@ export class PlantillaCartaPresentacionService {
       Message: 'Plantillas DOCX generadas exitosamente.',
       Data: cartas,
     };
+  }
+
+  /** Nombre del jefe de la dependencia en orden nombres-apellidos */
+  private async obtenerNombreJefe(dependenciaId: number | null): Promise<string> {
+    if (!dependenciaId) return SIN_JEFE_DEPENDENCIA;
+
+    const jefe = await this.tercerosHelper.getTerceroVinculado(
+      dependenciaId,
+      CARGO.JEFE_DEPENDENCIA_ID,
+    );
+    return construirNombreCompleto(jefe) || SIN_JEFE_DEPENDENCIA;
   }
 
   private async organizarData(
