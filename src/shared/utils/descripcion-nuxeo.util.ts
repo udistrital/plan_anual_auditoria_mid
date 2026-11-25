@@ -39,6 +39,19 @@ async function resolverDescripcion(
 }
 
 /**
+ * Deja un texto enriquecido listo para la plantilla. Si es un `NuxeoEnlace`, devuelve el HTML del gestor
+ * documental; en caso contrario devuelve el valor tal cual (texto plano o HTML). Usado por las
+ * observaciones de hallazgos, que pueden traer imágenes guardadas en Nuxeo.
+ */
+export async function resolverTextoEnriquecido(
+  valor: string | null | undefined,
+  obtener: ObtenerContenidoNuxeo,
+): Promise<string> {
+  if (!valor) return '';
+  return esEnlaceNuxeo(valor) ? resolverDescripcion(valor, obtener) : valor;
+}
+
+/**
  * Reemplaza el `NuxeoEnlace` de `descripcion_titulo` de cada tema y de `descripcion` de cada uno de sus
  * subtemas por el HTML del gestor documental.
  * - Conserva el orden de los temas y subtemas.
