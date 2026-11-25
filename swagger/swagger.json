@@ -747,6 +747,57 @@
         ]
       }
     },
+    "/cargue-masivo/auditoria-externa/plantilla": {
+      "get": {
+        "description": "Devuelve la plantilla en Base64 con las listas de vigencias y de dependencias (varias dependencias en una celda, separadas por |).",
+        "operationId": "CargueMasivoController_descargarPlantillaHallazgosExternos",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Plantilla descargada exitosamente (`base64`)."
+          },
+          "502": {
+            "description": "No se pudo obtener la plantilla del gestor documental."
+          },
+          "503": {
+            "description": "La plantilla aún no está configurada en este ambiente."
+          }
+        },
+        "summary": "Descargar la plantilla de hallazgos de una auditoría externa",
+        "tags": [
+          "Cargue Masivo"
+        ]
+      }
+    },
+    "/cargue-masivo/auditoria-externa/validacion": {
+      "post": {
+        "description": "Lee el archivo xlsx de la plantilla y valida todas sus filas sin guardar nada. Si todo es válido devuelve los hallazgos para la vista previa; si hay errores no devuelve ninguno y reporta todos por fila y columna.",
+        "operationId": "CargueMasivoController_validarHallazgosExternos",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidacionHallazgosExternosDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Archivo válido. `Data` trae `total` y `hallazgos` (vigencia, código de auditoría, número, descripción y dependencias con sus nombres)."
+          },
+          "400": {
+            "description": "Archivo inválido o con errores. El detalle viene en `details.errores`: lista de `{ fila, columna, motivo }`."
+          }
+        },
+        "summary": "Validar el archivo de hallazgos de una auditoría externa",
+        "tags": [
+          "Cargue Masivo"
+        ]
+      }
+    },
     "/cargue-masivo/actividades": {
       "post": {
         "operationId": "CargueMasivoController_cargueMasivoActividades",
@@ -2348,6 +2399,113 @@
         ]
       }
     },
+    "/auditoria-externa": {
+      "post": {
+        "description": "Valida todo y lo guarda en una sola operación: auditoría, estado, hallazgos, informe final (PDF ya subido a Nuxeo) y el esqueleto del plan de mejoramiento con el auditor como líder. Todo o nada: si un paso falla se revierte lo creado.",
+        "operationId": "AuditoriaExternaController_registrar",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrarAuditoriaExternaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "`Data` trae `auditoria_externa_id` y `plan_mejoramiento_id`."
+          },
+          "400": {
+            "description": "Datos inválidos. El detalle por campo y fila viene en `details.errores`."
+          },
+          "403": {
+            "description": "El rol del usuario no puede registrar auditorías externas."
+          },
+          "409": {
+            "description": "Ya existe una auditoría del mismo ente, nombre y fecha de informe."
+          },
+          "502": {
+            "description": "Falló el servicio CRUD; no se guardó nada."
+          }
+        },
+        "summary": "Registrar una auditoría externa con su informe y hallazgos",
+        "tags": [
+          "Auditoría externa"
+        ]
+      },
+      "get": {
+        "operationId": "AuditoriaExternaController_listar",
+        "parameters": [
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "description": "Desplazamiento (por defecto 0).",
+            "schema": {}
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Registros por página (1 a 100, por defecto 20).",
+            "schema": {}
+          },
+          {
+            "name": "vigencia_id",
+            "required": false,
+            "in": "query",
+            "description": "Id de la vigencia.",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista (puede ser vacía) con `MetaData.Count`."
+          },
+          "400": {
+            "description": "Parámetros inválidos."
+          }
+        },
+        "summary": "Listar las auditorías externas (más recientes primero)",
+        "tags": [
+          "Auditoría externa"
+        ]
+      }
+    },
+    "/auditoria-externa/{id}": {
+      "get": {
+        "operationId": "AuditoriaExternaController_obtener",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Id (ObjectId) de la auditoría externa.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Datos, hallazgos (con nombres), informe final y plan de mejoramiento."
+          },
+          "400": {
+            "description": "Id inválido."
+          },
+          "404": {
+            "description": "La auditoría externa no existe."
+          }
+        },
+        "summary": "Consultar una auditoría externa con sus hallazgos, informe y plan",
+        "tags": [
+          "Auditoría externa"
+        ]
+      }
+    },
     "/ejecutor-dependencia": {
       "get": {
         "operationId": "EjecutorDependenciaController_getEjecutores",
@@ -2465,6 +2623,18 @@
   "servers": [],
   "components": {
     "schemas": {
+      "ValidacionHallazgosExternosDto": {
+        "type": "object",
+        "properties": {
+          "base64data": {
+            "type": "string",
+            "description": "Archivo xlsx de la plantilla de hallazgos de auditorías externas, en Base64."
+          }
+        },
+        "required": [
+          "base64data"
+        ]
+      },
       "CrearComentarioAccionDto": {
         "type": "object",
         "properties": {
@@ -2492,6 +2662,117 @@
         "required": [
           "accion_mejora_id",
           "mensaje",
+          "usuario_id",
+          "usuario_rol"
+        ]
+      },
+      "HallazgoExternoDto": {
+        "type": "object",
+        "properties": {
+          "vigencia_pad": {
+            "type": "number",
+            "description": "Id de la vigencia del hallazgo (Parámetros)."
+          },
+          "codigo_auditoria_pad": {
+            "type": "string",
+            "description": "Código de auditoría del ente de control."
+          },
+          "numeral": {
+            "type": "string",
+            "description": "Número de hallazgo en el informe."
+          },
+          "descripcion": {
+            "type": "string",
+            "description": "Descripción (corta) del hallazgo."
+          },
+          "dependencia_id": {
+            "description": "Ids de las dependencias (Oikos) responsables.",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "vigencia_pad",
+          "codigo_auditoria_pad",
+          "numeral",
+          "descripcion",
+          "dependencia_id"
+        ]
+      },
+      "DocumentoInformeDto": {
+        "type": "object",
+        "properties": {
+          "nuxeo_id": {
+            "type": "number",
+            "description": "Id del documento del informe en Nuxeo."
+          },
+          "nuxeo_enlace": {
+            "type": "string",
+            "description": "Enlace del documento del informe en Nuxeo."
+          }
+        },
+        "required": [
+          "nuxeo_id",
+          "nuxeo_enlace"
+        ]
+      },
+      "RegistrarAuditoriaExternaDto": {
+        "type": "object",
+        "properties": {
+          "codigo_entidad": {
+            "type": "string",
+            "description": "Código del ente de control."
+          },
+          "nombre_entidad": {
+            "type": "string",
+            "description": "Nombre del ente de control."
+          },
+          "nombre_auditoria": {
+            "type": "string",
+            "description": "Nombre de la auditoría."
+          },
+          "fecha_informe_final": {
+            "type": "string",
+            "description": "Fecha de emisión del informe final (ISO)."
+          },
+          "vigencia_id": {
+            "type": "number",
+            "description": "Id de la vigencia de la auditoría (Parámetros)."
+          },
+          "hallazgos": {
+            "description": "Hallazgos del informe (de 1 a 500).",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HallazgoExternoDto"
+            }
+          },
+          "documento": {
+            "description": "Informe final en PDF, ya subido a Nuxeo por el cliente.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DocumentoInformeDto"
+              }
+            ]
+          },
+          "usuario_id": {
+            "type": "number",
+            "description": "Id (tercero) de quien registra."
+          },
+          "usuario_rol": {
+            "type": "string",
+            "description": "Código del rol con que registra (p. ej. AUDITOR)."
+          }
+        },
+        "required": [
+          "codigo_entidad",
+          "nombre_entidad",
+          "nombre_auditoria",
+          "fecha_informe_final",
+          "vigencia_id",
+          "hallazgos",
+          "documento",
           "usuario_id",
           "usuario_rol"
         ]
