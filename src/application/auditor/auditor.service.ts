@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
+import { nombreTercero } from 'src/shared/utils/nombre-completo.util';
 
 @Injectable()
 export class AuditorService {
@@ -51,7 +52,7 @@ export class AuditorService {
             .getTerceroById(elemento.auditor_id)
             .then((tercero) => {
               elemento.auditor_nombre =
-                tercero?.NombreCompleto || null;
+                nombreTercero(tercero) || null;
             }),
         );
       }
@@ -62,7 +63,7 @@ export class AuditorService {
             .getTerceroById(elemento.asignado_por_id)
             .then((tercero) => {
               elemento.asignado_por_nombre =
-                tercero?.NombreCompleto || null;
+                nombreTercero(tercero) || null;
             }),
         );
       }
@@ -95,7 +96,7 @@ export class AuditorService {
         const encontrado = arrayTercero.find(
           (param) => param.Id === doc,
         );
-        return encontrado ? encontrado.NombreCompleto : doc;
+        return encontrado ? nombreTercero(encontrado) : doc;
       });
     } else {
       const encontrado = arrayTercero.find(
@@ -103,7 +104,7 @@ export class AuditorService {
       );
 
       elemento[nuevoCampo] = encontrado
-        ? encontrado.NombreCompleto
+        ? nombreTercero(encontrado)
         : null;
     }
 

@@ -8,6 +8,7 @@ import { OikosService } from 'src/shared/services/oikos.service';
 import { PlantillasMidService } from 'src/shared/services/plantillas-mid.service';
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
 import { resolverDescripcionesTemas } from 'src/shared/utils/descripcion-nuxeo.util';
+import { nombreTercero } from 'src/shared/utils/nombre-completo.util';
 
 const {
   PLANTILLAS,
@@ -121,12 +122,12 @@ export class PlantillaInformeSeguimientoService {
           dependencia.Nombre += ` (${indice + 1})`;
       });
       lideres.forEach((lider: any, indice: number) => {
-        if (lider?.NombreCompleto)
-          lider.NombreCompleto += ` (${indice + 1})`;
+        const nombre = nombreTercero(lider);
+        if (nombre) lider.NombreCompleto = `${nombre} (${indice + 1})`;
       });
       responsables.forEach((responsable: any, indice: number) => {
-        if (responsable?.NombreCompleto)
-          responsable.NombreCompleto += ` (${indice + 1})`;
+        const nombre = nombreTercero(responsable);
+        if (nombre) responsable.NombreCompleto = `${nombre} (${indice + 1})`;
       });
 
       const infoParaPlantilla = {
@@ -279,7 +280,7 @@ export class PlantillaInformeSeguimientoService {
     );
     return ordenados
       .map((a, i) => ({
-        nombre: terceros[i]?.NombreCompleto,
+        nombre: nombreTercero(terceros[i]),
         cargo: a.auditor_lider ? CARGO_AUDITOR_LIDER : CARGO_AUDITOR,
       }))
       .filter((a): a is AuditorInforme => !!a.nombre);

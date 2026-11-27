@@ -3,6 +3,7 @@ import { environment } from 'src/config/configuration';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
 import { ParametrosService } from 'src/shared/services/parametros.service';
+import { nombreTercero } from 'src/shared/utils/nombre-completo.util';
 
 const { TIPO_PARAMETRO, PLAN_ESTADO, AUDITORIA_PADRE_ESTADO } = environment;
 
@@ -120,7 +121,7 @@ export class PlanAuditoriaService {
           plan.tiene_rechazos = tieneRechazos;
           plan.tiene_modificaciones = tieneModificaciones;
           plan.tiene_observaciones = tieneObservaciones;
-          if (tercero) plan.creado_por_nombre = tercero.NombreCompleto ?? null;
+          if (tercero) plan.creado_por_nombre = nombreTercero(tercero) || null;
         }),
       );
     } else if (Data?._id) {

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
 import { TercerosService } from 'src/shared/services/terceros.service';
+import { nombreTercero } from 'src/shared/utils/nombre-completo.util';
 
 @Injectable()
 export class PlanMejoramientoAuditorService {
@@ -51,12 +52,12 @@ export class PlanMejoramientoAuditorService {
     if (Array.isArray(elementoData)) {
       elemento[nuevoCampo] = elementoData.map((doc) => {
         const encontrado = arrayTercero.find((param) => param.Id === doc);
-        return encontrado ? encontrado.NombreCompleto : doc;
+        return encontrado ? nombreTercero(encontrado) : doc;
       });
     } else {
       const encontrado = arrayTercero.find((param) => param.Id === elementoData);
       if (encontrado) {
-        elemento[nuevoCampo] = encontrado.NombreCompleto;
+        elemento[nuevoCampo] = nombreTercero(encontrado);
       } else {
         console.warn(`No se encontró ${campo} para ID: ${elementoData}`);
         elemento[nuevoCampo] = null;

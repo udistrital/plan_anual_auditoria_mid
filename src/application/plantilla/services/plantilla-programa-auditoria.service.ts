@@ -7,6 +7,7 @@ import { ParametrosService } from 'src/shared/services/parametros.service';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
 import { OikosService } from 'src/shared/services/oikos.service';
+import { nombreTercero } from 'src/shared/utils/nombre-completo.util';
 
 const { PLANTILLAS, logoUDistrital, logoSIGUD, CARGO } = environment;
 
@@ -102,12 +103,12 @@ export class PlantillaProgramaAuditoriaService {
           dependencia.Nombre += ` (${indice + 1})`; 
       });
       lideres.forEach((lider: any, indice: number) => {
-        if (lider?.NombreCompleto)
-          lider.NombreCompleto += ` (${indice + 1})`;
+        const nombre = nombreTercero(lider);
+        if (nombre) lider.NombreCompleto = `${nombre} (${indice + 1})`;
       });
       responsables.forEach((responsable: any, indice: number) => {
-        if (responsable?.NombreCompleto)
-          responsable.NombreCompleto += ` (${indice + 1})`;
+        const nombre = nombreTercero(responsable);
+        if (nombre) responsable.NombreCompleto = `${nombre} (${indice + 1})`;
       });
 
       const actividadesOrganizadas = this.organizarActividades(
@@ -195,8 +196,8 @@ export class PlantillaProgramaAuditoriaService {
         const tercero = await this.tercerosService.getTerceroById(
           auditor.auditor_id,
         );
-        return tercero?.NombreCompleto
-          ? capitalize(tercero.NombreCompleto)
+        return nombreTercero(tercero)
+          ? capitalize(nombreTercero(tercero))
           : null;
       }),
     );

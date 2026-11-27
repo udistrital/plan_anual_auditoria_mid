@@ -29,3 +29,19 @@ export function construirNombreCompleto(
     .filter((componente) => componente.length > 0)
     .join(' ');
 }
+
+/**
+ * Nombre de un tercero para mostrar en vistas, documentos y notificaciones, en orden
+ * nombres-apellidos. Si el tercero no trae ningún componente del nombre se usa su
+ * NombreCompleto y, si tampoco existe, el texto de respaldo.
+ */
+export function nombreTercero(
+  tercero: (ComponentesNombreTercero & { NombreCompleto?: unknown }) | null | undefined,
+  respaldo = '',
+): string {
+  const nombreCompleto =
+    typeof tercero?.NombreCompleto === 'string'
+      ? tercero.NombreCompleto.trim().replace(/\s+/g, ' ')
+      : '';
+  return construirNombreCompleto(tercero) || nombreCompleto || respaldo;
+}

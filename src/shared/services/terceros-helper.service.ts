@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { TercerosService } from './terceros.service';
 import { environment } from 'src/config/configuration';
+import { nombreTercero } from 'src/shared/utils/nombre-completo.util';
 
 const { CARGO, ID_DEPENDENCIA_OCI } = environment;
 
@@ -81,7 +82,7 @@ export class TercerosHelperService {
       CARGO.JEFE_DEPENDENCIA_ID,
     );
 
-    return tercero?.NombreCompleto || 'No se encontró el jefe OCI';
+    return nombreTercero(tercero) || 'No se encontró el jefe OCI';
   }
 
   async getAuditorResponsable(auditores: any[]): Promise<string> {
@@ -98,6 +99,6 @@ export class TercerosHelperService {
 
     const tercero = await this.getTerceroById(auditorSeleccionado.auditor_id);
 
-    return tercero?.NombreCompleto || 'Sin auditor asignado.';
+    return nombreTercero(tercero) || 'Sin auditor asignado.';
   }
 }

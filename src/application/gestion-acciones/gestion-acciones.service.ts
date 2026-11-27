@@ -4,6 +4,7 @@ import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
 import { DominiosService } from 'src/shared/utils/dominios/dominios.service';
 import { environment } from 'src/config/configuration';
+import { nombreTercero } from 'src/shared/utils/nombre-completo.util';
 
 const { TIPO_PARAMETRO, PLAN_MEJORAMIENTO_ESTADO, ACCION_MEJORA } = environment;
 
@@ -341,7 +342,7 @@ export class GestionAccionesService {
         );
         nombrePorAuditor.set(
           auditorId,
-          tercero?.NombreCompleto ?? `Auditor ${auditorId}`,
+          nombreTercero(tercero) || `Auditor ${auditorId}`,
         );
       }),
     );
@@ -956,7 +957,7 @@ export class GestionAccionesService {
           );
           nombrePorAuditor.set(
             auditorId,
-            tercero?.NombreCompleto ?? `Auditor ${auditorId}`,
+            nombreTercero(tercero) || `Auditor ${auditorId}`,
           );
         },
       ),

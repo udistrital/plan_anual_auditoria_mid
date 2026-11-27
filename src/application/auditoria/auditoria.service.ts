@@ -7,7 +7,7 @@ import { Dominio } from 'src/shared/utils/dominios/dominio.model';
 import { unirListaNombresConComas } from 'src/utils/texto.utils';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
-import { construirNombreCompleto } from 'src/shared/utils/nombre-completo.util';
+import { nombreTercero } from 'src/shared/utils/nombre-completo.util';
 
 const { TIPO_PARAMETRO } = environment;
 
@@ -578,9 +578,9 @@ export class AuditoriaService {
 
     return {
       dependencia_id,
-      jefe_nombre: construirNombreCompleto(jefe_dep) || undefined,
+      jefe_nombre: nombreTercero(jefe_dep) || undefined,
       jefe_correo: jefe_dep?.UsuarioWSO2,
-      asistente_nombre: asistente_dep?.NombreCompleto,
+      asistente_nombre: nombreTercero(asistente_dep) || undefined,
       asistente_correo: asistente_dep?.UsuarioWSO2,
     };
   }

@@ -7,6 +7,7 @@ import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service
 import { ParametrosService } from 'src/shared/services/parametros.service';
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
 import { OikosService } from 'src/shared/services/oikos.service';
+import { nombreTercero } from 'src/shared/utils/nombre-completo.util';
 
 const { PLANTILLAS, logoUDistritalOCI, contactoOCI, CARGO } = environment;
 
@@ -90,8 +91,8 @@ export class PlantillaSolicitudInformacionService {
         const tercero = await this.tercerosService.getTerceroById(
           auditor.auditor_id,
         );
-        return tercero?.NombreCompleto
-          ? capitalize(tercero.NombreCompleto)
+        return nombreTercero(tercero)
+          ? capitalize(nombreTercero(tercero))
           : null;
       }),
     );
@@ -131,7 +132,7 @@ export class PlantillaSolicitudInformacionService {
         respuestaDependencias.push({
           nombre: dependencia.Nombre,
           responsable:
-            responsableDependencia?.NombreCompleto ||
+            nombreTercero(responsableDependencia) ||
             'No se encontró el responsable de la dependencia',
         });
       }
@@ -147,7 +148,7 @@ export class PlantillaSolicitudInformacionService {
       respuestaDependencias.push({
         nombre: dependencia.Nombre,
         responsable:
-          responsableDependencia?.NombreCompleto ||
+          nombreTercero(responsableDependencia) ||
           'No se encontró el responsable de la dependencia',
       });
     }

@@ -10,6 +10,7 @@ import {
   FiltrosEjecutor,
   PlanDependencia,
 } from './ejecutor-dependencia.model';
+import { nombreTercero } from 'src/shared/utils/nombre-completo.util';
 
 const { TIPO_PARAMETRO } = environment;
 
@@ -329,7 +330,7 @@ export class EjecutorDependenciaService {
           this.documentoDeTercero(usuarioId),
         ]);
         map.set(usuarioId, {
-          nombre: tercero?.NombreCompleto ?? `Usuario ${usuarioId}`,
+          nombre: nombreTercero(tercero) || `Usuario ${usuarioId}`,
           correo: tercero?.UsuarioWSO2 ?? null,
           documento,
         });
