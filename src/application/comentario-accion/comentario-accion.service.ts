@@ -16,6 +16,7 @@ import {
   ComentarioAccionRespuesta,
   CrearComentarioAccionDto,
 } from './dto/crear-comentario-accion.dto';
+import { nombreTercero } from 'src/shared/utils/nombre-completo.util';
 
 const { ETIQUETAS_ROL, CARGO, FORO_ACCION } = environment;
 
@@ -277,7 +278,7 @@ export class ComentarioAccionService {
       const tercero = await this.tercerosHelper.getTerceroById(
         String(usuarioId),
       );
-      const nombre: string | undefined = tercero?.NombreCompleto;
+      const nombre: string | undefined = nombreTercero(tercero) || undefined;
       return nombre
         ? nombre
             .toLowerCase()

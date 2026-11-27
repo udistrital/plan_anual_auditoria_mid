@@ -1,4 +1,4 @@
-import { construirNombreCompleto } from './nombre-completo.util';
+import { construirNombreCompleto, nombreTercero } from './nombre-completo.util';
 
 describe('construirNombreCompleto', () => {
   it('ordena primer nombre, segundo nombre, primer apellido y segundo apellido', () => {
@@ -75,5 +75,31 @@ describe('construirNombreCompleto', () => {
     ).toBe('');
     expect(construirNombreCompleto(null)).toBe('');
     expect(construirNombreCompleto(undefined)).toBe('');
+  });
+});
+
+describe('nombreTercero', () => {
+  it('usa el orden nombres-apellidos aunque NombreCompleto venga con apellidos primero', () => {
+    expect(
+      nombreTercero({
+        NombreCompleto: 'NUNEZ SANCHEZ SERGIO DUVAN',
+        PrimerNombre: 'SERGIO',
+        SegundoNombre: 'DUVAN',
+        PrimerApellido: 'NUÑEZ ',
+        SegundoApellido: 'SANCHEZ',
+      }),
+    ).toBe('SERGIO DUVAN NUÑEZ SANCHEZ');
+  });
+
+  it('usa NombreCompleto (sin espacios sobrantes) si no hay componentes', () => {
+    expect(nombreTercero({ NombreCompleto: '  PAZOS  ALVAREZ ALFONSO ' })).toBe(
+      'PAZOS ALVAREZ ALFONSO',
+    );
+  });
+
+  it('usa el respaldo si no hay componentes ni NombreCompleto', () => {
+    expect(nombreTercero(null, 'Sin auditor asignado.')).toBe('Sin auditor asignado.');
+    expect(nombreTercero({ NombreCompleto: '  ' }, 'Usuario')).toBe('Usuario');
+    expect(nombreTercero(undefined)).toBe('');
   });
 });

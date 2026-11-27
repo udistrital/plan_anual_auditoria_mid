@@ -3,7 +3,7 @@ import { environment } from 'src/config/configuration';
 import { AuditoriaService } from 'src/application/auditoria/auditoria.service';
 import { PlantillasMidService } from 'src/shared/services/plantillas-mid.service';
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
-import { construirNombreCompleto } from 'src/shared/utils/nombre-completo.util';
+import { nombreTercero } from 'src/shared/utils/nombre-completo.util';
 
 interface CartaRenderizada {
   dependencia_id: number | null;
@@ -131,7 +131,7 @@ export class PlantillaCartaPresentacionService {
       dependenciaId,
       CARGO.JEFE_DEPENDENCIA_ID,
     );
-    return construirNombreCompleto(jefe) || SIN_JEFE_DEPENDENCIA;
+    return nombreTercero(jefe, SIN_JEFE_DEPENDENCIA);
   }
 
   private async organizarData(

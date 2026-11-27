@@ -4,6 +4,7 @@ import { reemplazar, reemplazarCampoRol } from 'src/utils/campo.utils';
 import { AuditoriaCrudService } from 'src/shared/services/auditoria-crud.service';
 import { TercerosHelperService } from 'src/shared/services/terceros-helper.service';
 import { ParametrosService } from 'src/shared/services/parametros.service';
+import { nombreTercero } from 'src/shared/utils/nombre-completo.util';
 
 const { TIPO_PARAMETRO, ETIQUETAS_ROL } = environment;
 
@@ -111,7 +112,7 @@ export class PlanMejoramientoEstadoService {
       );
       element.usuario = {
         id: usuario.Id,
-        nombre: usuario.NombreCompleto.replace(/(^|\s)\p{L}/gu, (letra) =>
+        nombre: nombreTercero(usuario).replace(/(^|\s)\p{L}/gu, (letra) =>
           letra.toUpperCase(),
         ),
       };

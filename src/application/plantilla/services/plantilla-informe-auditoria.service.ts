@@ -12,6 +12,7 @@ import {
   resolverDescripcionesTemas,
 } from 'src/shared/utils/descripcion-nuxeo.util';
 import { esHtmlVacio } from 'src/shared/utils/html.util';
+import { nombreTercero } from 'src/shared/utils/nombre-completo.util';
 
 const {
   PLANTILLAS,
@@ -257,7 +258,7 @@ export class PlantillaInformeAuditoriaService {
     );
     return ordenados
       .map((a, i) => ({
-        nombre: terceros[i]?.NombreCompleto,
+        nombre: nombreTercero(terceros[i]),
         cargo: a.auditor_lider ? CARGO_AUDITOR_LIDER : CARGO_AUDITOR,
       }))
       .filter((a): a is AuditorInforme => !!a.nombre);
@@ -284,10 +285,10 @@ export class PlantillaInformeAuditoriaService {
         respuestaDependencias.push({
           nombre: dependencia.Nombre,
           lider:
-            liderDependencia?.NombreCompleto ||
+            nombreTercero(liderDependencia) ||
             'No se encontró el líder de la dependencia',
           responsable:
-            responsableDependencia?.NombreCompleto ||
+            nombreTercero(responsableDependencia) ||
             'No se encontró el responsable de la dependencia',
         });
       }
@@ -307,10 +308,10 @@ export class PlantillaInformeAuditoriaService {
       respuestaDependencias.push({
         nombre: dependencia.Nombre,
         lider:
-          liderDependencia?.NombreCompleto ||
+          nombreTercero(liderDependencia) ||
           'No se encontró el líder de la dependencia',
         responsable:
-          responsableDependencia?.NombreCompleto ||
+          nombreTercero(responsableDependencia) ||
           'No se encontró el responsable de la dependencia',
       });
     }
