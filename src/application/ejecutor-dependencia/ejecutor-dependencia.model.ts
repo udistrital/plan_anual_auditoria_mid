@@ -25,6 +25,10 @@ export interface EjecutorConsolidado {
   /** Correo del usuario (tercero.UsuarioWSO2), usado para gestionar el rol en WSO2. */
   usuario_correo: string | null;
   fecha_asignacion: string | null;
+  /** Inicio de la habilitación como ejecutor (vigencia contractual). */
+  fecha_inicio: string | null;
+  /** Fin de la habilitación; al vencer, el job desactiva la asignación. */
+  fecha_fin: string | null;
 }
 
 /** Dependencia con su(s) ejecutor(es) vigente(s). */

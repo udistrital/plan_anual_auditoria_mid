@@ -114,6 +114,8 @@ export class EjecutorDependenciaService {
         usuario_documento: datos?.documento ?? null,
         usuario_correo: datos?.correo ?? null,
         fecha_asignacion: r.fecha_asignacion ?? null,
+        fecha_inicio: r.fecha_inicio ?? null,
+        fecha_fin: r.fecha_fin ?? null,
       });
     }
 
