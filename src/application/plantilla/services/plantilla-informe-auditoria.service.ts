@@ -29,6 +29,11 @@ const SIN_JEFE_OCI =
 const CARGO_AUDITOR = 'Auditor';
 const CARGO_AUDITOR_LIDER = 'Auditor líder';
 const CARGO_JEFE_OCI = 'Jefe Oficina de Control Interno';
+const ROLES_AUDITOR = new Set([
+  'AUDITOR_EXPERTO',
+  'AUDITOR',
+  'AUDITOR_ASISTENTE',
+]);
 
 interface AuditorInforme {
   nombre: string;
@@ -76,8 +81,8 @@ export class PlantillaInformeAuditoriaService {
         this.obtenerComponentesInforme('hallazgo' , informe._id),
       ]);
 
-      // Respuestas de las dependencias por hallazgo (issue #958)
-      const respuestasPorHallazgo = await this.obtenerRespuestasPorHallazgo(hallazgos);
+      const { respuestasPorHallazgo, observacionesAuditorPorHallazgo } =
+        await this.obtenerObservacionesPorHallazgo(hallazgos);
 
       const [temasProcesados, hallazgosProcesados] = await Promise.all([
         this.procesarDescripcionTemas(temas),
@@ -87,6 +92,7 @@ export class PlantillaInformeAuditoriaService {
         temasProcesados,
         hallazgosProcesados,
         respuestasPorHallazgo,
+        observacionesAuditorPorHallazgo,
       );
       const esPreliminar = await this.esInformePreliminar(auditoria._id);
       // Fecha de emisión según el tipo de informe (issue #958): la preliminar usa fecha_emision,
@@ -254,7 +260,8 @@ export class PlantillaInformeAuditoriaService {
   private async reestructurarTemas(
     temas: any[],
     hallazgos: any[],
-    respuestasPorHallazgo: Map<string, any[]>,
+    respuestasPorHallazgo: Map<string, any[]> = new Map(),
+    observacionesAuditorPorHallazgo: Map<string, string> = new Map(),
   ) {
     // La sección "1" del informe está reservada, por eso la numeración arranca en 2
     return temas.map(({ subtema, ...data }, indiceTema) => {
@@ -279,6 +286,8 @@ export class PlantillaInformeAuditoriaService {
                 ...h,
                 // Respuestas de las dependencias de este hallazgo (issue #958)
                 respuestas: respuestasPorHallazgo.get(h._id?.toString()) ?? [],
+                observacion_auditor:
+                  observacionesAuditorPorHallazgo.get(h._id?.toString()) ?? '',
               })),
           })) ?? [],
       };
@@ -286,20 +295,21 @@ export class PlantillaInformeAuditoriaService {
   }
 
   /**
-   * Construye, por hallazgo, la lista de respuestas de las dependencias (issue #958).
-   * Cada respuesta se encabeza con "Respuesta <Nombre de la dependencia>", resuelta desde la
-   * dependencia asociada a la observación. El contenido se resuelve desde Nuxeo si trae imágenes.
-   * Solo se incluyen observaciones que tengan dependencia asociada; así no se mezclan con la del
-   * auditor ni se atribuyen a quien genera el documento.
+   * Separa las observaciones del auditor de las respuestas de dependencias por hallazgo.
+   * Los contenidos enriquecidos se resuelven desde Nuxeo cuando contienen imágenes.
    */
-  private async obtenerRespuestasPorHallazgo(
-    hallazgos: any[],
-  ): Promise<Map<string, any[]>> {
-    const resultado = new Map<string, any[]>();
+  private async obtenerObservacionesPorHallazgo(hallazgos: any[]): Promise<{
+    respuestasPorHallazgo: Map<string, any[]>;
+    observacionesAuditorPorHallazgo: Map<string, string>;
+  }> {
+    const respuestasPorHallazgo = new Map<string, any[]>();
+    const observacionesAuditorPorHallazgo = new Map<string, string>();
     const ids = (hallazgos ?? [])
       .map((h) => h._id?.toString())
       .filter((id): id is string => !!id);
-    if (!ids.length) return resultado;
+    if (!ids.length) {
+      return { respuestasPorHallazgo, observacionesAuditorPorHallazgo };
+    }
 
     // Las respuestas son un añadido al informe: si fallan, el documento debe generarse igual.
     let observaciones: any[] = [];
@@ -319,20 +329,22 @@ export class PlantillaInformeAuditoriaService {
         'No se pudieron obtener las observaciones para las respuestas por dependencia:',
         error,
       );
-      return resultado;
+      return { respuestasPorHallazgo, observacionesAuditorPorHallazgo };
     }
 
     const cacheDependencia = new Map<number, string>();
 
     for (const obs of observaciones) {
-      const dependenciasIds: number[] = Array.isArray(obs.dependencia_id)
-        ? obs.dependencia_id
-        : [];
-      // Sin dependencia asociada (p. ej. observación del auditor): no es respuesta de dependencia
-      if (!dependenciasIds.length) continue;
-
       const hallazgoId: string = obs.hallazgo_id?.toString();
       if (!hallazgoId) continue;
+
+      const esObservacionAuditor = ROLES_AUDITOR.has(obs.usuario_rol);
+      const dependenciasIds: number[] = esObservacionAuditor
+        ? []
+        : Array.isArray(obs.dependencia_id)
+          ? Array.from(new Set<number>(obs.dependencia_id))
+          : [];
+      if (!esObservacionAuditor && !dependenciasIds.length) continue;
 
       let contenido = '';
       try {
@@ -348,22 +360,29 @@ export class PlantillaInformeAuditoriaService {
       }
       if (esHtmlVacio(contenido)) continue;
 
+      if (esObservacionAuditor) {
+        if (!observacionesAuditorPorHallazgo.has(hallazgoId)) {
+          observacionesAuditorPorHallazgo.set(hallazgoId, contenido);
+        }
+        continue;
+      }
+
       for (const dependenciaId of dependenciasIds) {
         const nombre = await this.nombreDependencia(
           dependenciaId,
           cacheDependencia,
         );
-        const lista = resultado.get(hallazgoId) ?? [];
+        const lista = respuestasPorHallazgo.get(hallazgoId) ?? [];
         lista.push({
           dependencia_id: dependenciaId,
           encabezado: `Respuesta ${nombre}`,
           contenido,
         });
-        resultado.set(hallazgoId, lista);
+        respuestasPorHallazgo.set(hallazgoId, lista);
       }
     }
 
-    return resultado;
+    return { respuestasPorHallazgo, observacionesAuditorPorHallazgo };
   }
 
   /** Nombre de la dependencia por id, con caché para no repetir llamadas a Oikos. */
