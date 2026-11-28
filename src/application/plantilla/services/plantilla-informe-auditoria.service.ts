@@ -10,6 +10,7 @@ import { TercerosHelperService } from 'src/shared/services/terceros-helper.servi
 import {
   resolverDescripcionesHallazgos,
   resolverDescripcionesTemas,
+  resolverTextoEnriquecido,
 } from 'src/shared/utils/descripcion-nuxeo.util';
 import { esHtmlVacio } from 'src/shared/utils/html.util';
 
@@ -28,6 +29,11 @@ const SIN_JEFE_OCI =
 const CARGO_AUDITOR = 'Auditor';
 const CARGO_AUDITOR_LIDER = 'Auditor líder';
 const CARGO_JEFE_OCI = 'Jefe Oficina de Control Interno';
+const ROLES_AUDITOR = new Set([
+  'AUDITOR_EXPERTO',
+  'AUDITOR',
+  'AUDITOR_ASISTENTE',
+]);
 
 interface AuditorInforme {
   nombre: string;
@@ -75,16 +81,23 @@ export class PlantillaInformeAuditoriaService {
         this.obtenerComponentesInforme('hallazgo' , informe._id),
       ]);
 
+      const { respuestasPorHallazgo, observacionesAuditorPorHallazgo } =
+        await this.obtenerObservacionesPorHallazgo(hallazgos);
+
       const [temasProcesados, hallazgosProcesados] = await Promise.all([
         this.procesarDescripcionTemas(temas),
         this.procesarDescripcionHallazgos(hallazgos),
       ]);
-      const temasReestructurados = await this.reestructurarTemas(
+      const temasReestructurados = await this.reestructurarTemas(    
         temasProcesados,
         hallazgosProcesados,
+        respuestasPorHallazgo,
+        observacionesAuditorPorHallazgo,
       );
-      const [anio, mes, dia] = informe.fecha_emision.split('T')[0].split('-');
       const esPreliminar = await this.esInformePreliminar(auditoria._id);
+      // Fecha de emisión según el tipo de informe (issue #958): la preliminar usa fecha_emision,
+      // la final usa fecha_emision_final. No se sustituye una por la otra.
+      const [anio, mes, dia] = this.seleccionarFechaEmision(informe, esPreliminar);
       const tituloInforme = this.generarTituloInforme(
         auditoria.tipo_evaluacion_id,
         auditoria.titulo,
@@ -125,7 +138,10 @@ export class PlantillaInformeAuditoriaService {
           },
           aspectos_generales: informe.aspecto_general,
           temas: temasReestructurados,
-          informe_final: (informe.informe_final),
+          // Sección "Informe Final" eliminada por issue #958: se deja de enviar el campo
+          // informe_final a la plantilla. Se conserva en el modelo del informe (CRUD) por
+          // compatibilidad con registros existentes. Para reactivarla, restaurar la línea:
+          //   informe_final: (informe.informe_final),
           observaciones_conclusiones: informe.observacion_conclusion,
           notas: (informe.nota),
           jefe_oci: jefeOci || SIN_JEFE_OCI,
@@ -146,8 +162,13 @@ export class PlantillaInformeAuditoriaService {
       };
       return infoParaPlantilla;
     } catch (error: any) {
+      // Se conserva el motivo original en el log para diagnóstico (el 500 al cliente es genérico)
+      console.error(
+        'Error al organizar los datos para la plantilla del Informe de Auditoría:',
+        error?.message ?? error,
+      );
       const newError = new Error(
-        'Error al organizar los datos para la plantilla del Informe de Auditoría',
+        `Error al organizar los datos para la plantilla del Informe de Auditoría: ${error?.message ?? error}`,
       );
       newError.stack = error.stack;
       throw newError;
@@ -165,6 +186,31 @@ export class PlantillaInformeAuditoriaService {
       params,
     );
     return respuestaInforme.Data[0];
+  }
+
+  /**
+   * Devuelve [año, mes, dia] de la fecha de emisión según el tipo de informe (issue #958).
+   * - Preliminar: usa informe.fecha_emision.
+   * - Final: usa informe.fecha_emision_final; si no existe, hace respaldo con fecha_emision.
+   *
+   * La fecha de emisión final es OPCIONAL: el Jefe OCI puede aprobar sin fijarla (modal del front).
+   * Cuando no está, el informe final se genera con la fecha preliminar como respaldo, de modo que
+   * el documento siempre sea consultable/generable (incluye registros anteriores al issue #958).
+   */
+  private seleccionarFechaEmision(
+    informe: any,
+    esPreliminar: boolean,
+  ): [string, string, string] {
+    const fecha = esPreliminar
+      ? informe.fecha_emision
+      : (informe.fecha_emision_final ?? informe.fecha_emision);
+
+    if (!fecha) {
+      throw new Error('El informe no tiene fecha de emisión');
+    }
+
+    const [anio, mes, dia] = String(fecha).split('T')[0].split('-');
+    return [anio, mes, dia];
   }
 
   private async obtenerComponentesInforme(tipo: string, idInforme: string) {
@@ -211,7 +257,12 @@ export class PlantillaInformeAuditoriaService {
     return ESTADOS_INFORME_AUDITORIA_PRELIMINAR.includes(estadoId);
   }
 
-  private async reestructurarTemas(temas: any[], hallazgos: any[]) {
+  private async reestructurarTemas(
+    temas: any[],
+    hallazgos: any[],
+    respuestasPorHallazgo: Map<string, any[]> = new Map(),
+    observacionesAuditorPorHallazgo: Map<string, string> = new Map(),
+  ) {
     // La sección "1" del informe está reservada, por eso la numeración arranca en 2
     return temas.map(({ subtema, ...data }, indiceTema) => {
       let contadorSubtema = 0;
@@ -229,12 +280,133 @@ export class PlantillaInformeAuditoriaService {
                 ? ''
                 : `${indiceTema + 2}.${++contadorSubtema}`,
             descripcion: esHtmlVacio(sub.descripcion) ? '' : sub.descripcion,
-            hallazgos: hallazgos.filter(
-              (h) => h.subtema_id?.toString() === sub._id?.toString(),
-            ),
+            hallazgos: hallazgos
+              .filter((h) => h.subtema_id?.toString() === sub._id?.toString())
+              .map((h) => ({
+                ...h,
+                // Respuestas de las dependencias de este hallazgo (issue #958)
+                respuestas: respuestasPorHallazgo.get(h._id?.toString()) ?? [],
+                observacion_auditor:
+                  observacionesAuditorPorHallazgo.get(h._id?.toString()) ?? '',
+              })),
           })) ?? [],
       };
     });
+  }
+
+  /**
+   * Separa las observaciones del auditor de las respuestas de dependencias por hallazgo.
+   * Los contenidos enriquecidos se resuelven desde Nuxeo cuando contienen imágenes.
+   */
+  private async obtenerObservacionesPorHallazgo(hallazgos: any[]): Promise<{
+    respuestasPorHallazgo: Map<string, any[]>;
+    observacionesAuditorPorHallazgo: Map<string, string>;
+  }> {
+    const respuestasPorHallazgo = new Map<string, any[]>();
+    const observacionesAuditorPorHallazgo = new Map<string, string>();
+    const ids = (hallazgos ?? [])
+      .map((h) => h._id?.toString())
+      .filter((id): id is string => !!id);
+    if (!ids.length) {
+      return { respuestasPorHallazgo, observacionesAuditorPorHallazgo };
+    }
+
+    // Las respuestas son un añadido al informe: si fallan, el documento debe generarse igual.
+    let observaciones: any[] = [];
+    try {
+      const params = {
+        query: `hallazgo_id__in:${ids.join('|')},activo:true`,
+        limit: 0,
+      };
+      const respuesta = await this.auditoriaCrudService.traerDataCrud(
+        'observacion',
+        null,
+        params,
+      );
+      observaciones = respuesta?.Data ?? [];
+    } catch (error) {
+      console.error(
+        'No se pudieron obtener las observaciones para las respuestas por dependencia:',
+        error,
+      );
+      return { respuestasPorHallazgo, observacionesAuditorPorHallazgo };
+    }
+
+    const cacheDependencia = new Map<number, string>();
+
+    for (const obs of observaciones) {
+      const hallazgoId: string = obs.hallazgo_id?.toString();
+      if (!hallazgoId) continue;
+
+      const esObservacionAuditor = ROLES_AUDITOR.has(obs.usuario_rol);
+      const dependenciasIds: number[] = esObservacionAuditor
+        ? []
+        : Array.isArray(obs.dependencia_id)
+          ? Array.from(new Set<number>(obs.dependencia_id))
+          : [];
+      if (!esObservacionAuditor && !dependenciasIds.length) continue;
+
+      let contenido = '';
+      try {
+        contenido = await resolverTextoEnriquecido(obs.observacion, (uuid) =>
+          firstValueFrom(this.nuxeoService.obtenerPorUUID(uuid)),
+        );
+      } catch (error) {
+        console.error(
+          `No se pudo resolver el contenido de una observación del hallazgo ${hallazgoId}:`,
+          error,
+        );
+        continue;
+      }
+      if (esHtmlVacio(contenido)) continue;
+
+      if (esObservacionAuditor) {
+        if (!observacionesAuditorPorHallazgo.has(hallazgoId)) {
+          observacionesAuditorPorHallazgo.set(hallazgoId, contenido);
+        }
+        continue;
+      }
+
+      for (const dependenciaId of dependenciasIds) {
+        const nombre = await this.nombreDependencia(
+          dependenciaId,
+          cacheDependencia,
+        );
+        const lista = respuestasPorHallazgo.get(hallazgoId) ?? [];
+        lista.push({
+          dependencia_id: dependenciaId,
+          encabezado: `Respuesta ${nombre}`,
+          contenido,
+        });
+        respuestasPorHallazgo.set(hallazgoId, lista);
+      }
+    }
+
+    return { respuestasPorHallazgo, observacionesAuditorPorHallazgo };
+  }
+
+  /** Nombre de la dependencia por id, con caché para no repetir llamadas a Oikos. */
+  private async nombreDependencia(
+    dependenciaId: number,
+    cache: Map<number, string>,
+  ): Promise<string> {
+    if (cache.has(dependenciaId)) return cache.get(dependenciaId)!;
+    let nombre = `Dependencia ${dependenciaId}`;
+    try {
+      const dependencia = await this.oikosService.traerData(
+        'dependencia',
+        dependenciaId,
+        null,
+      );
+      if (dependencia?.Nombre) nombre = dependencia.Nombre;
+    } catch (error) {
+      console.error(
+        `No se pudo obtener el nombre de la dependencia ${dependenciaId}:`,
+        error,
+      );
+    }
+    cache.set(dependenciaId, nombre);
+    return nombre;
   }
 
   // Auditores activos de la auditoría, con el líder primero. Los que no aparecen en Terceros se omiten
